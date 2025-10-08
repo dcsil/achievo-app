@@ -12,11 +12,11 @@
   },
   "action": {
     "default_title": "Achievo",
-    "default_icon": "src/assets/achievo_thumbnail.png"
+    "default_icon": "src/assets/achievo_clap.png"
   },
   "icons": {
-    "16": "src/assets/achievo_thumbnail.png",
-    "48": "src/assets/achievo_thumbnail.png",
-    "128": "src/assets/achievo_thumbnail.png"
+    "16": "src/assets/achievo_clap.png",
+    "48": "src/assets/achievo_clap.png",
+    "128": "src/assets/achievo_clap.png"
   }
 }
