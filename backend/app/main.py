@@ -1,42 +1,33 @@
 from flask import Flask, request, jsonify
 import os
+
 from werkzeug.utils import secure_filename
 from services.pdf_extractor import extract_events_from_pdf, extract_tasks_from_pdf
+from utils.file_utils import handle_file_upload
 
 UPLOAD_FOLDER = "backend/app/storage/uploads"
-ALLOWED_EXTENSIONS = {"pdf"}
+
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @app.route("/extract/events", methods=["POST"])
 def extract_events():
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-    file = request.files["file"]
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        file.save(filepath)
-        result = extract_events_from_pdf(filepath)
-        return result, 200, {"Content-Type": "application/json"}
-    return jsonify({"error": "Invalid file"}), 400
+    filepath, error_response = handle_file_upload(request, app.config["UPLOAD_FOLDER"])
+    if error_response:
+        return error_response
+    result = extract_events_from_pdf(filepath)
+    return result, 200, {"Content-Type": "application/json"}
 
 @app.route("/extract/tasks", methods=["POST"])
 def extract_tasks():
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-    file = request.files["file"]
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        file.save(filepath)
-        result = extract_tasks_from_pdf(filepath)
-        return result, 200, {"Content-Type": "application/json"}
-    return jsonify({"error": "Invalid file"}), 400
+    filepath, error_response = handle_file_upload(request, app.config["UPLOAD_FOLDER"])
+    if error_response:
+        return error_response
+    result = extract_tasks_from_pdf(filepath)
+    return result, 200, {"Content-Type": "application/json"}
 
 if __name__ == "__main__":
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
