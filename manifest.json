@@ -1,20 +1,22 @@
 {
-  "name": "Drink Water Event Popup",
-  "description": "Demonstrates usage and features of the event page by reminding user to drink water",
+  "name": "Achievo",
+  "description": "A productivity extension to help you stay focused and achieve your goals.",
   "version": "1.0",
   "manifest_version": 3,
-  "permissions": ["alarms", "notifications", "storage"],
+  "permissions": ["sidePanel", "notifications", "storage"],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "service_worker.js"
+  },
+  "side_panel": {
+    "default_path": "landing.html"
   },
   "action": {
-    "default_title": "Drink Water Event",
-    "default_popup": "popup.html"
+    "default_title": "Achievo",
+    "default_icon": "achievo_thumbnail.png"
   },
   "icons": {
-    "16": "drink_water16.png",
-    "32": "drink_water32.png",
-    "48": "drink_water48.png",
-    "128": "drink_water128.png"
+    "16": "achievo_thumbnail.png",
+    "48": "achievo_thumbnail.png",
+    "128": "achievo_thumbnail.png"
   }
 }
