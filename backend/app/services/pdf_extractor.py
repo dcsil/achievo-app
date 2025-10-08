@@ -4,7 +4,7 @@ from google.genai import types
 import os
 from dotenv import load_dotenv
 
-load_dotenv("src/backend/.env")
+load_dotenv("backend/app/.env")
 api_key = os.getenv("GEMINI_API_KEY")
 
 client = genai.Client(api_key=api_key)

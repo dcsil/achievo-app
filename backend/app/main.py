@@ -3,7 +3,7 @@ import os
 from werkzeug.utils import secure_filename
 from services.pdf_extractor import extract_events_from_pdf, extract_tasks_from_pdf
 
-UPLOAD_FOLDER = "src/backend/app/storage/uploads"
+UPLOAD_FOLDER = "backend/app/storage/uploads"
 ALLOWED_EXTENSIONS = {"pdf"}
 
 app = Flask(__name__)
