@@ -5,18 +5,18 @@
   "manifest_version": 3,
   "permissions": ["sidePanel", "notifications", "storage"],
   "background": {
-    "service_worker": "service_worker.js"
+    "service_worker": "service-worker.js"
   },
   "side_panel": {
     "default_path": "index.html"
   },
   "action": {
     "default_title": "Achievo",
-    "default_icon": "achievo_clap.png"
+    "default_icon": "achievo-clap.png"
   },
   "icons": {
-    "16": "achievo_clap.png",
-    "48": "achievo_clap.png",
-    "128": "achievo_clap.png"
+    "16": "achievo-clap.png",
+    "48": "achievo-clap.png",
+    "128": "achievo-clap.png"
   }
 }
