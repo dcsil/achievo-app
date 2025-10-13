@@ -10,7 +10,6 @@ from werkzeug.utils import secure_filename
 from services.pdf_extractor import extract_events_from_pdf, extract_tasks_from_pdf
 from utils.file_utils import handle_file_upload
 from database.users_repository import UsersRepository
-# from database.users_repository import UsersRepository
 
 UPLOAD_FOLDER = "backend/app/storage/uploads"
 
