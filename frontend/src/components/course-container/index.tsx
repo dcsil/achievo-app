@@ -14,7 +14,7 @@ function CourseContainer ({ name, colour }: { name: string, colour: string }) {
     return (
         <div className={`flex flex-col rounded-lg bg-gradient-to-bl from-${colour}-100 to-${colour}-200 p-3 pt-5`}>
             <div className="mb-4">
-                <p className={`rounded-full text-sm w-24 text-white bg-${colour}-400 px-2`}>{name}</p>
+                <p className={`rounded-full text-sm text-center w-24 text-white bg-${colour}-400 px-2`}>{name}</p>
             </div>
             <div className="w-full">
                 <WideContainer tasks={tasks} colour={colour} />

@@ -45,6 +45,8 @@ function SkinnyContainer({ tasks }: { tasks: any[] }) {
         try {
             // Remove task from database (placeholder API call)
             await removeTaskFromDatabase(task.id);
+
+            // TODO: should also update course components task list if applicable
             
             // Remove task from local state
             setTaskList(prevTasks => prevTasks.filter(t => t.id !== task.id));
