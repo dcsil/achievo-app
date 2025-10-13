@@ -88,8 +88,11 @@ function SkinnyContainer({ tasks }: { tasks: any[] }) {
                             ) : (
                                 <div className="flex flex-row content-start items-center space-x-2 w-full p-2 border border-gray-200 rounded-lg h-12">
                                     <p className="font-semibold text-lg w-full text-left truncate">{task.title}</p>
-                                    <p className="text-gray-600 w-48 text-sm text-right">{task.dueDate}</p>
-                                    <p className={`text-gray-600 w-40 bg-${task.colour}-400 text-sm rounded-full`}>{task.course}</p>
+                                    <div className="flex flex-col w-20 items-end">
+                                        <p className="text-gray-600 w-20 text-sm text-right">{task.dueDate}</p>
+                                        <p className="text-gray-600 w-20 text-sm text-right">time due</p>
+                                    </div>
+                                    <p className={`text-gray-600 w-32 bg-${task.colour}-400 text-sm rounded-full`}>{task.course}</p>
                                 </div>
                             )}
                         </li>
