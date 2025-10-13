@@ -23,19 +23,19 @@ const Landing: React.FC = () => {
 
       {/* skinny container component for today's tasks */}
       <div className="max-w-md mx-auto p-3">
-          <h2 className="text-xl font-semibold text-left mb-4">Today's Tasks</h2>
+          <h2 className="text-xl font-semibold text-left mb-2">Today's Tasks</h2>
           <SkinnyContainer tasks={tasks} />
       </div>
 
       {/* skinny container component for upcoming tasks */}
       <div className="max-w-md mx-auto p-3">
-          <h2 className="text-xl font-semibold text-left mb-4">Upcoming Tasks</h2>
+          <h2 className="text-xl font-semibold text-left mb-2">Upcoming Tasks</h2>
           <SkinnyContainer tasks={tasks} />
       </div>
 
       {/* wide container component for tasks by courses */}
       <div className="max-w-md mx-auto p-3">
-          <h2 className="text-xl font-semibold text-left mb-4">Courses</h2>
+          <h2 className="text-xl font-semibold text-left mb-2">Courses</h2>
           <CourseContainer name={course.name} colour={course.colour} />
       </div>
 

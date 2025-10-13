@@ -13,11 +13,11 @@ function WideContainer ({ tasks, colour }: { tasks: any[], colour: string }) {
     };
 
     return (
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col space-y-2">
             {taskList.map((task) => (
                 <div key={task.id} className="p-4 bg-white rounded-lg w-full shadow-sm">
                     <p className="text-gray-500 text-left text-sm mb-1">DUE BY: {task.dueDate}</p>
-                    <p className="font-bold text-left text-lg mb-3 truncate">{task.title}</p>
+                    <p className="font-semibold text-left text-lg mb-3 truncate">{task.title}</p>
                     
                     {/* Progress bar */}
                     <div className="flex items-center space-x-3">
@@ -27,7 +27,7 @@ function WideContainer ({ tasks, colour }: { tasks: any[], colour: string }) {
                                 style={{ width: `${getTaskProgress(task.id)}%` }}
                             ></div>
                         </div>
-                        <span className="text-sm font-bold text-gray-700 text-right">
+                        <span className="text-sm font-semibold text-gray-700 text-right">
                             {getTaskProgress(task.id)}%
                         </span>
                     </div>

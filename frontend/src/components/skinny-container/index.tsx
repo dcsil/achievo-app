@@ -62,7 +62,7 @@ function SkinnyContainer({ tasks }: { tasks: any[] }) {
             {taskList.length === 0 ? (
                 <p className="text-gray-500">No tasks for today! Enjoy your free time!</p>
             ) : (
-                <ul className="space-y-4">
+                <ul className="space-y-1">
                     {taskList.map((task) => (
                         <li 
                             key={task.id} 
@@ -71,25 +71,25 @@ function SkinnyContainer({ tasks }: { tasks: any[] }) {
                             onMouseLeave={() => setHoveredTaskId(null)}
                         >
                             {hoveredTaskId === task.id ? (
-                                <div className="flex flex-row items-center space-x-2 w-full">
-                                    <div className="flex flex-row w-full items-center p-2 border border-gray-300 rounded-lg min-w-0">
-                                        <p className="font-semibold text-md w-full text-left truncate">{task.title}</p>
-                                        <p className="text-gray-600 w-36 text-sm text-right">{task.dueDate}</p>
+                                <div className="flex flex-row items-center space-x-1 w-full">
+                                    <div className="flex flex-row w-full items-center p-2 border border-gray-200 rounded-lg min-w-0 h-12">
+                                        <p className="font-semibold text-lg w-full text-left truncate">{task.title}</p>
+                                        {/* <p className="text-gray-600 w-48 text-sm text-right">{task.dueDate}</p> */}
                                     </div>
-                                    <div className="flex-shrink-0 w-22"> 
+                                    <div className="flex-shrink-0 w-24 h-12"> 
                                         <button
                                             onClick={() => handleCompleteTask(task)}
-                                            className="text-white font-semibold bg-black rounded-lg p-2 w-full"
+                                            className="text-white font-semibold text-sm bg-gradient-to-bl from-orange-300 to-orange-500 rounded-lg w-full h-full hover:shadow-lg"
                                         >
-                                            Complete
+                                            COMPLETE
                                         </button>    
                                     </div>                                    
                                 </div>
                             ) : (
-                                <div className="flex flex-row content-start items-center space-x-2 w-full p-2 border border-gray-300 rounded-lg">
-                                    <p className="font-semibold text-md w-full text-left truncate">{task.title}</p>
-                                    <p className="text-gray-600 w-36 text-sm text-right">{task.dueDate}</p>
-                                    <p className={`text-gray-600 w-40 bg-${task.colour}-100 text-sm rounded-full`}>{task.course}</p>
+                                <div className="flex flex-row content-start items-center space-x-2 w-full p-2 border border-gray-200 rounded-lg h-12">
+                                    <p className="font-semibold text-lg w-full text-left truncate">{task.title}</p>
+                                    <p className="text-gray-600 w-48 text-sm text-right">{task.dueDate}</p>
+                                    <p className={`text-gray-600 w-40 bg-${task.colour}-400 text-sm rounded-full`}>{task.course}</p>
                                 </div>
                             )}
                         </li>
