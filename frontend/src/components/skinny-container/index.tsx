@@ -67,35 +67,57 @@ function SkinnyContainer({ tasks }: { tasks: any[] }) {
                     {taskList.map((task) => (
                         <li 
                             key={task.id} 
-                            className="flex flex-row items-center space-x-4 w-full"
                             onMouseEnter={() => setHoveredTaskId(task.id)}
                             onMouseLeave={() => setHoveredTaskId(null)}
                         >
-                            {hoveredTaskId === task.id ? (
-                                <div className="flex flex-row items-center space-x-1 w-full">
-                                    <div className="flex flex-row w-full items-center p-2 border border-gray-200 rounded-lg min-w-0 h-12">
-                                        <p className="font-semibold text-lg w-full text-left truncate">{task.title}</p>
-                                        {/* <p className="text-gray-600 w-48 text-sm text-right">{task.dueDate}</p> */}
+                            <div className={`w-full border border-gray-200 bg-white rounded-xl transition-all duration-300 ease-in-out ${
+                                hoveredTaskId === task.id
+                            }`}>
+                                {/* Task header - always visible */}
+                                <div className="flex items-center justify-between">
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-semibold text-base p-2 text-gray-900 truncate">{task.title}</h3>
                                     </div>
-                                    <div className="flex-shrink-0 w-24 h-12"> 
-                                        <button
-                                            onClick={() => handleCompleteTask(task)}
-                                            className="text-white font-semibold text-sm bg-gradient-to-bl from-orange-300 to-orange-500 rounded-lg w-full h-full hover:shadow-lg"
-                                        >
-                                            COMPLETE
-                                        </button>    
-                                    </div>                                    
-                                </div>
-                            ) : (
-                                <div className="flex flex-row content-start items-center space-x-2 w-full p-2 border border-gray-200 rounded-lg h-12">
-                                    <p className="font-semibold text-lg w-full text-left truncate">{task.title}</p>
-                                    <div className="flex flex-col w-20 items-end">
-                                        <p className="text-gray-600 w-20 text-sm text-right">{task.dueDate}</p>
-                                        <p className="text-gray-600 w-20 text-sm text-right">time due</p>
+                                    
+                                    <div className="flex items-center space-x-2 pr-1">
+                                        <div className="text-right">
+                                            <p className="text-sm text-gray-600">{task.dueDate}</p>
+                                            <p className="text-xs text-gray-500">due time</p>
+                                        </div>
+                                        <span className={`px-2 py-1 text-sm font-medium text-white rounded-full bg-${task.colour}-400 whitespace-nowrap`}>
+                                            {task.course}
+                                        </span>
                                     </div>
-                                    <p className={`text-gray-600 w-32 bg-${task.colour}-400 text-sm text-center rounded-full`}>{task.course}</p>
                                 </div>
-                            )}
+
+                                {/* Task description and complete button - shown on hover */}
+                                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                                    hoveredTaskId === task.id 
+                                        ? `max-h-32 opacity-100 transform translate-y-0` 
+                                        : `max-h-0 opacity-0 transform -translate-y-2`
+                                }`}>
+                                    <div className={`p-3 rounded-b-lg bg-gradient-to-bl bg-${task.colour}-100 to-${task.colour}-200`}>
+                                        <div className="flex flex-row w-full">
+                                            {/* Task description */}
+                                            <div className="flex-1 mr-4">
+                                                <p className="text-sm text-gray-600 leading-relaxed">
+                                                    {task.description || "[task description]"}
+                                                </p>
+                                            </div>
+
+                                            {/* Complete button */}
+                                            <div className="flex justify-end w-24 h-12">
+                                                <button
+                                                    onClick={() => handleCompleteTask(task)}
+                                                    className="text-white font-semibold text-base bg-gradient-to-bl from-orange-300 to-orange-500 rounded-lg w-full h-full hover:shadow-lg transition-all duration-200"
+                                                >
+                                                    COMPLETE
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </li>
                     ))}
                 </ul>

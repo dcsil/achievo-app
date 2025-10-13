@@ -8,9 +8,9 @@ import CourseContainer from '../../components/course-container';
 const Home: React.FC = () => {
 
   const tasks = [
-    { id: 1, title: 'longlonglonglonglonglonglonglonglonglong', dueDate: '2023-10-01', course: 'Course 1', colour: 'blue' },
-    { id: 2, title: 'Task 2', dueDate: '2023-10-02', course: 'Course 2', colour: 'red' },
-    { id: 3, title: 'Task 3', dueDate: '2023-10-03', course: 'Course 3', colour: 'yellow' }
+    { id: 1, title: 'longlonglonglonglonglonglonglonglonglong', dueDate: '2023-10-01', description: 'Complete project proposal', course: 'Course 1', colour: 'blue' },
+    { id: 2, title: 'Task 2', dueDate: '2023-10-02', description: 'Description for Task 2', course: 'Course 2', colour: 'red' },
+    { id: 3, title: 'Task 3', dueDate: '2023-10-03', description: 'Description for Task 3', course: 'Course 3', colour: 'yellow' }
   ];
 
   const course = {name: 'Course 1', colour: 'blue'};
