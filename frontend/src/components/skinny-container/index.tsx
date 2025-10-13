@@ -58,10 +58,7 @@ function SkinnyContainer({ tasks }: { tasks: any[] }) {
     };
 
 	return (
-
-        <div className="max-w-md mx-auto rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-left mb-4">Today's Tasks</h2>
-
+        <div>
             {taskList.length === 0 ? (
                 <p className="text-gray-500">No tasks for today! Enjoy your free time!</p>
             ) : (
@@ -76,7 +73,7 @@ function SkinnyContainer({ tasks }: { tasks: any[] }) {
                             {hoveredTaskId === task.id ? (
                                 <div className="flex flex-row items-center space-x-2 w-full">
                                     <div className="flex flex-row w-full items-center p-2 border border-gray-300 rounded-lg min-w-0">
-                                        <p className="font-semibold w-full text-left truncate">{task.title}</p>
+                                        <p className="font-semibold text-md w-full text-left truncate">{task.title}</p>
                                         <p className="text-gray-600 w-36 text-sm text-right">{task.dueDate}</p>
                                     </div>
                                     <div className="flex-shrink-0 w-22"> 
@@ -90,9 +87,9 @@ function SkinnyContainer({ tasks }: { tasks: any[] }) {
                                 </div>
                             ) : (
                                 <div className="flex flex-row content-start items-center space-x-2 w-full p-2 border border-gray-300 rounded-lg">
-                                    <p className="font-semibold w-full text-left truncate">{task.title}</p>
+                                    <p className="font-semibold text-md w-full text-left truncate">{task.title}</p>
                                     <p className="text-gray-600 w-36 text-sm text-right">{task.dueDate}</p>
-                                    <p className="text-gray-600 w-40 bg-red-100 rounded-full">{task.course}</p>
+                                    <p className={`text-gray-600 w-40 bg-${task.colour}-100 text-sm rounded-full`}>{task.course}</p>
                                 </div>
                             )}
                         </li>
@@ -133,7 +130,6 @@ function SkinnyContainer({ tasks }: { tasks: any[] }) {
             />
             */}
         </div>
-
     );
 }
 
