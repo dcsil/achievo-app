@@ -24,8 +24,8 @@ From the repo root or the `backend` directory:
 cd backend
 
 # (Optiona but I would recommend) create and activate a virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 
 # Install the backend dependencies
 pip install -r requirements.txt
@@ -102,10 +102,10 @@ By default it starts on http://127.0.0.1:5000.
 curl -X POST http://127.0.0.1:5000/db/users \
   -H 'Content-Type: application/json' \
   -d '{
-        "user_id": "user_123",
+        "user_id": "user_456",
         "canvas_username": "alice_canvas",
-        "total_points": 10,
-        "current_level": 1
+        "total_points": 0,
+        "current_level": 0
       }'
 ```
 
@@ -118,5 +118,5 @@ curl 'http://127.0.0.1:5000/db/users'
 - Fetch one user by id
 
 ```bash
-curl 'http://127.0.0.1:5000/db/users?user_id=user_123'
+curl 'http://127.0.0.1:5000/db/users?user_id=user_456'
 ```
