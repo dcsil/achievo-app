@@ -92,7 +92,7 @@ function SkinnyContainer({ tasks }: { tasks: any[] }) {
                                         <p className="text-gray-600 w-20 text-sm text-right">{task.dueDate}</p>
                                         <p className="text-gray-600 w-20 text-sm text-right">time due</p>
                                     </div>
-                                    <p className={`text-gray-600 w-32 bg-${task.colour}-400 text-sm rounded-full`}>{task.course}</p>
+                                    <p className={`text-gray-600 w-32 bg-${task.colour}-400 text-sm text-center rounded-full`}>{task.course}</p>
                                 </div>
                             )}
                         </li>
