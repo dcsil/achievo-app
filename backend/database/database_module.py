@@ -12,7 +12,7 @@ def push_rows():
 
     Expects the env vars DATABRICKS_SERVER_HOSTNAME, DATABRICKS_HTTP_PATH, DATABRICKS_TOKEN to be set.
     """
-    load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+    load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
 
     server_hostname = os.getenv("DATABRICKS_SERVER_HOSTNAME")
     http_path = os.getenv("DATABRICKS_HTTP_PATH")
