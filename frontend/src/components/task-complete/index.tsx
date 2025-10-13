@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './index.css'; 
 
 const TaskComplete: React.FC = () => {
   const [showCongrats, setShowCongrats] = useState(false);
@@ -6,11 +7,10 @@ const TaskComplete: React.FC = () => {
   // Dummy data - will be replaced with actual task completion data
   const coinsEarned = 100;
   const taskCompleted = "Complete project proposal";
-  const totalGold = 1347; // Previous 1247 + 100 earned
+  const totalGold = 1347; 
 
   return (
     <>
-      {/* Demo button to trigger popup */}
       <button
         onClick={() => setShowCongrats(true)}
         className="px-6 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
@@ -82,50 +82,6 @@ const TaskComplete: React.FC = () => {
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes bounce-in {
-          0% {
-            transform: scale(0.3);
-            opacity: 0;
-          }
-          50% {
-            transform: scale(1.05);
-          }
-          70% {
-            transform: scale(0.9);
-          }
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
-        
-        @keyframes wiggle {
-          0%, 100% {
-            transform: rotate(0deg);
-          }
-          25% {
-            transform: rotate(-10deg);
-          }
-          75% {
-            transform: rotate(10deg);
-          }
-        }
-
-        .animate-bounce-in {
-          animation: bounce-in 0.5s ease-out;
-        }
-
-        .animate-wiggle {
-          animation: wiggle 1s ease-in-out infinite;
-        }
-
-        .animate-wiggle-delayed {
-          animation: wiggle 1s ease-in-out infinite;
-          animation-delay: 0.2s;
-        }
-      `}</style>
     </>
   );
 };
