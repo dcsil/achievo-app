@@ -22,10 +22,6 @@ const Home: React.FC = () => {
       {/* Main content area */}
       <main className="flex-1 p-5 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
-          {/* Center the button for demo */}
-          <div className="flex items-center justify-center py-20">
-            <TaskComplete />
-          </div>
           {/* skinny container component for today's tasks */}
           <div className="max-w-md mx-auto p-3">
               <h2 className="text-xl font-semibold text-left mb-2">Today's Tasks</h2>

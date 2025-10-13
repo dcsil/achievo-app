@@ -1,8 +1,7 @@
 // skinny task container component
 // takes in tasks as props and displays them in a skinny container
 import React, {useState } from 'react';
-// TODO: Import TaskCompletionOverlay component when implemented
-// import TaskCompletionOverlay from '../task-completion-overlay';
+import TaskComplete from '../task-complete';
 
 function SkinnyContainer({ tasks }: { tasks: any[] }) {
     // feed in tasks from API call into component
@@ -60,7 +59,7 @@ function SkinnyContainer({ tasks }: { tasks: any[] }) {
 	return (
         <div>
             {taskList.length === 0 ? (
-                <p className="text-gray-500">No tasks for today! Enjoy your free time!</p>
+                <p className="text-gray-500">No more tasks! Enjoy your free time!</p>
             ) : (
                 <ul className="space-y-1">
                     {taskList.map((task) => (
@@ -100,38 +99,14 @@ function SkinnyContainer({ tasks }: { tasks: any[] }) {
                 </ul>
             )}
             
-            {/* TODO: Replace with TaskCompletionOverlay component */}
-            {showOverlay && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
-                        <h3 className="text-lg font-semibold mb-4">Placeholder Overlay</h3>
-                        <p className="text-gray-600 mb-4">
-                            This will be replaced with the TaskCompletionOverlay component.
-                        </p>
-                        <p className="text-sm text-gray-500 mb-6">
-                            Selected task: {selectedTask?.title || 'Unknown'}
-                        </p>
-                        <button
-                            onClick={() => setShowOverlay(false)}
-                            className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors duration-200"
-                        >
-                            Close Placeholder
-                        </button>
-                    </div>
-                </div>
-            )}
-            {/* 
-            Future implementation:
-            <TaskCompletionOverlay 
+            {/* Task Completion Overlay */}
+            <TaskComplete 
                 isOpen={showOverlay}
                 task={selectedTask}
                 onClose={() => setShowOverlay(false)}
-                onComplete={(task) => {
-                    // Handle task completion logic
-                    setShowOverlay(false);
-                }}
+                coinsEarned={Math.floor(Math.random() * 200) + 50} // Random coins between 50-250
+                totalGold={1347 + Math.floor(Math.random() * 500)} // Simulated total with some variation
             />
-            */}
         </div>
     );
 }
