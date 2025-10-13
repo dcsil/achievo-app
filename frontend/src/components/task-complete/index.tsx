@@ -1,25 +1,31 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './index.css'; 
 
-const TaskComplete: React.FC = () => {
-  const [showCongrats, setShowCongrats] = useState(false);
-  
-  // Dummy data - will be replaced with actual task completion data
-  const coinsEarned = 100;
-  const taskCompleted = "Complete project proposal";
-  const totalGold = 1347; 
+interface TaskCompleteProps {
+  isOpen: boolean;
+  task?: {
+    title: string;
+    id: number;
+    course?: string;
+  };
+  onClose: () => void;
+  coinsEarned?: number;
+  totalGold?: number;
+}
+
+const TaskComplete: React.FC<TaskCompleteProps> = ({ 
+  isOpen, 
+  task, 
+  onClose,
+  coinsEarned = 100,
+  totalGold = 1347 
+}) => {
+  const taskCompleted = task?.title || "Complete project proposal"; 
 
   return (
     <>
-      <button
-        onClick={() => setShowCongrats(true)}
-        className="px-6 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-      >
-        Click Me - Complete Task!
-      </button>
-
       {/* Congratulations Popup Overlay */}
-      {showCongrats && (
+      {isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl border-4 border-yellow-400 max-w-sm w-full relative overflow-hidden animate-bounce-in">
             {/* Decorative top border */}
@@ -73,7 +79,7 @@ const TaskComplete: React.FC = () => {
 
               {/* Finish button */}
               <button
-                onClick={() => setShowCongrats(false)}
+                onClick={onClose}
                 className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-800 font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
               >
                 Finish
