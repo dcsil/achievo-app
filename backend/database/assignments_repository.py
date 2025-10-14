@@ -149,7 +149,7 @@ class AssignmentsRepository:
             cur = conn.cursor()
             
             cur.execute(
-                "UPDATE assignments SET is_complete = 1 WHERE assignment_id = ?",
+                "UPDATE assignments SET is_complete = TRUE WHERE assignment_id = ?",
                 (assignment_id,)
             )
             conn.commit()
