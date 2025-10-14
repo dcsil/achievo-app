@@ -80,7 +80,7 @@ class TasksRepository:
             conn = DBClient.connect()
             cur = conn.cursor()
             cur.execute(
-                "SELECT task_id, user_id, assignment_id, course_id, description, type, scheduled_start_at, scheduled_end_at, is_completed, completion_date_at, reward_points FROM tasks WHERE assignment_id = ? AND is_completed = 0",
+                "SELECT task_id, user_id, assignment_id, course_id, description, type, scheduled_start_at, scheduled_end_at, is_completed, completion_date_at, reward_points FROM tasks WHERE assignment_id = ? AND is_completed = FALSE",
                 (assignment_id,)
             )
             cols = [c[0] for c in cur.description] if cur.description else []
@@ -182,7 +182,7 @@ class TasksRepository:
             completion_date = datetime.now().isoformat()
             
             cur.execute(
-                "UPDATE tasks SET is_completed = 1, completion_date_at = ? WHERE task_id = ?",
+                "UPDATE tasks SET is_completed = TRUE, completion_date_at = ? WHERE task_id = ?",
                 (completion_date, task_id)
             )
             conn.commit()
