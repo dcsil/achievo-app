@@ -13,7 +13,7 @@ const Home: React.FC = () => {
     { id: 3, title: 'Task 3', dueDate: '2023-10-03', description: 'Description for Task 3', course: 'Course 3', colour: 'yellow' }
   ];
 
-  const course = {name: 'Course 1', colour: 'blue'};
+  const course = {name: 'Course 1', courseId: 1, colour: 'blue'};
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -37,7 +37,7 @@ const Home: React.FC = () => {
           {/* wide container component for tasks by courses */}
           <div className="max-w-md mx-auto p-3">
               <h2 className="text-xl font-semibold text-left mb-2">Courses</h2>
-              <CourseContainer name={course.name} colour={course.colour} />
+              <CourseContainer name={course.name} courseId={course.courseId} colour={course.colour} />
           </div>
         </div>
       </main>
