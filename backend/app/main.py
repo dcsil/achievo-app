@@ -10,8 +10,8 @@ backend_dir = str(Path(__file__).resolve().parent.parent)
 sys.path.append(backend_dir)
 
 from werkzeug.utils import secure_filename
-from services.pdf_extractor import extract_events_from_pdf, extract_tasks_from_pdf
-from utils.file_utils import handle_file_upload
+# from services.pdf_extractor import extract_events_from_pdf, extract_tasks_from_pdf
+# from utils.file_utils import handle_file_upload
 from database.users_repository import UsersRepository
 from database.tasks_repository import TasksRepository
 from database.assignments_repository import AssignmentsRepository
@@ -24,21 +24,21 @@ UPLOAD_FOLDER = "backend/app/storage/uploads"
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-@app.route("/extract/events", methods=["POST"])
-def extract_events():
-    filepath, error_response = handle_file_upload(request, app.config["UPLOAD_FOLDER"])
-    if error_response:
-        return error_response
-    result = extract_events_from_pdf(filepath)
-    return result, 200, {"Content-Type": "application/json"}
+# @app.route("/extract/events", methods=["POST"])
+# def extract_events():
+#     filepath, error_response = handle_file_upload(request, app.config["UPLOAD_FOLDER"])
+#     if error_response:
+#         return error_response
+#     result = extract_events_from_pdf(filepath)
+#     return result, 200, {"Content-Type": "application/json"}
 
-@app.route("/extract/tasks", methods=["POST"])
-def extract_tasks():
-    filepath, error_response = handle_file_upload(request, app.config["UPLOAD_FOLDER"])
-    if error_response:
-        return error_response
-    result = extract_tasks_from_pdf(filepath)
-    return result, 200, {"Content-Type": "application/json"}
+# @app.route("/extract/tasks", methods=["POST"])
+# def extract_tasks():
+#     filepath, error_response = handle_file_upload(request, app.config["UPLOAD_FOLDER"])
+#     if error_response:
+#         return error_response
+#     result = extract_tasks_from_pdf(filepath)
+#     return result, 200, {"Content-Type": "application/json"}
 
 # ---------- DB ROUTES ----------
 @app.route("/db/users", methods=["GET"])
@@ -226,6 +226,33 @@ def get_db_assignments():
             assignments = repo.fetch_all()
         
         return jsonify(assignments), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/db/assignments", methods=["POST"])
+def post_db_assignment():
+    payload = request.get_json() or {}
+    assignment_id = payload.get("assignment_id")
+    course_id = payload.get("course_id")
+    title = payload.get("title")
+    due_date = payload.get("due_date")
+    completion_points = payload.get("completion_points", 0)
+    is_complete = payload.get("is_complete", False)
+
+    if not assignment_id or not course_id or not title or not due_date:
+        return jsonify({"error": "assignment_id, course_id, title, and due_date are required"}), 400
+
+    try:
+        AssignmentsRepository().create(
+            assignment_id=assignment_id,
+            course_id=course_id,
+            title=title,
+            due_date=due_date,
+            completion_points=completion_points,
+            is_complete=is_complete
+        )
+        return jsonify({"status": "created", "assignment_id": assignment_id}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
