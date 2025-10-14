@@ -2,6 +2,9 @@ from flask import Flask, request, jsonify
 import os
 import sys
 from pathlib import Path
+from datetime import datetime
+import uuid
+import random
 
 backend_dir = str(Path(__file__).resolve().parent.parent)
 sys.path.append(backend_dir)
@@ -271,9 +274,6 @@ def purchase_blind_box():
         return jsonify({"error": "user_id is required"}), 400
 
     try:
-        from datetime import datetime
-        import uuid
-        
         users_repo = UsersRepository()
         series_repo = BlindBoxSeriesRepository()
         figures_repo = BlindBoxFiguresRepository()
@@ -303,7 +303,6 @@ def purchase_blind_box():
                 return jsonify({"error": "No affordable blind box series available"}), 400
             
             # Select a random series (you could also let the frontend choose)
-            import random
             series = random.choice(affordable_series)
             series_id = series.get("series_id")
             series_cost = series.get("cost_points", 0)
