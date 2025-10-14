@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import os
 import sys
 from pathlib import Path
@@ -10,11 +11,14 @@ from werkzeug.utils import secure_filename
 from services.pdf_extractor import extract_events_from_pdf, extract_tasks_from_pdf
 from utils.file_utils import handle_file_upload
 from database.users_repository import UsersRepository
+from database.courses_repository import CoursesRepository
 
 UPLOAD_FOLDER = "backend/app/storage/uploads"
 
+
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+CORS(app)
 
 @app.route("/extract/events", methods=["POST"])
 def extract_events():
@@ -33,6 +37,15 @@ def extract_tasks():
     return result, 200, {"Content-Type": "application/json"}
 
 # ---------- DB ROUTES ----------
+@app.route("/db/courses", methods=["GET"])
+def get_db_courses():
+    try:
+        repo = CoursesRepository()
+        courses = repo.fetch_all()
+        return jsonify(courses), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/db/users", methods=["GET"])
 def get_db_users():
     try:

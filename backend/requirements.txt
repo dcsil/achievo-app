@@ -1,3 +1,4 @@
+flask-cors
 python-dotenv
 databricks-sql-connector
 google-genai
