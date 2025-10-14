@@ -1,7 +1,7 @@
 """
 Test suite for /db/users API endpoints
 
-Run this test while the backend server is running on localhost:5000
+Run this test while the backend server is running on http://127.0.0.1:5000
 """
 import sys
 import uuid
