@@ -281,6 +281,56 @@ def put_db_assignment(assignment_id):
         return jsonify({"error": str(e)}), 500
 
 # ---------- BLIND BOX ROUTES ----------
+@app.route("/db/blind-box-series", methods=["POST"])
+def post_blind_box_series():
+    payload = request.get_json() or {}
+    series_id = payload.get("series_id")
+    name = payload.get("name")
+    description = payload.get("description")
+    cost_points = payload.get("cost_points", 0)
+    release_date = payload.get("release_date")
+
+    if not series_id or not name:
+        return jsonify({"error": "series_id and name are required"}), 400
+
+    try:
+        BlindBoxSeriesRepository().create(
+            series_id=series_id,
+            name=name,
+            description=description,
+            cost_points=cost_points,
+            release_date=release_date
+        )
+        return jsonify({"status": "created", "series_id": series_id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/db/blind-box-figures", methods=["POST"])
+def post_blind_box_figure():
+    payload = request.get_json() or {}
+    figure_id = payload.get("figure_id")
+    series_id = payload.get("series_id")
+    name = payload.get("name")
+    rarity = payload.get("rarity")
+    weight = payload.get("weight", 1.0)
+
+    if not figure_id or not series_id or not name:
+        return jsonify({"error": "figure_id, series_id, and name are required"}), 400
+
+    try:
+        BlindBoxFiguresRepository().create(
+            figure_id=figure_id,
+            series_id=series_id,
+            name=name,
+            rarity=rarity,
+            weight=weight
+        )
+        return jsonify({"status": "created", "figure_id": figure_id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/db/users/<user_id>/figures", methods=["GET"])
 def get_user_figures(user_id):
     try:
