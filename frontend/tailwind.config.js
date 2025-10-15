@@ -27,6 +27,10 @@ module.exports = {
     'border-purple-400', 'border-pink-400', 'border-indigo-400', 'border-orange-400',
     // Text sizes
     'text-sm', 'text-base', 'text-lg', 'text-xl', 'text-2xl', 'text-3xl',
+    // Responsive layout classes
+    'flex-col', 'min-[500px]:flex-row', 'min-[500px]:items-center', 'min-[500px]:gap-3',
+    'self-end', 'min-[500px]:self-auto', 'justify-between', 'min-[500px]:contents',
+    'min-[500px]:ml-auto', 'min-[500px]:order-first', 'min-[500px]:mx-4',
   ],
   theme: {
     extend: {},
