@@ -168,8 +168,9 @@ def complete_db_task(task_id):
     try:
         task_repo = TasksRepository()
         assignment_repo = AssignmentsRepository()
+        users_repo = UsersRepository()
         
-        # First, get the task to retrieve assignment_id and reward_points
+        # First, get the task to retrieve assignment_id, reward_points, and user_id
         task = task_repo.fetch_by_id(task_id)
         if not task:
             return jsonify({"error": "Task not found"}), 404
@@ -179,16 +180,19 @@ def complete_db_task(task_id):
         
         assignment_id = task.get("assignment_id")
         reward_points = task.get("reward_points", 0)
+        user_id = task.get("user_id")
         
         # Check if there's an assignment and if all tasks are completed
         if assignment_id:
             uncompleted_tasks = task_repo.fetch_uncompleted_by_assignment(assignment_id)
             
-            # If no uncompleted tasks remain, complete the assignment
             if len(uncompleted_tasks) == 0:
                 assignment_repo.complete_assignment(assignment_id)
                 assignment = assignment_repo.fetch_by_id(assignment_id)
                 completion_points = assignment.get("completion_points", 0) if assignment else 0
+                
+                if user_id:
+                    users_repo.update_points(user_id, completion_points)
                 
                 return jsonify({
                     "status": "completed",
@@ -198,7 +202,9 @@ def complete_db_task(task_id):
                     "points_earned": completion_points
                 }), 200
         
-        # Task completed but assignment not complete yet
+        if user_id:
+            users_repo.update_points(user_id, reward_points)
+        
         return jsonify({
             "status": "completed",
             "task_id": task_id,
