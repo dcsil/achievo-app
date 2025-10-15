@@ -5,3 +5,4 @@ flask-cors
 pytest
 flask
 werkzeug
+pytest-cov

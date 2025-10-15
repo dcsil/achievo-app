@@ -44,22 +44,23 @@ You should see Gemini return extracted tasks/events in Json format.
 
 Unit tests are written using [pytest](https://docs.pytest.org/). To run all backend unit tests:
 
-1. Install test dependencies (if not already):
+1. Install test dependencies (if not already, including coverage):
 
 ```
-pip install pytest flask werkzeug
+pip install pytest pytest-cov flask werkzeug
 ```
 
-2. From the backend directory, run:
+2. From the backend directory, run (with coverage):
 
 ```
-pytest app/utils/test_file_utils.py
+pytest --cov=app app/utils/test_file_utils.py
 ```
 
-Or, from the project root:
+Or, from the project root (with coverage):
 
 ```
-pytest backend/app/utils/test_file_utils.py
+pytest --cov=backend/app backend/app/utils/test_file_utils.py
 ```
 
+This will show a coverage report in the terminal. You can add more tests in the `app/utils/` directory as needed.
 All tests should pass. You can add more tests in the `app/utils/` directory as needed.

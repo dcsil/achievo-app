@@ -32,5 +32,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run pytest
-        run: pytest app/utils/test_file_utils.py
+      - name: Run pytest with coverage
+        run: pytest --cov=app app/utils/test_file_utils.py
+
+      - name: Generate HTML coverage report
+        run: pytest --cov=app --cov-report=html app/utils/test_file_utils.py
+
+      - name: Upload coverage report as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: backend/htmlcov/
