@@ -13,7 +13,7 @@ class CoursesRepository:
             conn = DBClient.connect()
             cur = conn.cursor()
             cur.execute(
-                "SELECT course_id, user_id, course_name, course_code, canvas_course_id, date_imported_at, term FROM courses"
+                "SELECT course_id, user_id, course_name, course_code, canvas_course_id, date_imported_at, term, colour FROM courses"
             )
             cols = [c[0] for c in cur.description] if cur.description else []
             rows = cur.fetchall()
@@ -37,7 +37,7 @@ class CoursesRepository:
             conn = DBClient.connect()
             cur = conn.cursor()
             cur.execute(
-                "SELECT course_id, user_id, course_name, course_code, canvas_course_id, date_imported_at, term FROM courses WHERE course_id = ?",
+                "SELECT course_id, user_id, course_name, course_code, canvas_course_id, date_imported_at, term, colour FROM courses WHERE course_id = ?",
                 (course_id,)
             )
             cols = [c[0] for c in cur.description] if cur.description else []
@@ -57,7 +57,7 @@ class CoursesRepository:
             except Exception:
                 pass
 
-    def create(self, course_id: str, user_id: str, course_name: str, course_code: str = None, canvas_course_id: str = None, term: str = None,) -> bool:
+    def create(self, course_id: str, user_id: str, course_name: str, course_code: str = None, canvas_course_id: str = None, term: str = None, colour: str = None) -> bool:
         conn = None
         cur = None
         try:
@@ -65,10 +65,10 @@ class CoursesRepository:
             cur = conn.cursor()
             cur.execute(
                 """
-                INSERT INTO courses (course_id, user_id, course_name, course_code, canvas_course_id, date_imported_at, term)
-                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
+                INSERT INTO courses (course_id, user_id, course_name, course_code, canvas_course_id, date_imported_at, term, colour)
+                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
                 """,
-                (course_id, user_id, course_name, course_code, canvas_course_id, term),
+                (course_id, user_id, course_name, course_code, canvas_course_id, term, colour),
             )
             conn.commit()
             return True
