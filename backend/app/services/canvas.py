@@ -2,8 +2,7 @@ import requests
 import os
 from dotenv import load_dotenv
 
-load_dotenv("backend/.env")
-
+load_dotenv()
 canvas_token = os.getenv("CANVAS_TOKEN")
 
 course_id = 404197  # Replace with your course ID
