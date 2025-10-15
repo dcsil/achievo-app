@@ -5,11 +5,23 @@ Run this test while the backend server is running on http://127.0.0.1:5000
 """
 import sys
 import uuid
-from utils import APIClient, print_test_result, print_section
+import atexit
+from utils import APIClient, print_test_result, print_section, cleanup_test_data
 
 client = APIClient()
 
 created_users = []
+
+
+def cleanup_on_exit():
+    """Cleanup function to be called on exit"""
+    if created_users:
+        print_section("CLEANING UP TEST DATA")
+        cleanup_test_data(client, users=created_users)
+
+
+# Register cleanup function to run on exit
+atexit.register(cleanup_on_exit)
 
 
 def test_get_all_users():
@@ -252,8 +264,8 @@ def run_all_tests():
         print(f"  Failed: {failed_count}")
     
     if created_users:
-        print(f"\n  Note: {len(created_users)} test user(s) created during testing")
-        print("  Test user IDs:", ", ".join(created_users))
+        print(f"\n  Created {len(created_users)} test user(s) during testing")
+        print("  (Will be cleaned up automatically on exit)")
     
     print("=" * 60 + "\n")
     

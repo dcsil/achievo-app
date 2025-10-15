@@ -5,11 +5,23 @@ Run this test while the backend server is running on http://127.0.0.1:5000
 """
 import sys
 import uuid
-from utils import APIClient, print_test_result, print_section
+import atexit
+from utils import APIClient, print_test_result, print_section, cleanup_test_data
 
 client = APIClient()
 
 created_courses = []
+
+
+def cleanup_on_exit():
+    """Cleanup function to be called on exit"""
+    # Note: Currently, this test suite only reads courses, doesn't create them
+    # Cleanup logic is here for future test expansion
+    pass
+
+
+# Register cleanup function to run on exit
+atexit.register(cleanup_on_exit)
 
 
 def test_get_all_courses():
