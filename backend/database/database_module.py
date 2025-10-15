@@ -154,7 +154,7 @@ def create_courses_table(cursor):
         canvas_course_id VARCHAR(100),
         date_imported_at TIMESTAMP NOT NULL,
         term VARCHAR(50),
-        colour VARCHAR(50),
+        color VARCHAR(50),
         FOREIGN KEY (user_id) REFERENCES users(user_id)
     )
     """)
