@@ -11,8 +11,8 @@ backend_dir = str(Path(__file__).resolve().parent.parent)
 sys.path.append(backend_dir)
 
 from werkzeug.utils import secure_filename
-# from services.pdf_extractor import extract_events_from_pdf, extract_tasks_from_pdf
-# from utils.file_utils import handle_file_upload
+from services.pdf_extractor import extract_events_from_pdf, extract_tasks_from_pdf
+from utils.file_utils import handle_file_upload
 from database.users_repository import UsersRepository
 from database.tasks_repository import TasksRepository
 from database.assignments_repository import AssignmentsRepository
@@ -27,21 +27,21 @@ app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 CORS(app)
 
-# @app.route("/extract/events", methods=["POST"])
-# def extract_events():
-#     filepath, error_response = handle_file_upload(request, app.config["UPLOAD_FOLDER"])
-#     if error_response:
-#         return error_response
-#     result = extract_events_from_pdf(filepath)
-#     return result, 200, {"Content-Type": "application/json"}
+@app.route("/extract/events", methods=["POST"])
+def extract_events():
+    filepath, error_response = handle_file_upload(request, app.config["UPLOAD_FOLDER"])
+    if error_response:
+        return error_response
+    result = extract_events_from_pdf(filepath)
+    return result, 200, {"Content-Type": "application/json"}
 
-# @app.route("/extract/tasks", methods=["POST"])
-# def extract_tasks():
-#     filepath, error_response = handle_file_upload(request, app.config["UPLOAD_FOLDER"])
-#     if error_response:
-#         return error_response
-#     result = extract_tasks_from_pdf(filepath)
-#     return result, 200, {"Content-Type": "application/json"}
+@app.route("/extract/tasks", methods=["POST"])
+def extract_tasks():
+    filepath, error_response = handle_file_upload(request, app.config["UPLOAD_FOLDER"])
+    if error_response:
+        return error_response
+    result = extract_tasks_from_pdf(filepath)
+    return result, 200, {"Content-Type": "application/json"}
 
 # ---------- DB ROUTES ----------
 @app.route("/db/users", methods=["GET"])
@@ -75,6 +75,19 @@ def post_db_user():
     try:
         UsersRepository().create(user_id=user_id, canvas_username=canvas_username, total_points=total_points, current_level=current_level)
         return jsonify({"status": "created", "user_id": user_id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/db/users/<user_id>", methods=["DELETE"])
+def delete_db_user(user_id):
+    try:
+        repo = UsersRepository()
+        deleted = repo.delete(user_id)
+        if deleted:
+            return jsonify({"status": "deleted", "user_id": user_id}), 200
+        else:
+            return jsonify({"error": "User not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -220,6 +233,19 @@ def complete_db_task(task_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/db/tasks/<task_id>", methods=["DELETE"])
+def delete_db_task(task_id):
+    try:
+        repo = TasksRepository()
+        deleted = repo.delete(task_id)
+        if deleted:
+            return jsonify({"status": "deleted", "task_id": task_id}), 200
+        else:
+            return jsonify({"error": "Task not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # ---------- ASSIGNMENTS ROUTES ----------
 @app.route("/db/assignments", methods=["GET"])
 def get_db_assignments():
@@ -295,6 +321,19 @@ def put_db_assignment(assignment_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/db/assignments/<assignment_id>", methods=["DELETE"])
+def delete_db_assignment(assignment_id):
+    try:
+        repo = AssignmentsRepository()
+        deleted = repo.delete(assignment_id)
+        if deleted:
+            return jsonify({"status": "deleted", "assignment_id": assignment_id}), 200
+        else:
+            return jsonify({"error": "Assignment not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # ---------- COURSES ROUTES ----------
 @app.route("/db/courses", methods=["GET"])
 def get_db_courses():
@@ -339,6 +378,19 @@ def post_blind_box_series():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/db/blind-box-series/<series_id>", methods=["DELETE"])
+def delete_blind_box_series(series_id):
+    try:
+        repo = BlindBoxSeriesRepository()
+        deleted = repo.delete(series_id)
+        if deleted:
+            return jsonify({"status": "deleted", "series_id": series_id}), 200
+        else:
+            return jsonify({"error": "Series not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/db/blind-box-figures", methods=["POST"])
 def post_blind_box_figure():
     payload = request.get_json() or {}
@@ -360,6 +412,19 @@ def post_blind_box_figure():
             weight=weight
         )
         return jsonify({"status": "created", "figure_id": figure_id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/db/blind-box-figures/<figure_id>", methods=["DELETE"])
+def delete_blind_box_figure(figure_id):
+    try:
+        repo = BlindBoxFiguresRepository()
+        deleted = repo.delete(figure_id)
+        if deleted:
+            return jsonify({"status": "deleted", "figure_id": figure_id}), 200
+        else:
+            return jsonify({"error": "Figure not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -458,6 +523,20 @@ def purchase_blind_box():
         }), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/db/user-blind-boxes/<purchase_id>", methods=["DELETE"])
+def delete_user_blind_box(purchase_id):
+    try:
+        repo = UserBlindBoxesRepository()
+        deleted = repo.delete(purchase_id)
+        if deleted:
+            return jsonify({"status": "deleted", "purchase_id": purchase_id}), 200
+        else:
+            return jsonify({"error": "Purchase not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
