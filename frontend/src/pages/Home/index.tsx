@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../../components/header';
 import Footer from '../../components/footer';
 import TaskComplete from '../../components/task-complete';
 import TaskContainer from '../../components/task-container';
 import CourseContainer from '../../components/course-container';
+import { getCourses, Course } from '../../api-contexts/get-courses';
 
 const Home: React.FC = () => {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const tasks = [
     { id: 1, title: 'longlonglonglonglonglonglonglonglonglong', dueDate: '2023-10-01', description: 'Complete project proposal', course: 'Course 1', colour: 'blue' },
@@ -13,7 +17,24 @@ const Home: React.FC = () => {
     { id: 3, title: 'Task 3', dueDate: '2023-10-03', description: 'Description for Task 3', course: 'Course 3', colour: 'yellow' }
   ];
 
-  const course = {name: 'Course namenamenamenamaennamaemean', courseId: 1, colour: 'blue'};
+  // Fetch courses when component mounts
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const fetchedCourses = await getCourses();
+        setCourses(fetchedCourses);
+      } catch (err) {
+        setError('Failed to fetch courses. Please try again later.');
+        console.error('Error fetching courses:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -37,7 +58,34 @@ const Home: React.FC = () => {
           {/* wide container component for tasks by courses */}
           <div className="max-w-md mx-auto p-2">
               <h2 className="text-xl font-semibold text-left mb-2">Courses</h2>
-              <CourseContainer name={course.name} courseId={course.courseId} colour={course.colour} />
+              
+              {loading && (
+                <div className="text-center py-4">
+                  <p className="text-gray-500">Loading courses...</p>
+                </div>
+              )}
+              
+              {error && (
+                <div className="text-center py-4">
+                  <p className="text-red-500">{error}</p>
+                </div>
+              )}
+              
+              {!loading && !error && courses.length === 0 && (
+                <div className="text-center py-4">
+                  <p className="text-gray-500">No courses found.</p>
+                </div>
+              )}
+              
+              {!loading && !error && courses.map((course, index) => (
+                <div key={course.course_id} className="mb-4">
+                  <CourseContainer 
+                    name={course.name} 
+                    courseId={parseInt(course.course_id)} 
+                    colour={course.color} 
+                  />
+                </div>
+              ))}
           </div>
         </div>
       </main>
