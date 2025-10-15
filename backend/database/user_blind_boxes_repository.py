@@ -30,6 +30,46 @@ class UserBlindBoxesRepository:
             except Exception:
                 pass
 
+    def fetch_by_user(self, user_id: str) -> List[Dict]:
+        conn = None
+        cur = None
+        try:
+            conn = DBClient.connect()
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT 
+                    ubb.purchase_id, 
+                    ubb.user_id, 
+                    ubb.series_id, 
+                    ubb.purchased_at, 
+                    ubb.opened_at, 
+                    ubb.awarded_figure_id,
+                    bbf.name as figure_name,
+                    bbf.rarity as figure_rarity,
+                    bbs.name as series_name
+                FROM user_blind_boxes ubb
+                LEFT JOIN blind_box_figures bbf ON ubb.awarded_figure_id = bbf.figure_id
+                LEFT JOIN blind_box_series bbs ON ubb.series_id = bbs.series_id
+                WHERE ubb.user_id = ?
+                """,
+                (user_id,)
+            )
+            cols = [c[0] for c in cur.description] if cur.description else []
+            rows = cur.fetchall()
+            return [{cols[i]: row[i] for i in range(len(cols))} for row in rows]
+        finally:
+            try:
+                if cur is not None:
+                    cur.close()
+            except Exception:
+                pass
+            try:
+                if conn is not None:
+                    conn.close()
+            except Exception:
+                pass
+
     def create(
         self,
         purchase_id: str,

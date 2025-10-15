@@ -95,3 +95,28 @@ class UsersRepository:
                     conn.close()
             except Exception:
                 pass
+
+    def update_points(self, user_id: str, points_delta: int) -> bool:
+        """Update user's total points by adding points_delta (can be negative)"""
+        conn = None
+        cur = None
+        try:
+            conn = DBClient.connect()
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE users SET total_points = total_points + ? WHERE user_id = ?",
+                (points_delta, user_id)
+            )
+            conn.commit()
+            return cur.rowcount > 0
+        finally:
+            try:
+                if cur is not None:
+                    cur.close()
+            except Exception:
+                pass
+            try:
+                if conn is not None:
+                    conn.close()
+            except Exception:
+                pass
