@@ -77,6 +77,8 @@ def test_get_course_by_id():
                         print(f"  Course Name: {data.get('course_name')}")
                         print(f"  Course Code: {data.get('course_code')}")
                         print(f"  Term: {data.get('term')}")
+                        if 'color' in data:
+                            print(f"  color: {data.get('color')}")
                 except Exception as e:
                     print_test_result("Response is valid JSON", False, str(e))
             

@@ -154,6 +154,7 @@ def create_courses_table(cursor):
         canvas_course_id VARCHAR(100),
         date_imported_at TIMESTAMP NOT NULL,
         term VARCHAR(50),
+        color VARCHAR(50),
         FOREIGN KEY (user_id) REFERENCES users(user_id)
     )
     """)
@@ -261,9 +262,9 @@ def add_dummy_data(cursor):
     """)
 
     cursor.execute("""
-    INSERT INTO courses (course_id, user_id, course_name, course_code, canvas_course_id, date_imported_at, term) VALUES
-    ('course_1', 'user_1', 'Intro to Computer Science', 'CS101', 'canvas_123', '2025-09-01 10:00:00', 'Fall 2025'),
-    ('course_2', 'user_2', 'World History', 'HIST201', NULL, '2025-09-02 11:00:00', 'Fall 2025')
+    INSERT INTO courses (course_id, user_id, course_name, course_code, canvas_course_id, date_imported_at, term, color) VALUES
+    ('course_1', 'user_1', 'Intro to Computer Science', 'CS101', 'canvas_123', '2025-09-01 10:00:00', 'Fall 2025', '#3B82F6'),
+    ('course_2', 'user_2', 'World History', 'HIST201', NULL, '2025-09-02 11:00:00', 'Fall 2025', '#EF4444')
     """)
 
     cursor.execute("""

@@ -13,6 +13,7 @@ module.exports = {
     'bg-pink-100', 'bg-pink-200', 'bg-pink-400', 'bg-pink-500',
     'bg-indigo-100', 'bg-indigo-200', 'bg-indigo-400', 'bg-indigo-500',
     'bg-orange-100', 'bg-orange-200', 'bg-orange-400', 'bg-orange-500', 'bg-orange-600',
+    'bg-gray-400', // For personal tasks without course color
     // Gradient backgrounds
     'bg-gradient-to-bl', 'from-blue-100', 'to-blue-200',
     'from-red-100', 'to-red-200', 'from-yellow-100', 'to-yellow-200',
@@ -27,6 +28,10 @@ module.exports = {
     'border-purple-400', 'border-pink-400', 'border-indigo-400', 'border-orange-400',
     // Text sizes
     'text-sm', 'text-base', 'text-lg', 'text-xl', 'text-2xl', 'text-3xl',
+    // Responsive layout classes
+    'flex-col', 'min-[500px]:flex-row', 'min-[500px]:items-center', 'min-[500px]:gap-3',
+    'self-end', 'min-[500px]:self-auto', 'justify-between', 'min-[500px]:contents',
+    'min-[500px]:ml-auto', 'min-[500px]:order-first', 'min-[500px]:mx-4',
   ],
   theme: {
     extend: {},

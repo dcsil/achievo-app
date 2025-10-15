@@ -13,9 +13,15 @@ class TasksRepository:
         try:
             conn = DBClient.connect()
             cur = conn.cursor()
-            cur.execute(
-                "SELECT task_id, user_id, assignment_id, course_id, description, type, scheduled_start_at, scheduled_end_at, is_completed, completion_date_at, reward_points FROM tasks"
-            )
+            # Join with courses table to get course name and color
+            cur.execute("""
+                SELECT 
+                    t.task_id, t.user_id, t.assignment_id, t.course_id, t.description, t.type,
+                    t.scheduled_start_at, t.scheduled_end_at, t.is_completed, t.completion_date_at,
+                    t.reward_points, c.course_name, c.color as course_color
+                FROM tasks t
+                LEFT JOIN courses c ON t.course_id = c.course_id
+            """)
             cols = [c[0] for c in cur.description] if cur.description else []
             rows = cur.fetchall()
             return [{cols[i]: row[i] for i in range(len(cols))} for row in rows]
@@ -37,6 +43,7 @@ class TasksRepository:
         scheduled_start_at: Optional[str] = None,
         scheduled_end_at: Optional[str] = None,
         assignment_id: Optional[str] = None,
+        is_completed: Optional[bool] = None,
     ) -> List[Dict]:
         conn = None
         cur = None
@@ -44,18 +51,30 @@ class TasksRepository:
             conn = DBClient.connect()
             cur = conn.cursor()
             
-            query = "SELECT task_id, user_id, assignment_id, course_id, description, type, scheduled_start_at, scheduled_end_at, is_completed, completion_date_at, reward_points FROM tasks WHERE user_id = ?"
+            # Join with courses table to get course name and color
+            query = """
+                SELECT 
+                    t.task_id, t.user_id, t.assignment_id, t.course_id, t.description, t.type, 
+                    t.scheduled_start_at, t.scheduled_end_at, t.is_completed, t.completion_date_at, 
+                    t.reward_points, c.course_name, c.color as course_color
+                FROM tasks t
+                LEFT JOIN courses c ON t.course_id = c.course_id
+                WHERE t.user_id = ?
+            """
             params = [user_id]
             
             if scheduled_start_at:
-                query += " AND scheduled_start_at >= ?"
+                query += " AND t.scheduled_start_at >= ?"
                 params.append(scheduled_start_at)
             if scheduled_end_at:
-                query += " AND scheduled_end_at <= ?"
+                query += " AND t.scheduled_end_at <= ?"
                 params.append(scheduled_end_at)
             if assignment_id:
-                query += " AND assignment_id = ?"
+                query += " AND t.assignment_id = ?"
                 params.append(assignment_id)
+            if is_completed is not None:
+                query += " AND t.is_completed = ?"
+                params.append(is_completed)
             
             cur.execute(query, tuple(params))
             cols = [c[0] for c in cur.description] if cur.description else []
@@ -79,10 +98,16 @@ class TasksRepository:
         try:
             conn = DBClient.connect()
             cur = conn.cursor()
-            cur.execute(
-                "SELECT task_id, user_id, assignment_id, course_id, description, type, scheduled_start_at, scheduled_end_at, is_completed, completion_date_at, reward_points FROM tasks WHERE assignment_id = ? AND is_completed = FALSE",
-                (assignment_id,)
-            )
+            # Join with courses table to get course name and color
+            cur.execute("""
+                SELECT 
+                    t.task_id, t.user_id, t.assignment_id, t.course_id, t.description, t.type,
+                    t.scheduled_start_at, t.scheduled_end_at, t.is_completed, t.completion_date_at,
+                    t.reward_points, c.course_name, c.color as course_color
+                FROM tasks t
+                LEFT JOIN courses c ON t.course_id = c.course_id
+                WHERE t.assignment_id = ? AND t.is_completed = FALSE
+            """, (assignment_id,))
             cols = [c[0] for c in cur.description] if cur.description else []
             rows = cur.fetchall()
             return [{cols[i]: row[i] for i in range(len(cols))} for row in rows]
@@ -104,10 +129,16 @@ class TasksRepository:
         try:
             conn = DBClient.connect()
             cur = conn.cursor()
-            cur.execute(
-                "SELECT task_id, user_id, assignment_id, course_id, description, type, scheduled_start_at, scheduled_end_at, is_completed, completion_date_at, reward_points FROM tasks WHERE task_id = ?",
-                (task_id,)
-            )
+            # Join with courses table to get course name and color
+            cur.execute("""
+                SELECT 
+                    t.task_id, t.user_id, t.assignment_id, t.course_id, t.description, t.type,
+                    t.scheduled_start_at, t.scheduled_end_at, t.is_completed, t.completion_date_at,
+                    t.reward_points, c.course_name, c.color as course_color
+                FROM tasks t
+                LEFT JOIN courses c ON t.course_id = c.course_id
+                WHERE t.task_id = ?
+            """, (task_id,))
             cols = [c[0] for c in cur.description] if cur.description else []
             row = cur.fetchone()
             if row:
