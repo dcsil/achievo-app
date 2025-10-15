@@ -4,6 +4,7 @@ import Header from '../../components/header';
 import Footer from '../../components/footer';
 import TaskContainer from '../../components/task-container';
 import CourseContainer from '../../components/course-container';
+import { getCourses, CourseForUI } from '../../api-contexts/get-courses';
 
 const Home: React.FC = () => {
   const [todayTasks, setTodayTasks] = useState<any[]>([]);
@@ -11,16 +12,12 @@ const Home: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [courses, setCourses] = useState<CourseForUI[]>([]);
+  const [courseRefreshKey, setCourseRefreshKey] = useState<{ [key: string]: number }>({});
 
   const userId = 'paul_paw_test'; // This should come from auth context in production
 
-  // Dummy course data - will be replaced when backend is linked
-  const courses = [
-    { name: 'Introduction to Computer Science', courseId: 1, colour: 'blue' },
-    { name: 'Data Structures & Algorithms', courseId: 2, colour: 'red' },
-    { name: 'Web Development', courseId: 3, colour: 'yellow' }
-  ];
-
+  // Fetch all data when component mounts
   useEffect(() => {
     fetchData();
   }, []);
@@ -58,9 +55,8 @@ const Home: React.FC = () => {
       setTodayTasks(todayTasksList);
       setUpcomingTasks(upcomingTasksList);
 
-      // Courses will be fetched when backend is ready
-      // const coursesData = await apiService.getCourses(userId);
-      // setCourses(coursesData);
+      // Fetch courses data
+      await fetchCourses();
 
     } catch (err) {
       console.error('Failed to fetch data:', err);
@@ -70,7 +66,19 @@ const Home: React.FC = () => {
     }
   };
 
-  const handleTaskCompleted = async (taskId: string, pointsEarned: number) => {
+  // Separate function to refresh courses data
+  const fetchCourses = async () => {
+    try {
+      const fetchedCourses = await getCourses("paul_paw_test");
+      console.log('Fetched courses:', fetchedCourses);
+      setCourses(fetchedCourses);
+    } catch (err) {
+      console.error('Error fetching courses:', err);
+      // Don't set global error for course fetching to avoid disrupting other data
+    }
+  };
+
+  const handleTaskCompleted = async (taskId: string, pointsEarned: number, courseId?: string) => {
     // Update local points display immediately for better UX
     if (user) {
       setUser({
@@ -79,12 +87,35 @@ const Home: React.FC = () => {
       });
     }
     
-    // Optionally fetch fresh data from backend to ensure sync
+    // Refresh user data and courses to update progress bars
     try {
+      // Update user points from backend
       const updatedUser = await apiService.getUser(userId);
       setUser(updatedUser);
+      
+      // Update the refresh key for the specific course if courseId is provided
+      if (courseId) {
+        setCourseRefreshKey(prev => ({
+          ...prev,
+          [courseId]: Date.now()
+        }));
+        console.log(`🔄 Refreshed course ${courseId} after task completion`);
+      } else {
+        // Fallback to refresh all courses if courseId is not provided
+        await fetchCourses();
+        const newKey = Date.now();
+        setCourseRefreshKey(prev => {
+          const newRefreshKey: { [key: string]: number } = {};
+          courses.forEach(course => {
+            newRefreshKey[course.course_id] = newKey;
+          });
+          return newRefreshKey;
+        });
+        console.log('🔄 Refreshed all courses after task completion (no courseId provided)');
+      }
+      
     } catch (err) {
-      console.error('Failed to refresh user data:', err);
+      console.error('Failed to refresh data after task completion:', err);
     }
   };
 
@@ -177,15 +208,36 @@ const Home: React.FC = () => {
 
           {/* Courses Section - Using dummy data until backend is linked */}
           <div className="max-w-md mx-auto p-2">
-            <h2 className="text-xl font-semibold text-left mb-2">Courses</h2>
-            {courses.map((course) => (
-              <CourseContainer 
-                key={course.courseId}
-                name={course.name} 
-                courseId={course.courseId} 
-                colour={course.colour} 
-              />
-            ))}
+              <h2 className="text-xl font-semibold text-left mb-2">Courses</h2>
+              
+              {loading && (
+                <div className="text-center py-4">
+                  <p className="text-gray-500">Loading courses...</p>
+                </div>
+              )}
+              
+              {error && (
+                <div className="text-center py-4">
+                  <p className="text-red-500">{error}</p>
+                </div>
+              )}
+              
+              {!loading && !error && courses.length === 0 && (
+                <div className="text-center py-4">
+                  <p className="text-gray-500">No courses found.</p>
+                </div>
+              )}
+              
+              {!loading && !error && courses.map((course, index) => (
+                <div key={`${course.course_id}-${courseRefreshKey[course.course_id] || 0}`} className="mb-4">
+                  <CourseContainer 
+                    name={course.name} 
+                    courseId={course.course_id} 
+                    color={course.color}
+                    refreshKey={courseRefreshKey[course.course_id] || 0}
+                  />
+                </div>
+              ))}
           </div>
         </div>
       </main>
