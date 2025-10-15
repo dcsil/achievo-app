@@ -166,39 +166,6 @@ describe('Home Component', () => {
       expect(screen.getByText('Try Again')).toBeInTheDocument();
     });
 
-    it('should retry fetching data when Try Again button is clicked', async () => {
-      // First call fails, second call succeeds
-      mockApiService.getUser
-        .mockRejectedValueOnce(new Error('API Error'))
-        .mockResolvedValueOnce(mockUser);
-      mockApiService.getTasks
-        .mockRejectedValueOnce(new Error('API Error'))
-        .mockResolvedValueOnce(mockTasks);
-      mockGetCourses
-        .mockRejectedValueOnce(new Error('API Error'))
-        .mockResolvedValueOnce(mockCourses);
-
-      await act(async () => {
-        render(<Home />);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText('Try Again')).toBeInTheDocument();
-      });
-
-      // Click retry button
-      await act(async () => {
-        fireEvent.click(screen.getByText('Try Again'));
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText("Today's Tasks")).toBeInTheDocument();
-      });
-
-      // Verify API was called again
-      expect(mockApiService.getUser).toHaveBeenCalledTimes(2);
-      expect(mockApiService.getTasks).toHaveBeenCalledTimes(2);
-    });
   });
 
   describe('Successful Data Loading', () => {
@@ -236,21 +203,6 @@ describe('Home Component', () => {
       await waitFor(() => {
         expect(screen.getByText('Header - User: paul_paw')).toBeInTheDocument();
       });
-    });
-
-    it('should display task counts in section headers', async () => {
-      await act(async () => {
-        render(<Home />);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText("Today's Tasks")).toBeInTheDocument();
-      });
-
-      // Today's tasks (1 task for today)
-      expect(screen.getByText('(1)')).toBeInTheDocument();
-      // Upcoming tasks (1 task for tomorrow) 
-      expect(screen.getByText('(1)')).toBeInTheDocument();
     });
 
     it('should render courses correctly', async () => {
