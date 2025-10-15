@@ -2,7 +2,7 @@ import React from 'react';
 import Header from '../../components/header';
 import Footer from '../../components/footer';
 import TaskComplete from '../../components/task-complete';
-import SkinnyContainer from '../../components/skinny-container';
+import TaskContainer from '../../components/task-container';
 import CourseContainer from '../../components/course-container';
 
 const Home: React.FC = () => {
@@ -25,13 +25,13 @@ const Home: React.FC = () => {
           {/* skinny container component for today's tasks */}
           <div className="max-w-md mx-auto p-2">
               <h2 className="text-xl font-semibold text-left mb-2">Today's Tasks</h2>
-              <SkinnyContainer tasks={tasks} />
+              <TaskContainer tasks={tasks} />
           </div>
 
           {/* skinny container component for upcoming tasks */}
           <div className="max-w-md mx-auto p-2">
               <h2 className="text-xl font-semibold text-left mb-2">Upcoming Tasks</h2>
-              <SkinnyContainer tasks={tasks} />
+              <TaskContainer tasks={tasks} />
           </div>
 
           {/* wide container component for tasks by courses */}

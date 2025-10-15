@@ -1,6 +1,6 @@
 import React, {useState } from 'react';
 
-function WideContainer ({ tasks, colour }: { tasks: any[], colour: string }) {
+function AssignmentProgressContainer ({ tasks, colour }: { tasks: any[], colour: string }) {
 
     const [assignList, setAssignList] = useState(tasks);
 
@@ -38,4 +38,4 @@ function WideContainer ({ tasks, colour }: { tasks: any[], colour: string }) {
 
 };
 
-export default WideContainer;
+export default AssignmentProgressContainer;

@@ -1,5 +1,5 @@
 import React, {useState } from 'react';
-import WideContainer from '../wide-container';
+import AssignmentProgressContainer from '../assignment-progress-container';
 
 function CourseContainer ({ name, courseId, colour }: { name: string, courseId: number, colour: string }) {
 
@@ -18,7 +18,7 @@ function CourseContainer ({ name, courseId, colour }: { name: string, courseId: 
             </div>
             <div>
                 <div className="w-full">
-                    <WideContainer tasks={assignList} colour={colour} />
+                    <AssignmentProgressContainer tasks={assignList} colour={colour} />
                 </div>
             </div>
         </div>

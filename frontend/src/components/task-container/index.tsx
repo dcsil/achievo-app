@@ -3,7 +3,7 @@
 import React, {useState } from 'react';
 import TaskComplete from '../task-complete';
 
-function SkinnyContainer({ tasks }: { tasks: any[] }) {
+function TaskContainer ({ tasks }: { tasks: any[] }) {
     // feed in tasks from API call into component
     // for now, use dummy data
     const [hoveredTaskId, setHoveredTaskId] = useState<number | null>(null);
@@ -135,4 +135,4 @@ function SkinnyContainer({ tasks }: { tasks: any[] }) {
     );
 }
 
-export default SkinnyContainer;
+export default TaskContainer;
