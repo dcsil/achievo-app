@@ -1,138 +1,165 @@
-// skinny task container component
-// takes in tasks as props and displays them in a skinny container
-import React, {useState } from 'react';
+// TaskContainer component - updated with backend integration
+import React, { useState, useEffect } from 'react';
+import { apiService } from '../../api-contexts/user-context';
 import TaskComplete from '../task-complete';
 
-function TaskContainer ({ tasks }: { tasks: any[] }) {
-    // feed in tasks from API call into component
-    // for now, use dummy data
-    const [hoveredTaskId, setHoveredTaskId] = useState<number | null>(null);
-    const [showOverlay, setShowOverlay] = useState(false);
-    const [selectedTask, setSelectedTask] = useState<any>(null);
-    const [taskList, setTaskList] = useState(tasks);
+interface TaskContainerProps {
+  tasks: any[];
+  userId: string;
+  onTaskCompleted?: (taskId: string, pointsEarned: number) => void;
+  onTasksUpdate?: (tasks: any[]) => void;
+}
 
-    // Placeholder API call to remove task from database
-    const removeTaskFromDatabase = async (taskId: number) => {
-        try {
-            // TODO: Replace with actual API call
-            // const response = await fetch(`/api/tasks/${taskId}`, {
-            //     method: 'DELETE',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //     },
-            // });
-            // 
-            // if (!response.ok) {
-            //     throw new Error('Failed to delete task');
-            // }
-            
-            console.log(`Placeholder API call: Removing task ${taskId} from database`);
-            
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            return { success: true };
-        } catch (error) {
-            console.error('Error removing task from database:', error);
-            throw error;
-        }
-    };
+function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskContainerProps) {
+  const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [taskList, setTaskList] = useState(tasks);
+  const [pointsEarned, setPointsEarned] = useState(0);
+  const [isCompleting, setIsCompleting] = useState(false);
 
-    const handleCompleteTask = async (task: any) => {
-        setSelectedTask(task);
-        setShowOverlay(true);
-        
-        try {
-            // Remove task from database (placeholder API call)
-            await removeTaskFromDatabase(task.id);
+  // Sync local state with parent's tasks prop
+  useEffect(() => {
+    setTaskList(tasks);
+  }, [tasks]);
 
-            // TODO: should also update course components task list if applicable
-            
-            // Remove task from local state
-            setTaskList(prevTasks => prevTasks.filter(t => t.id !== task.id));
-            
-            console.log(`Task "${task.title}" completed and removed from list`);
-        } catch (error) {
-            console.error('Failed to complete task:', error);
-            // You could show an error message to the user here
-        }
-    };
+  const handleCompleteTask = async (task: any) => {
+    if (isCompleting) return;
+    
+    try {
+      setIsCompleting(true);
+      setSelectedTask(task);
+      
+      // Call backend to complete the task
+      const response = await apiService.completeTask(task.task_id);
+      
+      // Set the points earned for the overlay
+      setPointsEarned(response.points_earned);
+      
+      // Show the completion overlay
+      setShowOverlay(true);
+      
+      // Remove task from local state
+      const updatedTasks = taskList.filter(t => t.task_id !== task.task_id);
+      setTaskList(updatedTasks);
+      
+      // Notify parent component
+      if (onTaskCompleted) {
+        onTaskCompleted(task.task_id, response.points_earned);
+      }
+      
+      if (onTasksUpdate) {
+        onTasksUpdate(updatedTasks);
+      }
+      
+      console.log(`Task completed. Points earned: ${response.points_earned}`);
+      
+      if (response.assignment_completed) {
+        console.log(`🎉 Assignment ${response.assignment_id} also completed!`);
+      }
+    } catch (error) {
+      console.error('Failed to complete task:', error);
+      setIsCompleting(false);
+      alert('Failed to complete task. Please try again.');
+    }
+  };
 
-	return (
-        <div>
-            {taskList.length === 0 ? (
-                <p className="text-gray-500">No more tasks! Enjoy your free time!</p>
-            ) : (
-                <ul className="space-y-1">
-                    {taskList.map((task) => (
-                        <li 
-                            key={task.id} 
-                            onMouseEnter={() => setHoveredTaskId(task.id)}
-                            onMouseLeave={() => setHoveredTaskId(null)}
-                        >
-                            <div className={`w-full border border-gray-200 bg-white rounded-xl transition-all duration-300 ease-in-out ${
-                                hoveredTaskId === task.id
-                            }`}>
-                                {/* Task header - always visible */}
-                                <div className="flex items-center justify-between">
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-semibold text-base p-2 text-gray-900 truncate">{task.title}</h3>
-                                    </div>
-                                    
-                                    <div className="flex items-center space-x-2 pr-1">
-                                        <div className="text-right">
-                                            <p className="text-sm text-gray-600">{task.dueDate}</p>
-                                            <p className="text-xs text-gray-500">due time</p>
-                                        </div>
-                                        <span className={`px-2 py-1 text-sm font-medium text-white rounded-full bg-${task.color}-400 whitespace-nowrap`}>
-                                            {task.course}
-                                        </span>
-                                    </div>
-                                </div>
+  const handleCloseOverlay = () => {
+    setShowOverlay(false);
+    setSelectedTask(null);
+    setIsCompleting(false);
+  };
 
-                                {/* Task description and complete button - shown on hover */}
-                                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                                    hoveredTaskId === task.id 
-                                        ? `max-h-32 opacity-100 transform translate-y-0` 
-                                        : `max-h-0 opacity-0 transform -translate-y-2`
-                                }`}>
-                                    <div className={`p-3 rounded-b-lg bg-gradient-to-bl bg-${task.color}-100 to-${task.color}-200`}>
-                                        <div className="flex flex-row w-full">
-                                            {/* Task description */}
-                                            <div className="flex-1 mr-4">
-                                                <p className="text-sm text-gray-600 leading-relaxed">
-                                                    {task.description || "[task description]"}
-                                                </p>
-                                            </div>
-
-                                            {/* Complete button */}
-                                            <div className="flex justify-end w-24 h-12">
-                                                <button
-                                                    onClick={() => handleCompleteTask(task)}
-                                                    className="text-white font-semibold text-base bg-gradient-to-bl from-orange-300 to-orange-500 rounded-lg w-full h-full hover:shadow-lg transition-all duration-200"
-                                                >
-                                                    COMPLETE
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-            )}
-            
-            {/* Task Completion Overlay */}
-            <TaskComplete 
-                isOpen={showOverlay}
-                task={selectedTask}
-                onClose={() => setShowOverlay(false)}
-                coinsEarned={Math.floor(Math.random() * 200) + 50} // Random coins between 50-250
-                totalGold={1347 + Math.floor(Math.random() * 500)} // Simulated total with some variation
-            />
+  return (
+    <div>
+      {taskList.length === 0 ? (
+        <div className="text-center py-6 px-4 bg-orange-50 rounded-xl border-2 border-dashed border-orange-200">
+          <div className="text-3xl mb-2">🎉</div>
+          <p className="text-gray-700 font-semibold text-sm">No tasks yet!</p>
+          <p className="text-gray-500 text-xs mt-1">You're all caught up</p>
         </div>
-    );
+      ) : (
+        <ul className="space-y-2">
+          {taskList.map((task) => (
+            <li 
+              key={task.task_id} 
+              onMouseEnter={() => setHoveredTaskId(task.task_id)}
+              onMouseLeave={() => setHoveredTaskId(null)}
+            >
+              <div className={`w-full border-2 border-orange-200 bg-white rounded-xl transition-all duration-300 ease-in-out ${
+                hoveredTaskId === task.task_id ? 'shadow-lg border-orange-300 scale-[1.01]' : 'shadow-sm'
+              }`}>
+                {/* Task header - always visible */}
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex-1 min-w-0 mr-4">
+                    <h3 className="font-semibold text-lg text-gray-900 mb-1 leading-tight">
+                      {task.description}
+                    </h3>
+                    {task.course_id && (
+                      <span className="inline-block px-2 py-0.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md mt-1">
+                        {task.course_name}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-lg font-bold text-gray-900">
+                      {new Date(task.scheduled_end_at).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}
+                    </p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">due</p>
+                  </div>
+                </div>
+
+                {/* Task actions - shown on hover */}
+                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                  hoveredTaskId === task.task_id 
+                    ? 'max-h-24 opacity-100' 
+                    : 'max-h-0 opacity-0'
+                }`}>
+                  <div className="px-4 pb-4 pt-0 border-t border-orange-100">
+                    <div className="flex items-center justify-between gap-4 mt-3">
+                      {/* Task points display */}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xl">🪙</span>
+                        <span className="text-sm font-semibold text-gray-700">
+                          Complete task to earn points!
+                        </span>
+                      </div>
+
+                      {/* Complete button */}
+                      <button
+                        onClick={() => handleCompleteTask(task)}
+                        disabled={isCompleting}
+                        className={`px-5 py-2 text-white font-semibold text-sm bg-gradient-to-r from-orange-400 to-orange-500 rounded-lg shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 ${
+                          isCompleting ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                      >
+                        {isCompleting ? 'Completing...' : '✓ Complete'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      
+      {/* Task Completion Overlay */}
+      {selectedTask && (
+        <TaskComplete 
+          isOpen={showOverlay}
+          task={{
+            title: selectedTask.description,
+            id: selectedTask.task_id
+          }}
+          onClose={handleCloseOverlay}
+          coinsEarned={pointsEarned}
+          userId={userId}
+        />
+      )}
+    </div>
+  );
 }
 
 export default TaskContainer;
