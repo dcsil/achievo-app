@@ -34,8 +34,8 @@ This starts a Flask server on http://127.0.0.1:5000.
 	•	Use curl or Postman:
 
 ```
-curl -X POST http://127.0.0.1:5000/upload \
-  -F "file=@syllabus.pdf"
+curl -X POST http://127.0.0.1:5000/extract/events \
+  -F "file=@backend/app/storage/uploads/dummy.pdf"
 ```
 
 You should see Gemini return extracted tasks/events in Json format.
