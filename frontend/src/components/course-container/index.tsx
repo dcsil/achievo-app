@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AssignmentProgressContainer from '../assignment-progress-container';
 import { getAssignments, Assignment } from '../../api-contexts/get-assignments';
 
-function CourseContainer ({ name, courseId, color }: { name: string, courseId: string, color: string }) {
+function CourseContainer ({ name, courseId, color, refreshKey }: { name: string, courseId: string, color: string, refreshKey?: number }) {
     const [assignList, setAssignList] = useState<Assignment[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ function CourseContainer ({ name, courseId, color }: { name: string, courseId: s
         };
 
         fetchAssignments();
-    }, [courseId, name]);
+    }, [courseId, name, refreshKey]);
 
     return (
         <div className={`flex flex-col rounded-lg bg-gradient-to-bl from-${color}-100 to-${color}-200 p-3 pt-5`}>
