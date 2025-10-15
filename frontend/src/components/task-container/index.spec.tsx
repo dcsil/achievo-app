@@ -198,19 +198,28 @@ describe('TaskContainer Component', () => {
         expect(actionsContainer).toHaveClass('max-h-0', 'opacity-0');
     });
 
-    test('applies hover styles to task card', () => {
-      render(<TaskContainer {...defaultProps} />);
-      
-      const firstTask = screen.getByText('Complete assignment 1').closest('li');
-      const taskCard = firstTask?.querySelector('div');
-      
-      // Initial state
-      expect(taskCard).toHaveClass('shadow-sm');
-      
-      // Hover
-      fireEvent.mouseEnter(firstTask!);
-      
-      expect(taskCard).toHaveClass('shadow-lg', 'border-orange-300', 'scale-[1.01]');
+    test('applies hover styles to task cards with correct course colors', () => {
+        render(<TaskContainer {...defaultProps} />);
+        
+        // Test Math 101 task (blue)
+        const mathTask = screen.getByText('Complete assignment 1').closest('li');
+        const mathTaskCard = mathTask?.querySelector('div');
+        
+        expect(mathTaskCard).toHaveClass('shadow-sm', 'border-blue-200');
+        
+        fireEvent.mouseEnter(mathTask!);
+        expect(mathTaskCard).toHaveClass('shadow-lg', 'border-blue-300', 'scale-[1.01]');
+        
+        fireEvent.mouseLeave(mathTask!);
+        
+        // Test Physics 201 task (green)
+        const physicsTask = screen.getByText('Study for exam').closest('li');
+        const physicsTaskCard = physicsTask?.querySelector('div');
+        
+        expect(physicsTaskCard).toHaveClass('shadow-sm', 'border-green-200');
+        
+        fireEvent.mouseEnter(physicsTask!);
+        expect(physicsTaskCard).toHaveClass('shadow-lg', 'border-green-300', 'scale-[1.01]');
     });
 
     test('can hover different tasks independently', () => {
