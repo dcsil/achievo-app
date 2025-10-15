@@ -1,0 +1,53 @@
+name: Frontend Unit/Component Tests
+
+on:
+  push:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-unit-tests.yml'
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-unit-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Run tests with coverage
+        working-directory: ./frontend
+        run: npm run test:coverage
+        env:
+          CI: true
+
+      - name: Display coverage summary
+        working-directory: ./frontend
+        run: |
+          echo "Test Coverage Summary:"
+          if [ -f coverage/lcov-report/index.html ]; then
+            echo "Coverage report generated successfully"
+          else
+            echo "Coverage report not found"
+          fi
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: ./frontend/coverage

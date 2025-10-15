@@ -87,7 +87,7 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskCo
               onMouseLeave={() => setHoveredTaskId(null)}
             >
               <div className={`w-full border-2 border-${task.course_color}-200 bg-white rounded-xl transition-all duration-300 ease-in-out ${
-                hoveredTaskId === task.task_id ? 'shadow-lg border-orange-300 scale-[1.01]' : 'shadow-sm'
+                hoveredTaskId === task.task_id ? `shadow-lg border-${task.course_color}-300 scale-[1.01]` : 'shadow-sm'
               }`}>
                 {/* Task header - always visible */}
                 <div className="flex items-center justify-between p-4">
