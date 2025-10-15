@@ -1,3 +1,4 @@
+
 import pathlib
 from google import genai
 from google.genai import types
@@ -6,7 +7,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = genai.Client(api_key="GEMINI_API_KEY")
+API_KEY = os.getenv("GEMINI_API_KEY")
+if not API_KEY or API_KEY == "GEMINI_API_KEY":
+    print("GEMINI_API_KEY not provided. Please set it in your .env file.")
+else:
+    client = genai.Client(api_key=API_KEY)
 
 def extract_tasks_from_pdf(pdf_path: str) -> str:
     filepath = pathlib.Path(pdf_path)

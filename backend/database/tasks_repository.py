@@ -279,3 +279,25 @@ class TasksRepository:
                     conn.close()
             except Exception:
                 pass
+
+    def delete(self, task_id: str) -> bool:
+        """Delete a task by task_id"""
+        conn = None
+        cur = None
+        try:
+            conn = DBClient.connect()
+            cur = conn.cursor()
+            cur.execute("DELETE FROM tasks WHERE task_id = ?", (task_id,))
+            conn.commit()
+            return cur.rowcount > 0
+        finally:
+            try:
+                if cur is not None:
+                    cur.close()
+            except Exception:
+                pass
+            try:
+                if conn is not None:
+                    conn.close()
+            except Exception:
+                pass

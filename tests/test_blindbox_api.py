@@ -5,8 +5,9 @@ Run this test while the backend server is running on http://127.0.0.1:5000
 """
 import sys
 import uuid
+import atexit
 from datetime import datetime
-from utils import APIClient, print_test_result, print_section
+from utils import APIClient, print_test_result, print_section, cleanup_test_data
 
 # Initialize API client
 client = APIClient()
@@ -16,6 +17,23 @@ created_users = []
 created_series = []
 created_figures = []
 created_purchases = []
+
+
+def cleanup_on_exit():
+    """Cleanup function to be called on exit"""
+    if any([created_users, created_series, created_figures, created_purchases]):
+        print_section("CLEANING UP TEST DATA")
+        cleanup_test_data(
+            client,
+            users=created_users,
+            series=created_series,
+            figures=created_figures,
+            purchases=created_purchases
+        )
+
+
+# Register cleanup function to run on exit
+atexit.register(cleanup_on_exit)
 
 
 def setup_test_user(points=1000):
@@ -501,14 +519,18 @@ def run_all_tests():
     else:
         print(f"  Failed: {failed_count}")
     
-    if created_users:
-        print(f"\n  Note: {len(created_users)} test user(s) created during testing")
-    if created_series:
-        print(f"  Note: {len(created_series)} test series created during testing")
-    if created_figures:
-        print(f"  Note: {len(created_figures)} test figure(s) created during testing")
-    if created_purchases:
-        print(f"  Note: {len(created_purchases)} test purchase(s) created during testing")
+    if created_users or created_series or created_figures or created_purchases:
+        created_items = []
+        if created_users:
+            created_items.append(f"{len(created_users)} user(s)")
+        if created_series:
+            created_items.append(f"{len(created_series)} series")
+        if created_figures:
+            created_items.append(f"{len(created_figures)} figure(s)")
+        if created_purchases:
+            created_items.append(f"{len(created_purchases)} purchase(s)")
+        print(f"\n  Created {', '.join(created_items)} during testing")
+        print("  (Will be cleaned up automatically on exit)")
     
     print("=" * 60 + "\n")
     

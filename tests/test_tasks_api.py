@@ -5,14 +5,31 @@ Run this test while the backend server is running on http://127.0.0.1:5000
 """
 import sys
 import uuid
+import atexit
 from datetime import datetime, timedelta
-from utils import APIClient, print_test_result, print_section
+from utils import APIClient, print_test_result, print_section, cleanup_test_data
 
 client = APIClient()
 
 created_tasks = []
 created_users = []
 created_assignments = []
+
+
+def cleanup_on_exit():
+    """Cleanup function to be called on exit"""
+    if any([created_tasks, created_users, created_assignments]):
+        print_section("CLEANING UP TEST DATA")
+        cleanup_test_data(
+            client,
+            users=created_users,
+            tasks=created_tasks,
+            assignments=created_assignments
+        )
+
+
+# Register cleanup function to run on exit
+atexit.register(cleanup_on_exit)
 
 
 def setup_test_user():
@@ -603,12 +620,16 @@ def run_all_tests():
     else:
         print(f"  Failed: {failed_count}")
     
-    if created_tasks:
-        print(f"\n  Note: {len(created_tasks)} test task(s) created during testing")
-    if created_users:
-        print(f"  Note: {len(created_users)} test user(s) created during testing")
-    if created_assignments:
-        print(f"  Note: {len(created_assignments)} test assignment(s) created during testing")
+    if created_tasks or created_users or created_assignments:
+        created_items = []
+        if created_tasks:
+            created_items.append(f"{len(created_tasks)} task(s)")
+        if created_users:
+            created_items.append(f"{len(created_users)} user(s)")
+        if created_assignments:
+            created_items.append(f"{len(created_assignments)} assignment(s)")
+        print(f"\n  Created {', '.join(created_items)} during testing")
+        print("  (Will be cleaned up automatically on exit)")
     
     print("=" * 60 + "\n")
     
