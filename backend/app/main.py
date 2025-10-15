@@ -76,6 +76,19 @@ def post_db_user():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/db/users/<user_id>", methods=["DELETE"])
+def delete_db_user(user_id):
+    try:
+        repo = UsersRepository()
+        deleted = repo.delete(user_id)
+        if deleted:
+            return jsonify({"status": "deleted", "user_id": user_id}), 200
+        else:
+            return jsonify({"error": "User not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # ---------- TASKS ROUTES ----------
 @app.route("/db/tasks", methods=["GET"])
 def get_db_tasks():
@@ -218,6 +231,19 @@ def complete_db_task(task_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/db/tasks/<task_id>", methods=["DELETE"])
+def delete_db_task(task_id):
+    try:
+        repo = TasksRepository()
+        deleted = repo.delete(task_id)
+        if deleted:
+            return jsonify({"status": "deleted", "task_id": task_id}), 200
+        else:
+            return jsonify({"error": "Task not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # ---------- ASSIGNMENTS ROUTES ----------
 @app.route("/db/assignments", methods=["GET"])
 def get_db_assignments():
@@ -293,6 +319,19 @@ def put_db_assignment(assignment_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/db/assignments/<assignment_id>", methods=["DELETE"])
+def delete_db_assignment(assignment_id):
+    try:
+        repo = AssignmentsRepository()
+        deleted = repo.delete(assignment_id)
+        if deleted:
+            return jsonify({"status": "deleted", "assignment_id": assignment_id}), 200
+        else:
+            return jsonify({"error": "Assignment not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # ---------- COURSES ROUTES ----------
 @app.route("/db/courses", methods=["GET"])
 def get_db_courses():
@@ -337,6 +376,19 @@ def post_blind_box_series():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/db/blind-box-series/<series_id>", methods=["DELETE"])
+def delete_blind_box_series(series_id):
+    try:
+        repo = BlindBoxSeriesRepository()
+        deleted = repo.delete(series_id)
+        if deleted:
+            return jsonify({"status": "deleted", "series_id": series_id}), 200
+        else:
+            return jsonify({"error": "Series not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/db/blind-box-figures", methods=["POST"])
 def post_blind_box_figure():
     payload = request.get_json() or {}
@@ -358,6 +410,19 @@ def post_blind_box_figure():
             weight=weight
         )
         return jsonify({"status": "created", "figure_id": figure_id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/db/blind-box-figures/<figure_id>", methods=["DELETE"])
+def delete_blind_box_figure(figure_id):
+    try:
+        repo = BlindBoxFiguresRepository()
+        deleted = repo.delete(figure_id)
+        if deleted:
+            return jsonify({"status": "deleted", "figure_id": figure_id}), 200
+        else:
+            return jsonify({"error": "Figure not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -456,6 +521,20 @@ def purchase_blind_box():
         }), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/db/user-blind-boxes/<purchase_id>", methods=["DELETE"])
+def delete_user_blind_box(purchase_id):
+    try:
+        repo = UserBlindBoxesRepository()
+        deleted = repo.delete(purchase_id)
+        if deleted:
+            return jsonify({"status": "deleted", "purchase_id": purchase_id}), 200
+        else:
+            return jsonify({"error": "Purchase not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
