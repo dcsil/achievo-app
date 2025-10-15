@@ -129,9 +129,9 @@ const Home: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen bg-gray-50">
+      <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
         <Header user={user}/>
-        <main className="flex-1 p-2 overflow-y-auto flex items-center justify-center">
+        <main id="main-content" className="flex-1 overflow-y-auto flex items-center justify-center">
           <div className="text-center">
             <div className="text-4xl mb-4">⏳</div>
             <p className="text-gray-600">Loading your tasks...</p>
@@ -144,9 +144,9 @@ const Home: React.FC = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col min-h-screen bg-gray-50">
+      <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
         <Header user={user}/>
-        <main className="flex-1 p-2 overflow-y-auto flex items-center justify-center">
+        <main id="main-content" className="flex-1 overflow-y-auto flex items-center justify-center">
           <div className="text-center">
             <div className="text-4xl mb-4">⚠️</div>
             <p className="text-red-600 mb-4">{error}</p>
@@ -164,12 +164,12 @@ const Home: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
       <Header user={user} />
       
-      {/* Main content area */}
-      <main className="flex-1 p-2 overflow-y-auto">
-        <div className="max-w-6xl mx-auto">
+      {/* Main content area with padding for header and footer */}
+      <main id="main-content" className="flex-1 overflow-y-auto px-2 py-4">
+        <div className="max-w-6xl mx-auto pb-4">
           {/* Today's Tasks */}
           <div className="max-w-md mx-auto p-2">
             <h2 className="text-xl font-semibold text-left mb-2">
@@ -206,7 +206,7 @@ const Home: React.FC = () => {
             />
           </div>
 
-          {/* Courses Section - Using dummy data until backend is linked */}
+          {/* Courses Section */}
           <div className="max-w-md mx-auto p-2">
               <h2 className="text-xl font-semibold text-left mb-2">Courses</h2>
               
