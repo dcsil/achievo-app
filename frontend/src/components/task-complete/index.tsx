@@ -1,16 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiService } from '../../api-contexts/user-context';
 import './index.css'; 
 
 interface TaskCompleteProps {
   isOpen: boolean;
   task?: {
     title: string;
-    id: number;
-    course?: string;
+    id: string;
   };
   onClose: () => void;
   coinsEarned?: number;
-  totalGold?: number;
+  userId: string;
 }
 
 const TaskComplete: React.FC<TaskCompleteProps> = ({ 
@@ -18,9 +18,36 @@ const TaskComplete: React.FC<TaskCompleteProps> = ({
   task, 
   onClose,
   coinsEarned = 100,
-  totalGold = 1347 
+  userId
 }) => {
-  const taskCompleted = task?.title || "Complete project proposal"; 
+  const [newTotal, setNewTotal] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const taskCompleted = task?.title || "Complete project proposal";
+
+  // Fetch updated user data when overlay opens
+  useEffect(() => {
+    if (isOpen && userId) {
+      fetchUpdatedTotal();
+    }
+  }, [isOpen, userId]);
+
+  const fetchUpdatedTotal = async () => {
+    try {
+      setLoading(true);
+      const user = await apiService.getUser(userId);
+      setNewTotal(user.total_points);
+    } catch (error) {
+      console.error('Failed to fetch updated total:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFinish = () => {
+    onClose();
+    // Reset state when closed
+    setNewTotal(null);
+  };
 
   return (
     <>
@@ -68,18 +95,26 @@ const TaskComplete: React.FC<TaskCompleteProps> = ({
                 <p className="text-gray-800 font-semibold">"{taskCompleted}"</p>
               </div>
 
-              {/* Total gold */}
+              {/* New Total */}
               <div className="bg-gray-100 rounded-lg p-3 mb-6">
-                <p className="text-gray-600 text-sm mb-1">Total Gold:</p>
+                <p className="text-gray-600 text-sm mb-1">New Total:</p>
                 <div className="flex items-center justify-center gap-2">
-                  <span className="text-2xl font-bold text-gray-800">{totalGold}</span>
-                  <span className="text-xl">🪙</span>
+                  {loading ? (
+                    <span className="text-gray-500">Loading...</span>
+                  ) : (
+                    <>
+                      <span className="text-2xl font-bold text-gray-800">
+                        {newTotal !== null ? newTotal.toLocaleString() : '---'}
+                      </span>
+                      <span className="text-xl">🪙</span>
+                    </>
+                  )}
                 </div>
               </div>
 
               {/* Finish button */}
               <button
-                onClick={onClose}
+                onClick={handleFinish}
                 className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-800 font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
               >
                 Finish
