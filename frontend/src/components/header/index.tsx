@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import maltese from '../../assets/maltese.png';
+import { User } from '../../api-contexts/user-context';
+import paul from '../../assets/paul_paw.png';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  user: User | null;
+}
+
+const Header: React.FC<HeaderProps> = ({ user }) => {
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // Dummy data - will be replaced with actual user data
-  const userName = "Maltese";
-  const coinCount = 1247; // Will be pulled from database
   const hasUnreadNotifications = true; // Will be pulled from database
   const motivationalQuote = "Success is the sum of small efforts repeated day in and day out."; // Will be pulled from database
   
@@ -38,6 +40,17 @@ const Header: React.FC = () => {
     }
   ];
 
+  // Show loading state when user is null
+  if (!user) {
+    return (
+      <header className="w-full bg-gradient-to-br from-rose-100 via-amber-50 to-amber-100 py-4 px-5 shadow-sm rounded-2xl relative">
+        <div className="flex items-center gap-4 max-w-6xl mx-auto">
+          <div className="text-gray-600">Loading...</div>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header className="w-full bg-gradient-to-br from-rose-100 via-amber-50 to-amber-100 py-4 px-5 shadow-sm rounded-2xl relative">
       <div className="flex items-center gap-4 max-w-6xl mx-auto relative z-10">
@@ -45,7 +58,7 @@ const Header: React.FC = () => {
         <div className="flex-shrink-0">
           <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow-md bg-white">
             <img 
-              src={maltese}
+              src={paul}
               alt="User Profile" 
               className="w-full h-full object-cover"
             />
@@ -55,7 +68,7 @@ const Header: React.FC = () => {
         {/* Welcome Message and Quote */}
         <div className="flex-1 min-w-0">
           <h1 className="text-base font-bold text-gray-800 mb-0.5">
-            Welcome back, <span className="text-orange-600">{userName}</span>!
+            Welcome back, <span className="text-orange-600">{user.canvas_username}</span>!
           </h1>
           <p className="text-gray-600 text-xs italic font-light leading-snug">
             {motivationalQuote}
@@ -66,7 +79,7 @@ const Header: React.FC = () => {
         <div className="flex items-center gap-2 bg-white bg-opacity-70 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-yellow-200">
           <span className="text-xl">🪙</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-base font-bold text-orange-600">{coinCount.toLocaleString()}</span>
+            <span className="text-base font-bold text-orange-600">{user.total_points.toLocaleString()}</span>
             <span className="text-xs text-gray-500">coins</span>
           </div>
         </div>

@@ -1,43 +1,191 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiService, User } from '../../api-contexts/user-context';
 import Header from '../../components/header';
 import Footer from '../../components/footer';
-import TaskComplete from '../../components/task-complete';
 import TaskContainer from '../../components/task-container';
 import CourseContainer from '../../components/course-container';
 
 const Home: React.FC = () => {
+  const [todayTasks, setTodayTasks] = useState<any[]>([]);
+  const [upcomingTasks, setUpcomingTasks] = useState<any[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const tasks = [
-    { id: 1, title: 'longlonglonglonglonglonglonglonglonglong', dueDate: '2023-10-01', description: 'Complete project proposal', course: 'Course 1', colour: 'blue' },
-    { id: 2, title: 'Task 2', dueDate: '2023-10-02', description: 'Description for Task 2', course: 'Course 2', colour: 'red' },
-    { id: 3, title: 'Task 3', dueDate: '2023-10-03', description: 'Description for Task 3', course: 'Course 3', colour: 'yellow' }
+  const userId = 'paul_paw_test'; // This should come from auth context in production
+
+  // Dummy course data - will be replaced when backend is linked
+  const courses = [
+    { name: 'Introduction to Computer Science', courseId: 1, colour: 'blue' },
+    { name: 'Data Structures & Algorithms', courseId: 2, colour: 'red' },
+    { name: 'Web Development', courseId: 3, colour: 'yellow' }
   ];
 
-  const course = {name: 'Course namenamenamenamaennamaemean', courseId: 1, colour: 'blue'};
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch user data for points
+      const userData = await apiService.getUser(userId);
+      setUser(userData);
+
+      // Fetch only incomplete tasks (backend filters by is_completed=false)
+      const tasksData = await apiService.getTasks(userId);
+      
+      // Split tasks into today and upcoming
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const todayTasksList = tasksData.filter((task: any) => {
+        const taskDate = new Date(task.scheduled_end_at);
+        taskDate.setHours(0, 0, 0, 0);
+        return taskDate.getTime() === today.getTime();
+      });
+
+      const upcomingTasksList = tasksData.filter((task: any) => {
+        const taskDate = new Date(task.scheduled_end_at);
+        taskDate.setHours(0, 0, 0, 0);
+        return taskDate.getTime() > today.getTime();
+      });
+
+      setTodayTasks(todayTasksList);
+      setUpcomingTasks(upcomingTasksList);
+
+      // Courses will be fetched when backend is ready
+      // const coursesData = await apiService.getCourses(userId);
+      // setCourses(coursesData);
+
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+      setError('Failed to load tasks. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTaskCompleted = async (taskId: string, pointsEarned: number) => {
+    // Update local points display immediately for better UX
+    if (user) {
+      setUser({
+        ...user,
+        total_points: user.total_points + pointsEarned
+      });
+    }
+    
+    // Optionally fetch fresh data from backend to ensure sync
+    try {
+      const updatedUser = await apiService.getUser(userId);
+      setUser(updatedUser);
+    } catch (err) {
+      console.error('Failed to refresh user data:', err);
+    }
+  };
+
+  const handleTasksUpdate = (updatedTasks: any[], section: 'today' | 'upcoming') => {
+    if (section === 'today') {
+      setTodayTasks(updatedTasks);
+    } else {
+      setUpcomingTasks(updatedTasks);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gray-50">
+        <Header user={user}/>
+        <main className="flex-1 p-2 overflow-y-auto flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-4xl mb-4">⏳</div>
+            <p className="text-gray-600">Loading your tasks...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gray-50">
+        <Header user={user}/>
+        <main className="flex-1 p-2 overflow-y-auto flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-4xl mb-4">⚠️</div>
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={fetchData}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <Header />
+      <Header user={user} />
       
       {/* Main content area */}
       <main className="flex-1 p-2 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
-          {/* skinny container component for today's tasks */}
+          {/* Today's Tasks */}
           <div className="max-w-md mx-auto p-2">
-              <h2 className="text-xl font-semibold text-left mb-2">Today's Tasks</h2>
-              <TaskContainer tasks={tasks} />
+            <h2 className="text-xl font-semibold text-left mb-2">
+              Today's Tasks
+              {todayTasks.length > 0 && (
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  ({todayTasks.length})
+                </span>
+              )}
+            </h2>
+            <TaskContainer 
+              tasks={todayTasks}
+              userId={userId}
+              onTaskCompleted={handleTaskCompleted}
+              onTasksUpdate={(tasks) => handleTasksUpdate(tasks, 'today')}
+            />
           </div>
 
-          {/* skinny container component for upcoming tasks */}
+          {/* Upcoming Tasks */}
           <div className="max-w-md mx-auto p-2">
-              <h2 className="text-xl font-semibold text-left mb-2">Upcoming Tasks</h2>
-              <TaskContainer tasks={tasks} />
+            <h2 className="text-xl font-semibold text-left mb-2">
+              Upcoming Tasks
+              {upcomingTasks.length > 0 && (
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  ({upcomingTasks.length})
+                </span>
+              )}
+            </h2>
+            <TaskContainer 
+              tasks={upcomingTasks}
+              userId={userId}
+              onTaskCompleted={handleTaskCompleted}
+              onTasksUpdate={(tasks) => handleTasksUpdate(tasks, 'upcoming')}
+            />
           </div>
 
-          {/* wide container component for tasks by courses */}
+          {/* Courses Section - Using dummy data until backend is linked */}
           <div className="max-w-md mx-auto p-2">
-              <h2 className="text-xl font-semibold text-left mb-2">Courses</h2>
-              <CourseContainer name={course.name} courseId={course.courseId} colour={course.colour} />
+            <h2 className="text-xl font-semibold text-left mb-2">Courses</h2>
+            {courses.map((course) => (
+              <CourseContainer 
+                key={course.courseId}
+                name={course.name} 
+                courseId={course.courseId} 
+                colour={course.colour} 
+              />
+            ))}
           </div>
         </div>
       </main>
