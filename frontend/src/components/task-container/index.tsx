@@ -86,7 +86,7 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskCo
               onMouseEnter={() => setHoveredTaskId(task.task_id)}
               onMouseLeave={() => setHoveredTaskId(null)}
             >
-              <div className={`w-full border-2 border-orange-200 bg-white rounded-xl transition-all duration-300 ease-in-out ${
+              <div className={`w-full border-2 border-${task.course_color}-200 bg-white rounded-xl transition-all duration-300 ease-in-out ${
                 hoveredTaskId === task.task_id ? 'shadow-lg border-orange-300 scale-[1.01]' : 'shadow-sm'
               }`}>
                 {/* Task header - always visible */}
@@ -95,11 +95,11 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskCo
                     <h3 className="font-semibold text-lg text-gray-900 mb-1 leading-tight">
                       {task.description}
                     </h3>
-                    {task.course_id && (
-                      <span className="inline-block px-2 py-0.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md mt-1">
-                        {task.course_name}
-                      </span>
-                    )}
+                    <span className={`inline-block rounded-full text-sm mt-1 font-medium text-white py-1 px-3 truncate max-w-full ${
+                      task.course_color ? `bg-${task.course_color}-400` : 'bg-gray-400'
+                    }`}>
+                      {task.course_name || 'Personal'}
+                    </span>
                   </div>
                   
                   <div className="text-right flex-shrink-0">

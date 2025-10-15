@@ -13,6 +13,7 @@ module.exports = {
     'bg-pink-100', 'bg-pink-200', 'bg-pink-400', 'bg-pink-500',
     'bg-indigo-100', 'bg-indigo-200', 'bg-indigo-400', 'bg-indigo-500',
     'bg-orange-100', 'bg-orange-200', 'bg-orange-400', 'bg-orange-500', 'bg-orange-600',
+    'bg-gray-400', // For personal tasks without course color
     // Gradient backgrounds
     'bg-gradient-to-bl', 'from-blue-100', 'to-blue-200',
     'from-red-100', 'to-red-200', 'from-yellow-100', 'to-yellow-200',
