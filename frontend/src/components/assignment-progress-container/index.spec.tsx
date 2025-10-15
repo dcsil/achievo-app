@@ -163,6 +163,82 @@ describe('AssignmentProgressContainer', () => {
       expect(screen.getByText('0%')).toBeInTheDocument();
       expect(screen.getByText('0 of 3 tasks completed')).toBeInTheDocument();
     });
+
+    it('calculates partial progress correctly', () => {
+      const partialProgressAssignment = [{
+        assignment_id: '7',
+        course_id: 'course1',
+        title: 'Partial Progress Assignment',
+        due_date: '2025-12-25',
+        completion_points: 75,
+        is_complete: false,
+        task_count: 3,
+        completed_task_count: 1
+      }];
+
+      render(<AssignmentProgressContainer assignments={partialProgressAssignment} color="green" />);
+      
+      // 1/3 tasks = 33% (rounded)
+      expect(screen.getByText('33%')).toBeInTheDocument();
+      expect(screen.getByText('1 of 3 tasks completed')).toBeInTheDocument();
+    });
+
+    it('handles assignments with undefined task_count but has completed_task_count', () => {
+      const undefinedTaskCountAssignment = [{
+        assignment_id: '8',
+        course_id: 'course1',
+        title: 'Undefined Task Count',
+        due_date: '2025-12-28',
+        completion_points: 40,
+        is_complete: true,
+        // task_count is undefined
+        completed_task_count: 2
+      }];
+
+      render(<AssignmentProgressContainer assignments={undefinedTaskCountAssignment} color="orange" />);
+      
+      // Should use completion status since task_count is undefined
+      expect(screen.getByText('100%')).toBeInTheDocument();
+      expect(screen.getByText('1 of 1 task completed')).toBeInTheDocument();
+    });
+
+    it('handles assignments with null task_count', () => {
+      const nullTaskCountAssignment = [{
+        assignment_id: '9',
+        course_id: 'course1',
+        title: 'Null Task Count',
+        due_date: '2025-12-29',
+        completion_points: 60,
+        is_complete: false,
+        task_count: null as any,
+        completed_task_count: 0
+      }];
+
+      render(<AssignmentProgressContainer assignments={nullTaskCountAssignment} color="pink" />);
+      
+      // Should use completion status since task_count is null
+      expect(screen.getByText('0%')).toBeInTheDocument();
+      expect(screen.getByText('0 of 1 task completed')).toBeInTheDocument();
+    });
+
+    it('handles assignments with negative task counts gracefully', () => {
+      const negativeTaskCountAssignment = [{
+        assignment_id: '10',
+        course_id: 'course1',
+        title: 'Negative Task Count',
+        due_date: '2025-12-30',
+        completion_points: 50,
+        is_complete: true,
+        task_count: -1,
+        completed_task_count: 0
+      }];
+
+      render(<AssignmentProgressContainer assignments={negativeTaskCountAssignment} color="indigo" />);
+      
+      // Should use completion status since task_count is negative
+      expect(screen.getByText('100%')).toBeInTheDocument();
+      expect(screen.getByText('1 of 1 task completed')).toBeInTheDocument();
+    });
   });
 
   describe('Progress Bar Styling', () => {
@@ -194,6 +270,60 @@ describe('AssignmentProgressContainer', () => {
       expect(progressBars[1]).toHaveStyle('width: 100%'); // Science Lab Report
       expect(progressBars[2]).toHaveStyle('width: 0%'); // History Essay
       expect(progressBars[3]).toHaveStyle('width: 100%'); // English Paper
+    });
+
+    it('renders progress bars with 0% width for incomplete assignments', () => {
+      const incompleteAssignment = [{
+        assignment_id: '11',
+        course_id: 'course1',
+        title: 'Incomplete Assignment',
+        due_date: '2025-12-31',
+        completion_points: 25,
+        is_complete: false,
+        task_count: 5,
+        completed_task_count: 0
+      }];
+
+      const { container } = render(<AssignmentProgressContainer assignments={incompleteAssignment} color="gray" />);
+      
+      const progressBar = container.querySelector('[style*="width"]');
+      expect(progressBar).toHaveStyle('width: 0%');
+    });
+
+    it('renders progress bars with 100% width for fully completed assignments', () => {
+      const completeAssignment = [{
+        assignment_id: '12',
+        course_id: 'course1',
+        title: 'Complete Assignment',
+        due_date: '2025-12-31',
+        completion_points: 100,
+        is_complete: true,
+        task_count: 3,
+        completed_task_count: 3
+      }];
+
+      const { container } = render(<AssignmentProgressContainer assignments={completeAssignment} color="green" />);
+      
+      const progressBar = container.querySelector('[style*="width"]');
+      expect(progressBar).toHaveStyle('width: 100%');
+    });
+
+    it('handles fractional progress calculations with proper rounding', () => {
+      const fractionalProgressAssignment = [{
+        assignment_id: '13',
+        course_id: 'course1',
+        title: 'Fractional Progress',
+        due_date: '2025-12-31',
+        completion_points: 30,
+        is_complete: false,
+        task_count: 7,
+        completed_task_count: 2
+      }];
+
+      render(<AssignmentProgressContainer assignments={fractionalProgressAssignment} color="teal" />);
+      
+      // 2/7 = 0.2857... = 29% when rounded
+      expect(screen.getByText('29%')).toBeInTheDocument();
     });
   });
 
