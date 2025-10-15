@@ -200,25 +200,3 @@ class AssignmentsRepository:
                     conn.close()
             except Exception:
                 pass
-
-    def delete(self, assignment_id: str) -> bool:
-        """Delete an assignment by assignment_id"""
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute("DELETE FROM assignments WHERE assignment_id = ?", (assignment_id,))
-            conn.commit()
-            return cur.rowcount > 0
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
