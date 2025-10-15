@@ -71,13 +71,24 @@ if [ "$TEST_SUITE" = "blindbox" ] || [ "$TEST_SUITE" = "all" ]; then
     echo ""
 fi
 
+if [ "$TEST_SUITE" = "courses" ] || [ "$TEST_SUITE" = "all" ]; then
+    echo "Running Courses API tests..."
+    echo ""
+    cd tests && python3 test_courses_api.py
+    courses_exit=$?
+    exit_code=$((exit_code + courses_exit))
+    cd ..
+    echo ""
+fi
+
 # Show usage if invalid parameter
-if [ "$TEST_SUITE" != "all" ] && [ "$TEST_SUITE" != "users" ] && [ "$TEST_SUITE" != "tasks" ] && [ "$TEST_SUITE" != "blindbox" ]; then
-    echo "Usage: ./run_tests.sh [all|users|tasks|blindbox]"
+if [ "$TEST_SUITE" != "all" ] && [ "$TEST_SUITE" != "users" ] && [ "$TEST_SUITE" != "tasks" ] && [ "$TEST_SUITE" != "blindbox" ] && [ "$TEST_SUITE" != "courses" ]; then
+    echo "Usage: ./run_tests.sh [all|users|tasks|blindbox|courses]"
     echo "  all      - Run all test suites (default)"
     echo "  users    - Run only user API tests"
     echo "  tasks    - Run only task API tests"
     echo "  blindbox - Run only blind box API tests"
+    echo "  courses  - Run only courses API tests"
     echo ""
     exit 1
 fi
