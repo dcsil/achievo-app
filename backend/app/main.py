@@ -86,16 +86,22 @@ def get_db_tasks():
         scheduled_start_at = request.args.get("scheduled_start_at")
         scheduled_end_at = request.args.get("scheduled_end_at")
         assignment_id = request.args.get("assignment_id")
+        is_completed_str = request.args.get("is_completed")
         
         if not user_id:
             return jsonify({"error": "user_id is required"}), 400
+        
+        is_completed = None
+        if is_completed_str is not None:
+            is_completed = is_completed_str.lower()
         
         repo = TasksRepository()
         tasks = repo.fetch_by_user(
             user_id=user_id,
             scheduled_start_at=scheduled_start_at,
             scheduled_end_at=scheduled_end_at,
-            assignment_id=assignment_id
+            assignment_id=assignment_id,
+            is_completed=is_completed
         )
         return jsonify(tasks), 200
     except Exception as e:

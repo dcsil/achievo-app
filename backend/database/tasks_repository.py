@@ -37,6 +37,7 @@ class TasksRepository:
         scheduled_start_at: Optional[str] = None,
         scheduled_end_at: Optional[str] = None,
         assignment_id: Optional[str] = None,
+        is_completed: Optional[bool] = None,
     ) -> List[Dict]:
         conn = None
         cur = None
@@ -56,6 +57,9 @@ class TasksRepository:
             if assignment_id:
                 query += " AND assignment_id = ?"
                 params.append(assignment_id)
+            if is_completed is not None:
+                query += " AND is_completed = ?"
+                params.append(is_completed)
             
             cur.execute(query, tuple(params))
             cols = [c[0] for c in cur.description] if cur.description else []
