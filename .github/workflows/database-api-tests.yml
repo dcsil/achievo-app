@@ -4,11 +4,13 @@ on:
   push:
     paths:
       - 'tests/**'
+      - 'backend/database/**'
       - 'run_tests.sh'
       - '.github/workflows/api-tests.yml'
   pull_request:
     paths:
       - 'tests/**'
+      - 'backend/database/**'
       - 'run_tests.sh'
       - '.github/workflows/api-tests.yml'
 
