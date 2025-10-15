@@ -120,3 +120,25 @@ class UsersRepository:
                     conn.close()
             except Exception:
                 pass
+
+    def delete(self, user_id: str) -> bool:
+        """Delete a user by user_id"""
+        conn = None
+        cur = None
+        try:
+            conn = DBClient.connect()
+            cur = conn.cursor()
+            cur.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+            conn.commit()
+            return cur.rowcount > 0
+        finally:
+            try:
+                if cur is not None:
+                    cur.close()
+            except Exception:
+                pass
+            try:
+                if conn is not None:
+                    conn.close()
+            except Exception:
+                pass

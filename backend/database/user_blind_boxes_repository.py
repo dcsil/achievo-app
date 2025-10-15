@@ -104,3 +104,25 @@ class UserBlindBoxesRepository:
                     conn.close()
             except Exception:
                 pass
+
+    def delete(self, purchase_id: str) -> bool:
+        """Delete a user blind box purchase by purchase_id"""
+        conn = None
+        cur = None
+        try:
+            conn = DBClient.connect()
+            cur = conn.cursor()
+            cur.execute("DELETE FROM user_blind_boxes WHERE purchase_id = ?", (purchase_id,))
+            conn.commit()
+            return cur.rowcount > 0
+        finally:
+            try:
+                if cur is not None:
+                    cur.close()
+            except Exception:
+                pass
+            try:
+                if conn is not None:
+                    conn.close()
+            except Exception:
+                pass

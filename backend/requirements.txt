@@ -2,3 +2,7 @@ python-dotenv
 databricks-sql-connector
 google-genai
 flask-cors
+pytest
+flask
+werkzeug
+pytest-cov
