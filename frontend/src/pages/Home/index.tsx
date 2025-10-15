@@ -4,17 +4,17 @@ import Footer from '../../components/footer';
 import TaskComplete from '../../components/task-complete';
 import TaskContainer from '../../components/task-container';
 import CourseContainer from '../../components/course-container';
-import { getCourses, Course } from '../../api-contexts/get-courses';
+import { getCourses, CourseForUI } from '../../api-contexts/get-courses';
 
 const Home: React.FC = () => {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<CourseForUI[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const tasks = [
-    { id: 1, title: 'longlonglonglonglonglonglonglonglonglong', dueDate: '2023-10-01', description: 'Complete project proposal', course: 'Course 1', colour: 'blue' },
-    { id: 2, title: 'Task 2', dueDate: '2023-10-02', description: 'Description for Task 2', course: 'Course 2', colour: 'red' },
-    { id: 3, title: 'Task 3', dueDate: '2023-10-03', description: 'Description for Task 3', course: 'Course 3', colour: 'yellow' }
+    { id: 1, title: 'longlonglonglonglonglonglonglonglonglong', dueDate: '2023-10-01', description: 'Complete project proposal', course: 'Course 1', color: 'blue' },
+    { id: 2, title: 'Task 2', dueDate: '2023-10-02', description: 'Description for Task 2', course: 'Course 2', color: 'red' },
+    { id: 3, title: 'Task 3', dueDate: '2023-10-03', description: 'Description for Task 3', course: 'Course 3', color: 'yellow' }
   ];
 
   // Fetch courses when component mounts
@@ -23,7 +23,8 @@ const Home: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const fetchedCourses = await getCourses();
+        const fetchedCourses = await getCourses("paul_paw_test");
+        console.log('Fetched courses:', fetchedCourses);
         setCourses(fetchedCourses);
       } catch (err) {
         setError('Failed to fetch courses. Please try again later.');
@@ -81,8 +82,8 @@ const Home: React.FC = () => {
                 <div key={course.course_id} className="mb-4">
                   <CourseContainer 
                     name={course.name} 
-                    courseId={parseInt(course.course_id)} 
-                    colour={course.color} 
+                    courseId={course.course_id} 
+                    color={course.color} 
                   />
                 </div>
               ))}

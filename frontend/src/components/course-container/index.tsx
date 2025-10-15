@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AssignmentProgressContainer from '../assignment-progress-container';
 import { getAssignments, Assignment } from '../../api-contexts/get-assignments';
 
-function CourseContainer ({ name, courseId, colour }: { name: string, courseId: number, colour: string }) {
+function CourseContainer ({ name, courseId, color }: { name: string, courseId: string, color: string }) {
     const [assignList, setAssignList] = useState<Assignment[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -13,7 +13,7 @@ function CourseContainer ({ name, courseId, colour }: { name: string, courseId: 
             try {
                 setLoading(true);
                 setError(null);
-                const fetchedAssignments = await getAssignments(courseId.toString());
+                const fetchedAssignments = await getAssignments(courseId.toString(), "paul_paw_test");
                 setAssignList(fetchedAssignments);
             } catch (err) {
                 setError('Failed to fetch assignments');
@@ -26,18 +26,12 @@ function CourseContainer ({ name, courseId, colour }: { name: string, courseId: 
         fetchAssignments();
     }, [courseId, name]);
 
-    // Convert Assignment objects to the format expected by AssignmentProgressContainer
-    const formattedAssignments = assignList.map((assignment, index) => ({
-        id: index + 1,
-        title: assignment.title,
-        dueDate: assignment.due_date,
-        course: name
-    }));
-
     return (
-        <div className={`flex flex-col rounded-lg bg-gradient-to-bl from-${colour}-100 to-${colour}-200 p-3 pt-5`}>
+        <div className={`flex flex-col rounded-lg bg-gradient-to-bl from-${color}-100 to-${color}-200 p-3 pt-5`}>
             <div className="mb-4">
-                <span className={`inline-block rounded-full text-sm font-medium text-white bg-${colour}-400 py-1 px-3 truncate max-w-full`}>{name}</span>
+                <span className={`inline-block rounded-full text-sm font-medium text-white bg-${color}-400 py-1 px-3 truncate max-w-full`}>
+                    {name || 'Unnamed Course'}
+                </span>
             </div>
             <div>
                 {loading && (
@@ -54,7 +48,7 @@ function CourseContainer ({ name, courseId, colour }: { name: string, courseId: 
                 
                 {!loading && (
                     <div className="w-full">
-                        <AssignmentProgressContainer tasks={formattedAssignments} colour={colour} />
+                        <AssignmentProgressContainer assignments={assignList} color={color} />
                     </div>
                 )}
             </div>

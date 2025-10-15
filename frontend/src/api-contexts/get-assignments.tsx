@@ -25,7 +25,7 @@ export interface Assignment {
 }
 
 // Helper function to get tasks for a specific assignment
-async function getTasksForAssignment(assignmentId: string, userId: string = "default_user"): Promise<Task[]> {
+async function getTasksForAssignment(assignmentId: string, userId: string = "paul_paw_test"): Promise<Task[]> {
   try {
     const response = await fetch(`http://127.0.0.1:5000/db/tasks?user_id=${userId}&assignment_id=${assignmentId}`, {
       method: 'GET',
@@ -46,7 +46,7 @@ async function getTasksForAssignment(assignmentId: string, userId: string = "def
   }
 }
 
-export async function getAssignments(courseId: string, userId: string = "default_user"): Promise<Assignment[]> {
+export async function getAssignments(courseId: string, userId: string = "paul_paw_test"): Promise<Assignment[]> {
   try {
     const response = await fetch(`http://127.0.0.1:5000/db/assignments?course_id=${courseId}`, {
       method: 'GET',

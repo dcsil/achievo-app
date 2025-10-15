@@ -84,7 +84,7 @@ function TaskContainer ({ tasks }: { tasks: any[] }) {
                                             <p className="text-sm text-gray-600">{task.dueDate}</p>
                                             <p className="text-xs text-gray-500">due time</p>
                                         </div>
-                                        <span className={`px-2 py-1 text-sm font-medium text-white rounded-full bg-${task.colour}-400 whitespace-nowrap`}>
+                                        <span className={`px-2 py-1 text-sm font-medium text-white rounded-full bg-${task.color}-400 whitespace-nowrap`}>
                                             {task.course}
                                         </span>
                                     </div>
@@ -96,7 +96,7 @@ function TaskContainer ({ tasks }: { tasks: any[] }) {
                                         ? `max-h-32 opacity-100 transform translate-y-0` 
                                         : `max-h-0 opacity-0 transform -translate-y-2`
                                 }`}>
-                                    <div className={`p-3 rounded-b-lg bg-gradient-to-bl bg-${task.colour}-100 to-${task.colour}-200`}>
+                                    <div className={`p-3 rounded-b-lg bg-gradient-to-bl bg-${task.color}-100 to-${task.color}-200`}>
                                         <div className="flex flex-row w-full">
                                             {/* Task description */}
                                             <div className="flex-1 mr-4">
