@@ -25,6 +25,8 @@ module.exports = {
     // Border colors
     'border-blue-400', 'border-red-400', 'border-yellow-400', 'border-green-400',
     'border-purple-400', 'border-pink-400', 'border-indigo-400', 'border-orange-400',
+    // Text sizes
+    'text-sm', 'text-base', 'text-lg', 'text-xl', 'text-2xl', 'text-3xl',
   ],
   theme: {
     extend: {},
