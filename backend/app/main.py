@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import os
 import sys
 from pathlib import Path
@@ -24,6 +25,7 @@ UPLOAD_FOLDER = "backend/app/storage/uploads"
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+CORS(app)
 
 @app.route("/extract/events", methods=["POST"])
 def extract_events():
