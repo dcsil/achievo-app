@@ -46,7 +46,13 @@ function CourseContainer ({ name, courseId, color }: { name: string, courseId: s
                     </div>
                 )}
                 
-                {!loading && (
+                {!loading && !error && assignList.length === 0 && (
+                    <div className="text-center py-3">
+                        <p className="text-gray-500 text-sm">No assignments!</p>
+                    </div>
+                )}
+                
+                {!loading && !error && assignList.length > 0 && (
                     <div className="w-full">
                         <AssignmentProgressContainer assignments={assignList} color={color} />
                     </div>
