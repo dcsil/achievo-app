@@ -23,6 +23,7 @@ const Landing: React.FC<Props> = ({ onLogin }) => {
 
           <button
             type="button"
+            onClick={() => navigate('/signup')}
             className="mt-6 w-full bg-gradient-to-br from-orange-400 to-yellow-500 text-black font-medium py-3 rounded-full hover:shadow-lg hover:scale-105 transition-all duration-200"
           >
             Get Started

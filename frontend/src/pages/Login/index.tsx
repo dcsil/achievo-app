@@ -139,7 +139,7 @@ const LoginPage: React.FC = () => {
               {isLoading ? 'Logging in...' : 'Log in'}
             </button>
 
-            <p className="mt-4 text-center text-sm text-gray-600">Don't have an account? <button onClick={() => navigate('/')} className="text-amber-500 font-medium hover:underline">Sign up</button></p>
+            <p className="mt-4 text-center text-sm text-gray-600">Don't have an account? <button onClick={() => navigate('/signup')} className="text-amber-500 font-medium hover:underline">Sign up</button></p>
           </form>
         </div>
       </div>
