@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import clap from '../../assets/achievo-clap.png';
+import clap from '../../assets/achievo-clap-transparent.png';
 
 type Props = {
   onLogin?: () => void;

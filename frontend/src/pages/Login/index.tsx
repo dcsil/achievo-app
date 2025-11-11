@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import clap from '../../assets/achievo-clap.png';
+import clap from '../../assets/achievo-clap-transparent.png';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -42,17 +42,14 @@ const LoginPage: React.FC = () => {
 
     setIsLoading(true);
 
-    // Simulate API call delay
-    setTimeout(() => {
-      if (email === DUMMY_CREDENTIALS.email && password === DUMMY_CREDENTIALS.password) {
-        // Success - navigate to home page
-        console.log('Login successful', { email, remember });
-        navigate('/home');
-      } else {
-        setError('Invalid email or password. Please try again.');
-      }
-      setIsLoading(false);
-    }, 1000);
+    if (email === DUMMY_CREDENTIALS.email && password === DUMMY_CREDENTIALS.password) {
+    // Success - navigate to home page
+    console.log('Login successful', { email, remember });
+    navigate('/home');
+    } else {
+    setError('Invalid email or password. Please try again.');
+    }
+    setIsLoading(false);
   };
 
   return (
@@ -117,6 +114,7 @@ const LoginPage: React.FC = () => {
             </div>
             {passwordError && <p className="mt-1 text-sm text-red-600">Required</p>}
 
+            {/* remember me (for later) */}
             {/* <div className="flex items-center justify-between mt-4">
               <label className="inline-flex items-center">
                 <input

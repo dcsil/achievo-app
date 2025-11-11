@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import clap from '../../assets/achievo-clap.png';
+import clap from '../../assets/achievo-clap-transparent.png';
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
