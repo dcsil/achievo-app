@@ -164,7 +164,7 @@ Propose {default_micro_task_count} micro-tasks to help complete this assignment,
   }}
   // ...repeat for each micro-task
 ]
-
+Each assignment must have at least one task for submission before the due.
 All micro-tasks must fit between "{prev_due_date}" and "{curr_due_date}", never overlap any busy interval, and time fields must be provided as 'YYYY-MM-DDTHH:MM:SS'. If a task lands in a busy interval, move it to the closest available slot. Return only the JSON array, no extra text.
 """
 
