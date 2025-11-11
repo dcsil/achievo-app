@@ -10,9 +10,8 @@ import random
 backend_dir = str(Path(__file__).resolve().parent.parent)
 sys.path.append(backend_dir)
 
-from werkzeug.utils import secure_filename
-from services.pdf_extractor import extract_events_from_pdf, extract_tasks_from_pdf
-from utils.file_utils import handle_file_upload
+# from werkzeug.utils import secure_filename
+# from utils.file_utils import handle_file_upload
 from database.users_repository import UsersRepository
 from database.tasks_repository import TasksRepository
 from database.assignments_repository import AssignmentsRepository
@@ -25,7 +24,15 @@ UPLOAD_FOLDER = "backend/app/storage/uploads"
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-CORS(app)
+CORS(app, 
+     origins=[
+         "http://localhost:3000",  # React dev server
+         "http://127.0.0.1:3000",
+         "chrome-extension://*",   # Allow all Chrome extensions
+     ],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization"]
+)
 
 @app.route("/extract/events", methods=["POST"])
 def extract_events():
