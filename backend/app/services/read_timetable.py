@@ -151,8 +151,12 @@ def generate_tasks_for_courses(courses, user_id, assignment_id, start_date, end_
 if __name__ == "__main__":
     course_list = extract_timetable_courses(pdf_path, user_id, term)
     tasks = generate_tasks_for_courses(course_list, user_id, assignment_id, start_date, end_date, breaks, holidays)
-    # for t in tasks[32:35]:
-    #     print(t)
-    print(f"Total tasks generated: {len(tasks)}" )
+    num = 0
+    for t in tasks:
+        if t["course_id"] == "PHL277H1":
+            print(t)
+            num+=1
+    print(f"Total PHLtasks generated: {num}" )
+    # print(f"Total tasks generated: {len(tasks)}" )
     # for course in course_list:
     #     print(course)
