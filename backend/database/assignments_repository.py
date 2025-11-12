@@ -7,55 +7,26 @@ class AssignmentsRepository:
     table = "assignments"
 
     def fetch_all(self) -> List[Dict]:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT assignment_id, course_id, title, due_date, completion_points, is_complete FROM assignments"
-            )
-            cols = [c[0] for c in cur.description] if cur.description else []
-            rows = cur.fetchall()
-            return [{cols[i]: row[i] for i in range(len(cols))} for row in rows]
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        res = (
+            client
+            .table(self.table)
+            .select("assignment_id,course_id,title,due_date,completion_points,is_complete")
+            .execute()
+        )
+        return res.data or []
 
     def fetch_by_id(self, assignment_id: str) -> Optional[Dict]:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT assignment_id, course_id, title, due_date, completion_points, is_complete FROM assignments WHERE assignment_id = ?",
-                (assignment_id,)
-            )
-            cols = [c[0] for c in cur.description] if cur.description else []
-            row = cur.fetchone()
-            if row:
-                return {cols[i]: row[i] for i in range(len(cols))}
-            return None
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        res = (
+            client
+            .table(self.table)
+            .select("assignment_id,course_id,title,due_date,completion_points,is_complete")
+            .eq("assignment_id", assignment_id)
+            .execute()
+        )
+        rows = res.data or []
+        return rows[0] if rows else None
 
     def fetch_with_filters(
         self,
@@ -63,40 +34,19 @@ class AssignmentsRepository:
         title: Optional[str] = None,
         course_id: Optional[str] = None,
     ) -> List[Dict]:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            
-            query = "SELECT assignment_id, course_id, title, due_date, completion_points, is_complete FROM assignments WHERE 1=1"
-            params = []
-            
-            if due_date:
-                query += " AND due_date = ?"
-                params.append(due_date)
-            if title:
-                query += " AND title LIKE ?"
-                params.append(f"%{title}%")
-            if course_id:
-                query += " AND course_id = ?"
-                params.append(course_id)
-            
-            cur.execute(query, tuple(params))
-            cols = [c[0] for c in cur.description] if cur.description else []
-            rows = cur.fetchall()
-            return [{cols[i]: row[i] for i in range(len(cols))} for row in rows]
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        query = client.table(self.table).select(
+            "assignment_id,course_id,title,due_date,completion_points,is_complete"
+        )
+        if due_date:
+            query = query.eq("due_date", due_date)
+        if title:
+            # Supabase supports ilike for case-insensitive pattern
+            query = query.ilike("title", f"%{title}%")
+        if course_id:
+            query = query.eq("course_id", course_id)
+        res = query.execute()
+        return res.data or []
 
     def update(
         self,
@@ -104,67 +54,33 @@ class AssignmentsRepository:
         title: Optional[str] = None,
         due_date: Optional[str] = None,
     ) -> bool:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            
-            updates = []
-            params = []
-            
-            if title is not None:
-                updates.append("title = ?")
-                params.append(title)
-            if due_date is not None:
-                updates.append("due_date = ?")
-                params.append(due_date)
-            
-            if not updates:
-                return False
-            
-            params.append(assignment_id)
-            query = f"UPDATE assignments SET {', '.join(updates)} WHERE assignment_id = ?"
-            
-            cur.execute(query, tuple(params))
-            conn.commit()
-            return True
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        if title is None and due_date is None:
+            return False
+        update_fields: Dict = {}
+        if title is not None:
+            update_fields["title"] = title
+        if due_date is not None:
+            update_fields["due_date"] = due_date
+        client = DBClient.connect()
+        res = (
+            client
+            .table(self.table)
+            .update(update_fields)
+            .eq("assignment_id", assignment_id)
+            .execute()
+        )
+        return bool(res.data)
 
     def complete_assignment(self, assignment_id: str) -> bool:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            
-            cur.execute(
-                "UPDATE assignments SET is_complete = TRUE WHERE assignment_id = ?",
-                (assignment_id,)
-            )
-            conn.commit()
-            return True
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        res = (
+            client
+            .table(self.table)
+            .update({"is_complete": True})
+            .eq("assignment_id", assignment_id)
+            .execute()
+        )
+        return bool(res.data)
 
     def create(
         self,
@@ -175,28 +91,20 @@ class AssignmentsRepository:
         completion_points: int,
         is_complete: bool = False,
     ) -> bool:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute(
-                """
-                INSERT INTO assignments (assignment_id, course_id, title, due_date, completion_points, is_complete)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                (assignment_id, course_id, title, due_date, completion_points, is_complete),
+        client = DBClient.connect()
+        _ = (
+            client
+            .table(self.table)
+            .insert(
+                {
+                    "assignment_id": assignment_id,
+                    "course_id": course_id,
+                    "title": title,
+                    "due_date": due_date,
+                    "completion_points": completion_points,
+                    "is_complete": is_complete,
+                }
             )
-            conn.commit()
-            return True
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+            .execute()
+        )
+        return True
