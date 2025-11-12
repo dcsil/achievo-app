@@ -11,8 +11,8 @@ backend_dir = str(Path(__file__).resolve().parent.parent)
 sys.path.append(backend_dir)
 
 from werkzeug.utils import secure_filename
-from services.pdf_extractor import extract_events_from_pdf, extract_tasks_from_pdf
-from utils.file_utils import handle_file_upload
+from app.services.pdf_extractor import extract_events_from_pdf, extract_tasks_from_pdf
+from app.utils.file_utils import handle_file_upload
 from database.users_repository import UsersRepository
 from database.tasks_repository import TasksRepository
 from database.assignments_repository import AssignmentsRepository
