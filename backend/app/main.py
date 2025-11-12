@@ -10,6 +10,7 @@ import json
 
 backend_dir = str(Path(__file__).resolve().parent.parent)
 sys.path.append(backend_dir)
+
 from werkzeug.utils import secure_filename
 from app.utils.file_utils import handle_file_upload, extract_tables_from_pdf
 from dateutil.parser import parse as date_parse
