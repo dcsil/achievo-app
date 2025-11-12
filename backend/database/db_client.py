@@ -1,34 +1,27 @@
 import os
-from databricks import sql
+from supabase import create_client, Client
 from dotenv import load_dotenv
 
 
 class DBClient:
-    """Centralized Databricks SQL client factory and context helpers."""
+    """Centralized Supabase SQL client factory and context helpers."""
 
     @staticmethod
     def connect():
-        """Create and return a Databricks SQL connection using env vars and optional .env file.
+        """Create and return a Supabase SQL connection using env vars and optional .env file.
 
         Requires env vars:
-        - DATABRICKS_SERVER_HOSTNAME
-        - DATABRICKS_HTTP_PATH
-        - DATABRICKS_TOKEN
+        - SUPABASE_URL
+        - SUPABASE_KEY
         """
         load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-        server_hostname = os.getenv("DATABRICKS_SERVER_HOSTNAME")
-        http_path = os.getenv("DATABRICKS_HTTP_PATH")
-        token = os.getenv("DATABRICKS_TOKEN")
+        supabase_url = os.getenv("SUPABASE_URL")
+        supabase_key = os.getenv("SUPABASE_KEY")
 
-        if not (server_hostname and http_path and token):
+        if not (supabase_url and supabase_key):
             raise RuntimeError(
-                "DATABRICKS_SERVER_HOSTNAME, DATABRICKS_HTTP_PATH and DATABRICKS_TOKEN must be set"
+                "SUPABASE_URL and SUPABASE_KEY must be set"
             )
 
-        return sql.connect(
-            server_hostname=server_hostname,
-            http_path=http_path,
-            access_token=token,
-            _tls_no_verify=True,
-        )
+        return create_client(supabase_url, supabase_key)
