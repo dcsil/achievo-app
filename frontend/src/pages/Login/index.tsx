@@ -15,7 +15,7 @@ const LoginPage: React.FC = () => {
 
   // Dummy credentials
   const DUMMY_CREDENTIALS = {
-    email: 'user@achievo.com',
+    email: 'paul.paw@example.com',
     password: 'password123'
   };
 
