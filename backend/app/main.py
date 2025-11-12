@@ -6,6 +6,7 @@ from pathlib import Path
 from datetime import datetime
 import uuid
 import random
+import json
 
 backend_dir = str(Path(__file__).resolve().parent.parent)
 sys.path.append(backend_dir)
@@ -13,6 +14,7 @@ from werkzeug.utils import secure_filename
 from app.utils.file_utils import handle_file_upload, extract_tables_from_pdf
 from dateutil.parser import parse as date_parse
 from app.services.read_timetable import extract_timetable_courses, generate_tasks_for_courses
+from app.services.read_syllabi import extract_tasks_assignments_from_pdf, generate_assignment_microtasks
 
 from database.users_repository import UsersRepository
 from database.tasks_repository import TasksRepository
@@ -562,12 +564,17 @@ def delete_user_blind_box(purchase_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 # ---------- TIMETABLE ROUTES ----------
 @app.route("/api/timetable/process", methods=["POST"])
 def process_timetable():
     """
     Process uploaded timetable PDF and return courses and tasks.
     Only requires PDF file upload - uses hardcoded values from read_timetable.py
+
+    testing:
+    curl -X POST http://127.0.0.1:5000/api/timetable/process \
+        -F "file=@backend/app/storage/uploads/timetable.pdf"
     """
     try:
         # Handle file upload
@@ -611,6 +618,60 @@ def process_timetable():
         
     except Exception as e:
         print(f"Error processing timetable: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+# ---------- SYLLABI ROUTES ----------
+@app.route("/api/syllabi/process", methods=["POST"])
+def process_syllabi():
+    """
+    Process uploaded syllabi PDF and return assignments with micro-tasks and exam/quiz tasks.
+    Only requires PDF file upload - automatically generates micro-tasks for assignments.
+
+    testing:
+    curl -X POST http://127.0.0.1:5000/api/syllabi/process \
+        -F "file=@backend/app/storage/uploads/dummy.pdf" 
+        -F 'busy_intervals=[{"start": "2025-11-13T09:00:00", "end": "2025-11-13T14:00:00"}]'
+    """
+    try:
+        # Handle file upload
+        filepath, error_response = handle_file_upload(request, UPLOAD_FOLDER)
+        if error_response:
+            return error_response
+        
+        # Extract assignments and tasks from PDF using AI
+        extracted_data = extract_tasks_assignments_from_pdf(filepath)
+        
+        # Get busy intervals from form data (optional)
+        busy_intervals_json = request.form.get("busy_intervals", "[]")
+        try:
+            busy_intervals = json.loads(busy_intervals_json)
+        except json.JSONDecodeError:
+            busy_intervals = []
+        
+        # Generate micro-tasks for assignments
+        assignments_with_micro = generate_assignment_microtasks(
+            extracted_data["assignments"], 
+            busy_intervals,
+            default_micro_task_count=3
+        )
+        
+        # Clean up uploaded file
+        try:
+            os.remove(filepath)
+        except:
+            pass
+        
+        return jsonify({
+            "status": "success",
+            "assignments_found": len(extracted_data["assignments"]),
+            "tasks_found": len(extracted_data["tasks"]),
+            "total_micro_tasks": sum(len(a["micro_tasks"]) for a in assignments_with_micro["assignments"]),
+            "assignments": assignments_with_micro["assignments"],
+            "tasks": extracted_data["tasks"]
+        }), 200
+        
+    except Exception as e:
+        print(f"Error processing syllabi: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
