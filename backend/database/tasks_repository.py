@@ -7,35 +7,31 @@ from .db_client import DBClient
 class TasksRepository:
     table = "tasks"
 
+    base_select = (
+        "task_id,user_id,assignment_id,course_id,description,type," \
+        "scheduled_start_at,scheduled_end_at,is_completed,completion_date_at,reward_points," \
+        "courses(course_name,color)"
+    )
+
+    def _flatten(self, rows: List[Dict]) -> List[Dict]:
+        """Flatten nested course object (if present) into course_name/course_color keys."""
+        flattened = []
+        for r in rows:
+            course_info = r.get("courses")
+            if isinstance(course_info, dict):
+                r["course_name"] = course_info.get("course_name")
+                r["course_color"] = course_info.get("color")
+            elif isinstance(course_info, list) and course_info:
+                r["course_name"] = course_info[0].get("course_name")
+                r["course_color"] = course_info[0].get("color")
+            r.pop("courses", None)
+            flattened.append(r)
+        return flattened
+
     def fetch_all(self) -> List[Dict]:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            # Join with courses table to get course name and color
-            cur.execute("""
-                SELECT 
-                    t.task_id, t.user_id, t.assignment_id, t.course_id, t.description, t.type,
-                    t.scheduled_start_at, t.scheduled_end_at, t.is_completed, t.completion_date_at,
-                    t.reward_points, c.course_name, c.color as course_color
-                FROM tasks t
-                LEFT JOIN courses c ON t.course_id = c.course_id
-            """)
-            cols = [c[0] for c in cur.description] if cur.description else []
-            rows = cur.fetchall()
-            return [{cols[i]: row[i] for i in range(len(cols))} for row in rows]
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        res = client.table(self.table).select(self.base_select).execute()
+        return self._flatten(res.data or [])
 
     def fetch_by_user(
         self,
@@ -45,116 +41,42 @@ class TasksRepository:
         assignment_id: Optional[str] = None,
         is_completed: Optional[bool] = None,
     ) -> List[Dict]:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            
-            # Join with courses table to get course name and color
-            query = """
-                SELECT 
-                    t.task_id, t.user_id, t.assignment_id, t.course_id, t.description, t.type, 
-                    t.scheduled_start_at, t.scheduled_end_at, t.is_completed, t.completion_date_at, 
-                    t.reward_points, c.course_name, c.color as course_color
-                FROM tasks t
-                LEFT JOIN courses c ON t.course_id = c.course_id
-                WHERE t.user_id = ?
-            """
-            params = [user_id]
-            
-            if scheduled_start_at:
-                query += " AND t.scheduled_start_at >= ?"
-                params.append(scheduled_start_at)
-            if scheduled_end_at:
-                query += " AND t.scheduled_end_at <= ?"
-                params.append(scheduled_end_at)
-            if assignment_id:
-                query += " AND t.assignment_id = ?"
-                params.append(assignment_id)
-            if is_completed is not None:
-                query += " AND t.is_completed = ?"
-                params.append(is_completed)
-            
-            cur.execute(query, tuple(params))
-            cols = [c[0] for c in cur.description] if cur.description else []
-            rows = cur.fetchall()
-            return [{cols[i]: row[i] for i in range(len(cols))} for row in rows]
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        query = client.table(self.table).select(self.base_select).eq("user_id", user_id)
+        if scheduled_start_at:
+            query = query.gte("scheduled_start_at", scheduled_start_at)
+        if scheduled_end_at:
+            query = query.lte("scheduled_end_at", scheduled_end_at)
+        if assignment_id:
+            query = query.eq("assignment_id", assignment_id)
+        if is_completed is not None:
+            query = query.eq("is_completed", is_completed)
+        res = query.execute()
+        return self._flatten(res.data or [])
 
     def fetch_uncompleted_by_assignment(self, assignment_id: str) -> List[Dict]:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            # Join with courses table to get course name and color
-            cur.execute("""
-                SELECT 
-                    t.task_id, t.user_id, t.assignment_id, t.course_id, t.description, t.type,
-                    t.scheduled_start_at, t.scheduled_end_at, t.is_completed, t.completion_date_at,
-                    t.reward_points, c.course_name, c.color as course_color
-                FROM tasks t
-                LEFT JOIN courses c ON t.course_id = c.course_id
-                WHERE t.assignment_id = ? AND t.is_completed = FALSE
-            """, (assignment_id,))
-            cols = [c[0] for c in cur.description] if cur.description else []
-            rows = cur.fetchall()
-            return [{cols[i]: row[i] for i in range(len(cols))} for row in rows]
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        res = (
+            client
+            .table(self.table)
+            .select(self.base_select)
+            .eq("assignment_id", assignment_id)
+            .eq("is_completed", False)
+            .execute()
+        )
+        return self._flatten(res.data or [])
 
     def fetch_by_id(self, task_id: str) -> Optional[Dict]:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            # Join with courses table to get course name and color
-            cur.execute("""
-                SELECT 
-                    t.task_id, t.user_id, t.assignment_id, t.course_id, t.description, t.type,
-                    t.scheduled_start_at, t.scheduled_end_at, t.is_completed, t.completion_date_at,
-                    t.reward_points, c.course_name, c.color as course_color
-                FROM tasks t
-                LEFT JOIN courses c ON t.course_id = c.course_id
-                WHERE t.task_id = ?
-            """, (task_id,))
-            cols = [c[0] for c in cur.description] if cur.description else []
-            row = cur.fetchone()
-            if row:
-                return {cols[i]: row[i] for i in range(len(cols))}
-            return None
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        res = (
+            client
+            .table(self.table)
+            .select(self.base_select)
+            .eq("task_id", task_id)
+            .execute()
+        )
+        rows = self._flatten(res.data or [])
+        return rows[0] if rows else None
 
     def update(
         self,
@@ -163,72 +85,30 @@ class TasksRepository:
         scheduled_start_at: Optional[str] = None,
         scheduled_end_at: Optional[str] = None,
     ) -> bool:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            
-            updates = []
-            params = []
-            
-            if description is not None:
-                updates.append("description = ?")
-                params.append(description)
-            if scheduled_start_at is not None:
-                updates.append("scheduled_start_at = ?")
-                params.append(scheduled_start_at)
-            if scheduled_end_at is not None:
-                updates.append("scheduled_end_at = ?")
-                params.append(scheduled_end_at)
-            
-            if not updates:
-                return False
-            
-            params.append(task_id)
-            query = f"UPDATE tasks SET {', '.join(updates)} WHERE task_id = ?"
-            
-            cur.execute(query, tuple(params))
-            conn.commit()
-            return True
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        if description is None and scheduled_start_at is None and scheduled_end_at is None:
+            return False
+        update_fields: Dict = {}
+        if description is not None:
+            update_fields["description"] = description
+        if scheduled_start_at is not None:
+            update_fields["scheduled_start_at"] = scheduled_start_at
+        if scheduled_end_at is not None:
+            update_fields["scheduled_end_at"] = scheduled_end_at
+        client = DBClient.connect()
+        res = client.table(self.table).update(update_fields).eq("task_id", task_id).execute()
+        return bool(res.data)
 
     def complete_task(self, task_id: str) -> bool:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            
-            completion_date = datetime.now().isoformat()
-            
-            cur.execute(
-                "UPDATE tasks SET is_completed = TRUE, completion_date_at = ? WHERE task_id = ?",
-                (completion_date, task_id)
-            )
-            conn.commit()
-            return True
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        completion_date = datetime.utcnow().isoformat()
+        client = DBClient.connect()
+        res = (
+            client
+            .table(self.table)
+            .update({"is_completed": True, "completion_date_at": completion_date})
+            .eq("task_id", task_id)
+            .execute()
+        )
+        return bool(res.data)
 
     def create(
         self,
@@ -243,61 +123,26 @@ class TasksRepository:
         is_completed: bool = False,
         reward_points: int = 0,
     ) -> bool:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute(
-                """
-                INSERT INTO tasks (task_id, user_id, assignment_id, course_id, description, type, scheduled_start_at, scheduled_end_at, is_completed, completion_date_at, reward_points)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)
-                """,
-                (
-                    task_id,
-                    user_id,
-                    assignment_id,
-                    course_id,
-                    description,
-                    type,
-                    scheduled_start_at,
-                    scheduled_end_at,
-                    is_completed,
-                    reward_points,
-                ),
-            )
-            conn.commit()
-            return True
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        payload = {
+            "task_id": task_id,
+            "user_id": user_id,
+            "description": description,
+            "type": type,
+            "reward_points": reward_points,
+            "is_completed": is_completed,
+            "assignment_id": assignment_id,
+            "course_id": course_id,
+            "scheduled_start_at": scheduled_start_at,
+            "scheduled_end_at": scheduled_end_at,
+            "completion_date_at": None,
+        }
+        # Remove None keys to avoid RLS or schema issues
+        clean_payload = {k: v for k, v in payload.items() if v is not None}
+        client = DBClient.connect()
+        _ = client.table(self.table).insert(clean_payload).execute()
+        return True
 
     def delete(self, task_id: str) -> bool:
-        """Delete a task by task_id"""
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute("DELETE FROM tasks WHERE task_id = ?", (task_id,))
-            conn.commit()
-            return cur.rowcount > 0
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        res = client.table(self.table).delete().eq("task_id", task_id).execute()
+        return bool(res.data)

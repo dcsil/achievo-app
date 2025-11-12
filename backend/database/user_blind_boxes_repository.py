@@ -6,69 +6,46 @@ from .db_client import DBClient
 class UserBlindBoxesRepository:
     table = "user_blind_boxes"
 
+    join_select = (
+        "purchase_id,user_id,series_id,purchased_at,opened_at,awarded_figure_id," \
+        "blind_box_figures(name,rarity),blind_box_series(name)"
+    )
+
+    def _flatten(self, rows: List[Dict]) -> List[Dict]:
+        flattened = []
+        for r in rows:
+            fig = r.get("blind_box_figures")
+            ser = r.get("blind_box_series")
+            if isinstance(fig, dict):
+                r["figure_name"] = fig.get("name")
+                r["figure_rarity"] = fig.get("rarity")
+            elif isinstance(fig, list) and fig:
+                r["figure_name"] = fig[0].get("name")
+                r["figure_rarity"] = fig[0].get("rarity")
+            if isinstance(ser, dict):
+                r["series_name"] = ser.get("name")
+            elif isinstance(ser, list) and ser:
+                r["series_name"] = ser[0].get("name")
+            r.pop("blind_box_figures", None)
+            r.pop("blind_box_series", None)
+            flattened.append(r)
+        return flattened
+
     def fetch_all(self) -> List[Dict]:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT purchase_id, user_id, series_id, purchased_at, opened_at, awarded_figure_id FROM user_blind_boxes"
-            )
-            cols = [c[0] for c in cur.description] if cur.description else []
-            rows = cur.fetchall()
-            return [{cols[i]: row[i] for i in range(len(cols))} for row in rows]
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        res = client.table(self.table).select("purchase_id,user_id,series_id,purchased_at,opened_at,awarded_figure_id").execute()
+        return res.data or []
 
     def fetch_by_user(self, user_id: str) -> List[Dict]:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute(
-                """
-                SELECT 
-                    ubb.purchase_id, 
-                    ubb.user_id, 
-                    ubb.series_id, 
-                    ubb.purchased_at, 
-                    ubb.opened_at, 
-                    ubb.awarded_figure_id,
-                    bbf.name as figure_name,
-                    bbf.rarity as figure_rarity,
-                    bbs.name as series_name
-                FROM user_blind_boxes ubb
-                LEFT JOIN blind_box_figures bbf ON ubb.awarded_figure_id = bbf.figure_id
-                LEFT JOIN blind_box_series bbs ON ubb.series_id = bbs.series_id
-                WHERE ubb.user_id = ?
-                """,
-                (user_id,)
-            )
-            cols = [c[0] for c in cur.description] if cur.description else []
-            rows = cur.fetchall()
-            return [{cols[i]: row[i] for i in range(len(cols))} for row in rows]
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        res = (
+            client
+            .table(self.table)
+            .select(self.join_select)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        return self._flatten(res.data or [])
 
     def create(
         self,
@@ -79,50 +56,20 @@ class UserBlindBoxesRepository:
         opened_at: Optional[str] = None,
         awarded_figure_id: Optional[str] = None,
     ) -> bool:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute(
-                """
-                INSERT INTO user_blind_boxes (purchase_id, user_id, series_id, purchased_at, opened_at, awarded_figure_id)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                (purchase_id, user_id, series_id, purchased_at, opened_at, awarded_figure_id),
-            )
-            conn.commit()
-            return True
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        payload = {
+            "purchase_id": purchase_id,
+            "user_id": user_id,
+            "series_id": series_id,
+            "purchased_at": purchased_at,
+            "opened_at": opened_at,
+            "awarded_figure_id": awarded_figure_id,
+        }
+        clean_payload = {k: v for k, v in payload.items() if v is not None}
+        client = DBClient.connect()
+        _ = client.table(self.table).insert(clean_payload).execute()
+        return True
 
     def delete(self, purchase_id: str) -> bool:
-        """Delete a user blind box purchase by purchase_id"""
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute("DELETE FROM user_blind_boxes WHERE purchase_id = ?", (purchase_id,))
-            conn.commit()
-            return cur.rowcount > 0
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        res = client.table(self.table).delete().eq("purchase_id", purchase_id).execute()
+        return bool(res.data)

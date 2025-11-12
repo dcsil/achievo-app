@@ -8,67 +8,28 @@ class BlindBoxFiguresRepository:
     table = "blind_box_figures"
 
     def fetch_all(self) -> List[Dict]:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT figure_id, series_id, name, rarity, weight FROM blind_box_figures"
-            )
-            cols = [c[0] for c in cur.description] if cur.description else []
-            rows = cur.fetchall()
-            return [{cols[i]: row[i] for i in range(len(cols))} for row in rows]
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        res = client.table(self.table).select("figure_id,series_id,name,rarity,weight").execute()
+        return res.data or []
 
     def fetch_by_series(self, series_id: str) -> List[Dict]:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT figure_id, series_id, name, rarity, weight FROM blind_box_figures WHERE series_id = ?",
-                (series_id,)
-            )
-            cols = [c[0] for c in cur.description] if cur.description else []
-            rows = cur.fetchall()
-            return [{cols[i]: row[i] for i in range(len(cols))} for row in rows]
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        res = (
+            client
+            .table(self.table)
+            .select("figure_id,series_id,name,rarity,weight")
+            .eq("series_id", series_id)
+            .execute()
+        )
+        return res.data or []
 
     def select_random_figure(self, series_id: str) -> Optional[Dict]:
         """Select a random figure from a series based on weighted probability"""
         figures = self.fetch_by_series(series_id)
-        
         if not figures:
             return None
-        
-        # Extract figures and their weights
         weights = [fig.get('weight', 1.0) for fig in figures]
-        
-        # Use random.choices for weighted random selection
         selected_figure = random.choices(figures, weights=weights, k=1)[0]
-        
         return selected_figure
 
     def create(
@@ -79,50 +40,24 @@ class BlindBoxFiguresRepository:
         rarity: str,
         weight: float,
     ) -> bool:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute(
-                """
-                INSERT INTO blind_box_figures (figure_id, series_id, name, rarity, weight)
-                VALUES (?, ?, ?, ?, ?)
-                """,
-                (figure_id, series_id, name, rarity, weight),
+        client = DBClient.connect()
+        _ = (
+            client
+            .table(self.table)
+            .insert(
+                {
+                    "figure_id": figure_id,
+                    "series_id": series_id,
+                    "name": name,
+                    "rarity": rarity,
+                    "weight": weight,
+                }
             )
-            conn.commit()
-            return True
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+            .execute()
+        )
+        return True
 
     def delete(self, figure_id: str) -> bool:
-        """Delete a blind box figure by figure_id"""
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute("DELETE FROM blind_box_figures WHERE figure_id = ?", (figure_id,))
-            conn.commit()
-            return cur.rowcount > 0
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        res = client.table(self.table).delete().eq("figure_id", figure_id).execute()
+        return bool(res.data)

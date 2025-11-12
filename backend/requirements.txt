@@ -1,5 +1,5 @@
 python-dotenv
-databricks-sql-connector
+supabase
 google-genai
 flask-cors
 requests

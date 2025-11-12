@@ -7,28 +7,15 @@ class UsersRepository:
     table = "users"
 
     def fetch_all(self) -> List[Dict]:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT user_id, canvas_username, total_points, current_level, last_activity_at FROM users"
-            )
-            cols = [c[0] for c in cur.description] if cur.description else []
-            rows = cur.fetchall()
-            return [{cols[i]: row[i] for i in range(len(cols))} for row in rows]
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        """Fetch all users via Supabase."""
+        client = DBClient.connect()
+        res = (
+            client
+            .table(self.table)
+            .select("user_id,canvas_username,total_points,current_level,last_activity_at")
+            .execute()
+        )
+        return res.data or []
 
     def create(
         self,
@@ -37,108 +24,56 @@ class UsersRepository:
         total_points: int = 0,
         current_level: int = 0,
     ) -> bool:
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            # NOTE: Placeholder style may vary by driver; adjust if needed.
-            cur.execute(
-                """
-                INSERT INTO users (user_id, canvas_username, total_points, current_level, last_activity_at)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-                """,
-                (user_id, canvas_username, total_points, current_level),
+        """Insert a user row. last_activity_at handled by DB default if present."""
+        client = DBClient.connect()
+        _ = (
+            client
+            .table(self.table)
+            .insert(
+                {
+                    "user_id": user_id,
+                    "canvas_username": canvas_username,
+                    "total_points": total_points,
+                    "current_level": current_level,
+                }
             )
-            conn.commit()
-            return True
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+            .execute()
+        )
+        return True
 
     def fetch_by_id(self, user_id: str) -> Optional[Dict]:
         """Return a single user dict by user_id, or None if not found."""
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute(
-                """
-                SELECT user_id, canvas_username, total_points, current_level, last_activity_at
-                FROM users
-                WHERE user_id = ?
-                """,
-                (user_id,),
-            )
-            row = cur.fetchone()
-            if not row:
-                return None
-            cols = [c[0] for c in cur.description] if cur.description else []
-            return {cols[i]: row[i] for i in range(len(cols))}
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        client = DBClient.connect()
+        res = (
+            client
+            .table(self.table)
+            .select("user_id,canvas_username,total_points,current_level,last_activity_at")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        rows = res.data or []
+        return rows[0] if rows else None
 
     def update_points(self, user_id: str, points_delta: int) -> bool:
-        """Update user's total points by adding points_delta (can be negative)"""
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute(
-                "UPDATE users SET total_points = total_points + ? WHERE user_id = ?",
-                (points_delta, user_id)
-            )
-            conn.commit()
-            return cur.rowcount > 0
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        """Increment user's total_points by points_delta (can be negative)."""
+        client = DBClient.connect()
+        # Fetch current points first
+        user = self.fetch_by_id(user_id)
+        if not user:
+            return False
+        new_total = (user.get("total_points", 0) or 0) + points_delta
+        res = (
+            client
+            .table(self.table)
+            .update({"total_points": new_total})
+            .eq("user_id", user_id)
+            .execute()
+        )
+        return bool(res.data)
 
     def delete(self, user_id: str) -> bool:
-        """Delete a user by user_id"""
-        conn = None
-        cur = None
-        try:
-            conn = DBClient.connect()
-            cur = conn.cursor()
-            cur.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
-            conn.commit()
-            return cur.rowcount > 0
-        finally:
-            try:
-                if cur is not None:
-                    cur.close()
-            except Exception:
-                pass
-            try:
-                if conn is not None:
-                    conn.close()
-            except Exception:
-                pass
+        """Delete a user by user_id."""
+        client = DBClient.connect()
+        res = client.table(self.table).delete().eq("user_id", user_id).execute()
+        # Supabase returns deleted rows (if configured) or empty list
+        return bool(res.data)
