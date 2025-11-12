@@ -16,7 +16,7 @@ export interface Task {
 
 // API service for tasks
 class TasksApiService {
-  private baseUrl = 'http://localhost:5000';
+  private baseUrl = 'http://127.0.0.1:5000';
 
   async createTask(taskData: Omit<Task, 'is_completed'> & { is_completed?: boolean }): Promise<{ status: string; task_id: string }> {
     const response = await fetch(`${this.baseUrl}/db/tasks`, {

@@ -24,15 +24,7 @@ UPLOAD_FOLDER = "backend/app/storage/uploads"
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-CORS(app, 
-     origins=[
-         "http://localhost:3000",  # React dev server
-         "http://127.0.0.1:3000",
-         "chrome-extension://*",   # Allow all Chrome extensions
-     ],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     allow_headers=["Content-Type", "Authorization"]
-)
+CORS(app)
 
 @app.route("/extract/events", methods=["POST"])
 def extract_events():
