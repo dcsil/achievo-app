@@ -352,6 +352,46 @@ def get_db_courses():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/db/courses", methods=["POST"])
+def post_db_course():
+    """Create a course record.
+
+    Body JSON fields:
+      - course_id (str, required)
+      - user_id (str, required)
+      - course_name (str, required)
+      - course_code (str, optional)
+      - canvas_course_id (str, optional)
+      - term (str, optional)
+      - color (str, optional)
+    """
+    payload = request.get_json() or {}
+    course_id = payload.get("course_id")
+    user_id = payload.get("user_id")
+    course_name = payload.get("course_name")
+    course_code = payload.get("course_code")
+    canvas_course_id = payload.get("canvas_course_id")
+    term = payload.get("term")
+    color = payload.get("color")
+
+    if not course_id or not user_id or not course_name:
+        return jsonify({"error": "course_id, user_id, and course_name are required"}), 400
+
+    try:
+        repo = CoursesRepository()
+        repo.create(
+            course_id=course_id,
+            user_id=user_id,
+            course_name=course_name,
+            course_code=course_code,
+            canvas_course_id=canvas_course_id,
+            term=term,
+            color=color,
+        )
+        return jsonify({"status": "created", "course_id": course_id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # ---------- BLIND BOX ROUTES ----------
 @app.route("/db/blind-box-series", methods=["POST"])
 def post_blind_box_series():

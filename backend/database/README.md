@@ -1,73 +1,104 @@
-## Database setup and local seeding
+## Database setup (Supabase) and local testing
 
-This folder contains the Databricks SQL schema and a small seeding script for local/dev use. The entry point is `database_module.py`, which:
+This folder targets Supabase (managed PostgreSQL). We have a schema file and the repositories use the Supabase Python client.
 
-- connects to a Databricks SQL Warehouse using env vars
-- creates all required tables (idempotent CREATE TABLE IF NOT EXISTS)
-- inserts a small set of dummy rows for development
-- prints out the data for a quick sanity check
-
-Note: This module targets a Databricks SQL Warehouse, not a local SQLite/Postgres instance.
+Key files:
+- `supabase_schema_simple.sql` — single, minimal schema (tables + FKs only)
+- `db_client.py` — creates a Supabase client using `SUPABASE_URL` and `SUPABASE_KEY`
 
 ### Prerequisites
 
-- The following Python packages (already listed in `backend/requirements.txt`):
-  - `databricks-sql-connector`
+- Python packages (already in `backend/requirements.txt`):
+  - `supabase`
   - `python-dotenv`
+  - `flask`, `flask-cors`
 
 ### 1) Install dependencies
 
-From the repo root or the `backend` directory:
+From repo root:
 
 ```bash
-# From repo root
 cd backend
-
-# (Optiona but I would recommend) create and activate a virtual environment
 python3 -m venv venv
 source venv/bin/activate
-
-# Install the backend dependencies
 pip install -r requirements.txt
 ```
 
 ### 2) Configure environment variables (.env)
 
-`database_module.py` and `db_client.py` load a `.env` file from this folder. **Add it to this folder.**
+`db_client.py` will load a `.env` from `backend/.env` or from your environment. Define:
 
-
-### 3) Run the schema + dummy data seeding
-
-Run the module with Python. From the `backend` directory:
-
-```bash
-# Ensure you're in the backend directory (so relative imports/paths resolve)
-cd backend
-
-# Run the seeding script
-python3 database/database_module.py
+```
+SUPABASE_URL=https://<project>.supabase.co
+SUPABASE_KEY=<anon-or-service-role-key>
 ```
 
-What this does:
+### 3) Create the schema in Supabase
 
-- Connects to your SQL Warehouse
-- Creates the following tables (if they don’t already exist):
-  - `users`, `courses`, `assignments`, `tasks`, `blind_box_series`, `blind_box_figures`, `user_blind_boxes`
-- Inserts a few example rows into each
-- Prints the contents of each table
+In the Supabase SQL Editor, run the queries in `supabase_schema_simple.sql`
 
-If you prefer module-style invocation from the repo root:
+Tables created:
+- `users`, `courses`, `assignments`, `tasks`, `blind_box_series`, `blind_box_figures`, `user_blind_boxes`
+
+### 4) Run the backend API locally
+
+From repo root:
 
 ```bash
-python3 -m backend.database.database_module
+python backend/app/main.py
+```
+
+The server starts at http://127.0.0.1:5000.
+
+### 5) Sanity check endpoints
+
+Create a user:
+
+```bash
+curl -X POST http://127.0.0.1:5000/db/users \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"user_456","canvas_username":"alice_canvas","total_points":0,"current_level":0}'
+```
+
+Create a course for that user:
+
+```bash
+curl -X POST http://127.0.0.1:5000/db/courses \
+  -H 'Content-Type: application/json' \
+  -d '{"course_id":"COURSE123","user_id":"user_456","course_name":"Intro to Systems"}'
+```
+
+Create an assignment and a task:
+
+```bash
+curl -X POST http://127.0.0.1:5000/db/assignments \
+  -H 'Content-Type: application/json' \
+  -d '{"assignment_id":"A1","course_id":"COURSE123","title":"Read Chapter 1","due_date":"2025-11-20T00:00:00Z","completion_points":50}'
+
+curl -X POST http://127.0.0.1:5000/db/tasks \
+  -H 'Content-Type: application/json' \
+  -d '{"task_id":"T1","user_id":"user_456","description":"Outline notes","type":"study","assignment_id":"A1","course_id":"COURSE123","reward_points":10}'
+```
+
+Blind box sample flow:
+
+```bash
+curl -X POST http://127.0.0.1:5000/db/blind-box-series \
+  -H 'Content-Type: application/json' \
+  -d '{"series_id":"S1","name":"Study Buddies","description":"Cute helpers","cost_points":50}'
+
+curl -X POST http://127.0.0.1:5000/db/blind-box-figures \
+  -H 'Content-Type: application/json' \
+  -d '{"figure_id":"F1","series_id":"S1","name":"Coffee Cat","rarity":"common","weight":5}'
+
+curl -X POST http://127.0.0.1:5000/db/blind-boxes/purchase \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"user_456","series_id":"S1"}'
 ```
 
 ### Reruns and resets
 
-- The script uses `CREATE TABLE IF NOT EXISTS`, so tables persist across runs.
-- Inserts are unconditional, so rerunning can create duplicate data or constraint conflicts depending on your Databricks/Unity Catalog settings.
-
-To reset, you can drop the tables in your Databricks SQL editor (or run once via a temporary script):
+To drop tables in Supabase for a clean reset:
 
 ```sql
 DROP TABLE IF EXISTS user_blind_boxes;
@@ -79,44 +110,4 @@ DROP TABLE IF EXISTS courses;
 DROP TABLE IF EXISTS users;
 ```
 
-Then re-run the seeding script.
-
-### Running the database APIs locally
-
-The Flask app in `backend/app/main.py` exposes simple endpoints for the `users` table. This is handy to sanity‑check DB connectivity via the repository layer.
-
-1) Start the backend server:
-
-```bash
-cd backend
-python3 app/main.py
-```
-
-By default it starts on http://127.0.0.1:5000.
-
-2) Test the users endpoints:
-
-- Create a NEW user
-
-```bash
-curl -X POST http://127.0.0.1:5000/db/users \
-  -H 'Content-Type: application/json' \
-  -d '{
-        "user_id": "user_456",
-        "canvas_username": "alice_canvas",
-        "total_points": 0,
-        "current_level": 0
-      }'
-```
-
-- Fetch all users
-
-```bash
-curl 'http://127.0.0.1:5000/db/users'
-```
-
-- Fetch one user by id
-
-```bash
-curl 'http://127.0.0.1:5000/db/users?user_id=user_456'
-```
+Re-run the schema script afterwards.
