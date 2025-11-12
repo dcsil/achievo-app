@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 // Import your custom icons here
 import dashboardIcon from '../../assets/icons/dashboard.svg';
@@ -7,39 +8,72 @@ import addIcon from '../../assets/icons/add.svg';
 import rewardsIcon from '../../assets/icons/rewards.svg';
 import settingsIcon from '../../assets/icons/settings.svg';
 
-
 const Footer = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showLabels, setShowLabels] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
+  // Update active tab based on current route
   useEffect(() => {
-  const mainContent = document.getElementById('main-content');
-  if (!mainContent) return;
+    const path = location.pathname;
+    if (path === '/' || path === '/home') {
+      setActiveTab('home');
+    } else if (path === '/rewards') {
+      setActiveTab('rewards');
+    }
+  }, [location.pathname]);
 
-  const handleScroll = () => {
-    const currentScrollY = mainContent.scrollTop;
-    
-    // Use a ref or state callback to get the latest lastScrollY
-    setLastScrollY(prevScrollY => {
-      // Show labels when scrolling up or at top, hide when scrolling down
-      if (currentScrollY < prevScrollY || currentScrollY < 50) {
-        setShowLabels(true);
-      } else if (currentScrollY > prevScrollY && currentScrollY > 100) {
-        setShowLabels(false);
-      }
+  useEffect(() => {
+    const mainContent = document.getElementById('main-content');
+    if (!mainContent) return;
+
+    const handleScroll = () => {
+      const currentScrollY = mainContent.scrollTop;
       
-      return currentScrollY;
-    });
-  };
+      setLastScrollY(prevScrollY => {
+        if (currentScrollY < prevScrollY || currentScrollY < 50) {
+          setShowLabels(true);
+        } else if (currentScrollY > prevScrollY && currentScrollY > 100) {
+          setShowLabels(false);
+        }
+        
+        return currentScrollY;
+      });
+    };
 
-  mainContent.addEventListener('scroll', handleScroll, { passive: true });
-  return () => mainContent.removeEventListener('scroll', handleScroll);
-}, []); // Remove lastScrollY from dependencies
+    mainContent.addEventListener('scroll', handleScroll, { passive: true });
+    return () => mainContent.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleNavigation = (id: string) => {
+    setActiveTab(id);
+    
+    switch (id) {
+      case 'home':
+        navigate('/home');
+        break;
+      case 'rewards':
+        navigate('/rewards');
+        break;
+      case 'todo':
+        navigate('/todo');
+        break;
+      case 'settings':
+      navigate('/settings');
+      break;
+      case 'add-task':
+      navigate('/add-task');
+      break;
+      default:
+        navigate('/');
+    }
+  };
 
   const navItems = [
     {
-      id: 'dashboard',
+      id: 'home',
       icon: dashboardIcon,
       label: 'Dashboard'
     },
@@ -49,7 +83,7 @@ const Footer = () => {
       label: 'To-Do'
     },
     {
-      id: 'add',
+      id: 'add-task',
       icon: addIcon,
       label: 'Add Task',
       isSpecial: true
@@ -74,7 +108,7 @@ const Footer = () => {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => handleNavigation(item.id)}
                 className="relative -mt-6 flex flex-col items-center justify-center transition-all duration-300 group"
                 aria-label={item.label}
               >
@@ -95,7 +129,7 @@ const Footer = () => {
           return (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => handleNavigation(item.id)}
               className={`flex flex-col items-center justify-center gap-1 px-4 py-3 transition-all duration-200 min-w-[72px] ${
                 activeTab === item.id
                   ? 'text-orange-500'
