@@ -3,7 +3,7 @@
   "description": "A productivity extension to help you stay focused and achieve your goals.",
   "version": "1.0",
   "manifest_version": 3,
-  "permissions": ["sidePanel", "notifications", "storage"],
+  "permissions": ["sidePanel", "notifications", "alarms", "storage"],
   "background": {
     "service_worker": "service-worker.js"
   },
