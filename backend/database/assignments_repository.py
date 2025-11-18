@@ -11,7 +11,7 @@ class AssignmentsRepository:
         res = (
             client
             .table(self.table)
-            .select("assignment_id,course_id,title,due_date,completion_points,is_complete")
+            .select("assignment_id,course_id,title,due_date,completion_points,is_complete,actual_completion_date")
             .execute()
         )
         return res.data or []
@@ -21,7 +21,7 @@ class AssignmentsRepository:
         res = (
             client
             .table(self.table)
-            .select("assignment_id,course_id,title,due_date,completion_points,is_complete")
+            .select("assignment_id,course_id,title,due_date,completion_points,is_complete,actual_completion_date")
             .eq("assignment_id", assignment_id)
             .execute()
         )
@@ -36,7 +36,7 @@ class AssignmentsRepository:
     ) -> List[Dict]:
         client = DBClient.connect()
         query = client.table(self.table).select(
-            "assignment_id,course_id,title,due_date,completion_points,is_complete"
+            "assignment_id,course_id,title,due_date,completion_points,is_complete,actual_completion_date"
         )
         if due_date:
             query = query.eq("due_date", due_date)
@@ -53,14 +53,17 @@ class AssignmentsRepository:
         assignment_id: str,
         title: Optional[str] = None,
         due_date: Optional[str] = None,
+        actual_completion_date: Optional[str] = None,
     ) -> bool:
-        if title is None and due_date is None:
+        if title is None and due_date is None and actual_completion_date is None:
             return False
         update_fields: Dict = {}
         if title is not None:
             update_fields["title"] = title
         if due_date is not None:
             update_fields["due_date"] = due_date
+        if actual_completion_date is not None:
+            update_fields["actual_completion_date"] = actual_completion_date
         client = DBClient.connect()
         res = (
             client
@@ -72,11 +75,13 @@ class AssignmentsRepository:
         return bool(res.data)
 
     def complete_assignment(self, assignment_id: str) -> bool:
+        from datetime import datetime
+        completion_date = datetime.utcnow().isoformat()
         client = DBClient.connect()
         res = (
             client
             .table(self.table)
-            .update({"is_complete": True})
+            .update({"is_complete": True, "actual_completion_date": completion_date})
             .eq("assignment_id", assignment_id)
             .execute()
         )
@@ -90,21 +95,18 @@ class AssignmentsRepository:
         due_date: str,
         completion_points: int,
         is_complete: bool = False,
+        actual_completion_date: Optional[str] = None,
     ) -> bool:
         client = DBClient.connect()
-        _ = (
-            client
-            .table(self.table)
-            .insert(
-                {
-                    "assignment_id": assignment_id,
-                    "course_id": course_id,
-                    "title": title,
-                    "due_date": due_date,
-                    "completion_points": completion_points,
-                    "is_complete": is_complete,
-                }
-            )
-            .execute()
-        )
+        payload = {
+            "assignment_id": assignment_id,
+            "course_id": course_id,
+            "title": title,
+            "due_date": due_date,
+            "completion_points": completion_points,
+            "is_complete": is_complete,
+            "actual_completion_date": actual_completion_date,
+        }
+        clean_payload = {k: v for k, v in payload.items() if v is not None}
+        _ = client.table(self.table).insert(clean_payload).execute()
         return True
