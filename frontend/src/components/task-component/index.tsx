@@ -5,9 +5,10 @@ interface TaskComponentProps {
   onCompleteTask: (task: any) => void;
   showCompleteButton?: boolean;
   isCompleting?: boolean;
+  timeAdjustment?: boolean;
 }
 
-function TaskComponent({ task, onCompleteTask, showCompleteButton = true, isCompleting = false }: TaskComponentProps) {
+function TaskComponent({ task, onCompleteTask, showCompleteButton = true, isCompleting = false, timeAdjustment = true }: TaskComponentProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseEnter = () => {
@@ -42,8 +43,8 @@ function TaskComponent({ task, onCompleteTask, showCompleteButton = true, isComp
           </div>
           
           <div className="text-right flex-shrink-0">
-            <p className="text-lg text-gray-900">{new Date(new Date(task.scheduled_start_at).getTime() + 5 * 60 * 60 * 1000).toLocaleTimeString('en-US', { hour: "numeric", minute: "numeric", hour12: true })}</p>
-            <p className="text-lg text-gray-500">{new Date(new Date(task.scheduled_end_at).getTime() + 5 * 60 * 60 * 1000).toLocaleTimeString('en-US', { hour: "numeric", minute: "numeric", hour12: true })}</p>
+            <p className="text-lg text-gray-900">{new Date(new Date(task.scheduled_start_at).getTime() + (timeAdjustment ? 5 : 0) * 60 * 60 * 1000).toLocaleTimeString('en-US', { hour: "numeric", minute: "numeric", hour12: true })}</p>
+            <p className="text-lg text-gray-500">{new Date(new Date(task.scheduled_end_at).getTime() + (timeAdjustment ? 5 : 0) * 60 * 60 * 1000).toLocaleTimeString('en-US', { hour: "numeric", minute: "numeric", hour12: true })}</p>
           </div>
         </div>
 
