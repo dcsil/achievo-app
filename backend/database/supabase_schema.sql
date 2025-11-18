@@ -26,12 +26,18 @@ SET timezone = 'UTC';
 CREATE TABLE IF NOT EXISTS users (
   user_id VARCHAR(50) PRIMARY KEY,
   canvas_username VARCHAR(255),
+  canvas_domain TEXT,
+  canvas_api_key TEXT, -- encrypted at rest via pgsodium security label in production
+  profile_picture TEXT,
   total_points INTEGER NOT NULL DEFAULT 0,
   current_level INTEGER NOT NULL DEFAULT 0,
   last_activity_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- If pgsodium is enabled and a key named 'api_key' exists, apply transparent encryption:
+-- SECURITY LABEL FOR pgsodium ON COLUMN users.canvas_api_key IS 'ENCRYPT WITH KEY api_key';
 
 -- 2) courses
 CREATE TABLE IF NOT EXISTS courses (
@@ -57,6 +63,7 @@ CREATE TABLE IF NOT EXISTS assignments (
   due_date TIMESTAMP WITH TIME ZONE NOT NULL,
   completion_points INTEGER NOT NULL DEFAULT 0,
   is_complete BOOLEAN NOT NULL DEFAULT FALSE,
+  actual_completion_date TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_assignments_course FOREIGN KEY (course_id) 
@@ -70,6 +77,7 @@ CREATE TABLE IF NOT EXISTS blind_box_series (
   description TEXT,
   cost_points INTEGER NOT NULL DEFAULT 0,
   release_date TIMESTAMP WITH TIME ZONE,
+  image TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -81,6 +89,7 @@ CREATE TABLE IF NOT EXISTS blind_box_figures (
   name VARCHAR(100) NOT NULL,
   rarity VARCHAR(50),
   weight DOUBLE PRECISION DEFAULT 1.0,
+  image TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_figures_series FOREIGN KEY (series_id) 
@@ -99,6 +108,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   scheduled_end_at TIMESTAMP WITH TIME ZONE,
   is_completed BOOLEAN NOT NULL DEFAULT FALSE,
   completion_date_at TIMESTAMP WITH TIME ZONE,
+  is_last_task BOOLEAN,
   reward_points INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

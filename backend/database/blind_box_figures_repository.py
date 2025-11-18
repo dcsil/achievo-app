@@ -9,7 +9,7 @@ class BlindBoxFiguresRepository:
 
     def fetch_all(self) -> List[Dict]:
         client = DBClient.connect()
-        res = client.table(self.table).select("figure_id,series_id,name,rarity,weight").execute()
+        res = client.table(self.table).select("figure_id,series_id,name,rarity,weight,image").execute()
         return res.data or []
 
     def fetch_by_series(self, series_id: str) -> List[Dict]:
@@ -17,7 +17,7 @@ class BlindBoxFiguresRepository:
         res = (
             client
             .table(self.table)
-            .select("figure_id,series_id,name,rarity,weight")
+            .select("figure_id,series_id,name,rarity,weight,image")
             .eq("series_id", series_id)
             .execute()
         )
@@ -39,22 +39,19 @@ class BlindBoxFiguresRepository:
         name: str,
         rarity: str,
         weight: float,
+        image: Optional[str] = None,
     ) -> bool:
         client = DBClient.connect()
-        _ = (
-            client
-            .table(self.table)
-            .insert(
-                {
-                    "figure_id": figure_id,
-                    "series_id": series_id,
-                    "name": name,
-                    "rarity": rarity,
-                    "weight": weight,
-                }
-            )
-            .execute()
-        )
+        payload = {
+            "figure_id": figure_id,
+            "series_id": series_id,
+            "name": name,
+            "rarity": rarity,
+            "weight": weight,
+            "image": image,
+        }
+        clean_payload = {k: v for k, v in payload.items() if v is not None}
+        _ = client.table(self.table).insert(clean_payload).execute()
         return True
 
     def delete(self, figure_id: str) -> bool:

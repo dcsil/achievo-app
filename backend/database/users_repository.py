@@ -12,7 +12,10 @@ class UsersRepository:
         res = (
             client
             .table(self.table)
-            .select("user_id,canvas_username,total_points,current_level,last_activity_at")
+            .select(
+                # Decrypt canvas_api_key using pgsodium before returning. Alias keeps field name consistent.
+                "user_id,canvas_username,canvas_domain,profile_picture,canvas_api_key:pgsodium.decrypt(canvas_api_key,'user_key'),total_points,current_level,last_activity_at"
+            )
             .execute()
         )
         return res.data or []
@@ -21,22 +24,28 @@ class UsersRepository:
         self,
         user_id: str,
         canvas_username: Optional[str] = None,
+        canvas_domain: Optional[str] = None,
+        canvas_api_key: Optional[str] = None,
+        profile_picture: Optional[str] = None,
         total_points: int = 0,
         current_level: int = 0,
     ) -> bool:
         """Insert a user row. last_activity_at handled by DB default if present."""
         client = DBClient.connect()
+        payload = {
+            "user_id": user_id,
+            "canvas_username": canvas_username,
+            "canvas_domain": canvas_domain,
+            # Do not select/return api key elsewhere; DB handles encryption at-rest.
+            "canvas_api_key": canvas_api_key,
+            "profile_picture": profile_picture,
+            "total_points": total_points,
+            "current_level": current_level,
+        }
         _ = (
             client
             .table(self.table)
-            .insert(
-                {
-                    "user_id": user_id,
-                    "canvas_username": canvas_username,
-                    "total_points": total_points,
-                    "current_level": current_level,
-                }
-            )
+            .insert(payload)
             .execute()
         )
         return True
@@ -47,7 +56,9 @@ class UsersRepository:
         res = (
             client
             .table(self.table)
-            .select("user_id,canvas_username,total_points,current_level,last_activity_at")
+            .select(
+                "user_id,canvas_username,canvas_domain,profile_picture,canvas_api_key:pgsodium.decrypt(canvas_api_key,'user_key'),total_points,current_level,last_activity_at"
+            )
             .eq("user_id", user_id)
             .execute()
         )

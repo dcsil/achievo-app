@@ -9,7 +9,7 @@ class TasksRepository:
 
     base_select = (
         "task_id,user_id,assignment_id,course_id,description,type," \
-        "scheduled_start_at,scheduled_end_at,is_completed,completion_date_at,reward_points," \
+        "scheduled_start_at,scheduled_end_at,is_completed,completion_date_at,is_last_task,reward_points," \
         "courses(course_name,color)"
     )
 
@@ -122,6 +122,7 @@ class TasksRepository:
         scheduled_end_at: Optional[str] = None,
         is_completed: bool = False,
         reward_points: int = 0,
+        is_last_task: Optional[bool] = None,
     ) -> bool:
         payload = {
             "task_id": task_id,
@@ -136,6 +137,9 @@ class TasksRepository:
             "scheduled_end_at": scheduled_end_at,
             "completion_date_at": None,
         }
+        # For tasks linked to assignments, allow setting is_last_task; otherwise leave as NULL
+        if assignment_id is not None:
+            payload["is_last_task"] = is_last_task if is_last_task is not None else False
         # Remove None keys to avoid RLS or schema issues
         clean_payload = {k: v for k, v in payload.items() if v is not None}
         client = DBClient.connect()

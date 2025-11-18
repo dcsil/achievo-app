@@ -1,6 +1,7 @@
 import os
 from flask import request, jsonify
 from werkzeug.utils import secure_filename
+import pdfplumber
 
 ALLOWED_EXTENSIONS = {"pdf"}
 
@@ -19,3 +20,14 @@ def handle_file_upload(request, upload_folder=UPLOAD_FOLDER):
         file.save(filepath)
         return filepath, None
     return None, (jsonify({"error": "Invalid file"}), 400)
+
+def extract_tables_from_pdf(pdf_path):
+    """
+    Extract all tables from all pages of a PDF.
+    Returns a list of tables.
+    """
+    tables = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            tables.extend(page.extract_tables())
+    return tables
