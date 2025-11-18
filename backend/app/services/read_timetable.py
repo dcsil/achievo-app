@@ -83,17 +83,61 @@ def _parse_course_cell(cell):
 def parse_time_range(time_str):
     """
     Parse a time range string into start and end time objects.
+    Handles 12-hour format without AM/PM like "9:00 - 12:00" or "6:00 - 8:00"
+    Determines AM/PM based on logical sequence and typical class hours.
     """
-    start, end = [t.strip() for t in time_str.replace('AM','').replace('PM','').split('-')]
+    print(f"Parsing time string: '{time_str}'")  # Debug output
+    
+    # Split by dash and clean up whitespace
+    parts = time_str.split('-')
+    if len(parts) != 2:
+        raise ValueError(f"Invalid time format: {time_str}")
+    
+    start_str = parts[0].strip()
+    end_str = parts[1].strip()
+    
+    print(f"Start: '{start_str}', End: '{end_str}'")  # Debug output
+    
     try:
-        start_dt = datetime.strptime(start, "%H:%M")
-    except:
-        start_dt = datetime.strptime(start, "%I:%M")
-    try:
-        end_dt = datetime.strptime(end, "%H:%M")
-    except:
-        end_dt = datetime.strptime(end, "%I:%M")
-    return start_dt.time(), end_dt.time()
+        # Parse as basic time first
+        start_dt = datetime.strptime(start_str, "%H:%M")
+        end_dt = datetime.strptime(end_str, "%H:%M")
+        
+        start_hour = start_dt.hour
+        end_hour = end_dt.hour
+        
+        # Determine AM/PM based on the time sequence
+        # If start time is 8-11 and end time is 12 or after, it's AM to PM
+        # If both times are low (1-7), it's likely evening PM
+        # If start time is 9+ and end time is lower, end time needs +12
+        
+        if start_hour >= 8 and end_hour == 12:
+            # Morning class ending at noon (e.g., 9:00 AM - 12:00 PM)
+            final_start_hour = start_hour
+            final_end_hour = 12
+        elif start_hour >= 8 and end_hour < start_hour:
+            # Morning class ending in afternoon (e.g., 9:00 AM - 1:00 PM)
+            final_start_hour = start_hour
+            final_end_hour = end_hour + 12
+        elif start_hour <= 7 and end_hour <= 11 and end_hour >= start_hour:
+            # Evening class (e.g., 6:00 PM - 8:00 PM)
+            final_start_hour = start_hour + 12
+            final_end_hour = end_hour + 12
+        else:
+            # Default case - keep as is if times make sense
+            final_start_hour = start_hour
+            final_end_hour = end_hour
+            
+        start_time = datetime.strptime(f"{final_start_hour:02d}:{start_dt.minute:02d}", "%H:%M").time()
+        end_time = datetime.strptime(f"{final_end_hour:02d}:{end_dt.minute:02d}", "%H:%M").time()
+            
+    except ValueError as e:
+        print(f"Error parsing times: {e}")
+        raise ValueError(f"Could not parse time range: {time_str}")
+    
+    print(f"Parsed times - Start: {start_time}, End: {end_time}")  # Debug output
+    
+    return start_time, end_time
 
 def generate_tasks_for_courses(courses, user_id, assignment_id, start_date, end_date, breaks, holidays):
     """
@@ -160,6 +204,9 @@ if __name__ == "__main__":
             print(t)
             num+=1
     print(f"Total PHLtasks generated: {num}" )
+    # print(f"Total tasks generated: {len(tasks)}" )
+    # for course in course_list:
+    #     print(course)
     # print(f"Total tasks generated: {len(tasks)}" )
     # for course in course_list:
     #     print(course)

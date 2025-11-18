@@ -919,11 +919,12 @@ def process_timetable():
 def process_syllabi():
     """
     Process uploaded syllabi PDF and return assignments with micro-tasks and exam/quiz tasks.
-    Only requires PDF file upload - automatically generates micro-tasks for assignments.
+    Requires PDF file upload and optional course_id parameter.
 
     testing:
     curl -X POST http://127.0.0.1:5000/api/syllabi/process \
-        -F "file=@backend/app/storage/uploads/dummy.pdf" 
+        -F "file=@backend/app/storage/uploads/dummy.pdf" \
+        -F "course_id=course_123" \
         -F 'busy_intervals=[{"start": "2025-11-13T09:00:00", "end": "2025-11-13T14:00:00"}]'
     """
     try:
@@ -932,8 +933,15 @@ def process_syllabi():
         if error_response:
             return error_response
         
+        # Get course_id from form data (optional)
+        course_id = request.form.get("course_id")
+        
         # Extract assignments and tasks from PDF using AI
         extracted_data = extract_tasks_assignments_from_pdf(filepath)
+        
+        # Add IDs to the extracted data
+        from app.services.read_syllabi import add_ids_to_extracted_data, generate_assignment_microtasks_with_ids
+        data_with_ids = add_ids_to_extracted_data(extracted_data, course_id=course_id)
         
         # Get busy intervals from form data (optional)
         busy_intervals_json = request.form.get("busy_intervals", "[]")
@@ -942,9 +950,9 @@ def process_syllabi():
         except json.JSONDecodeError:
             busy_intervals = []
         
-        # Generate micro-tasks for assignments
-        assignments_with_micro = generate_assignment_microtasks(
-            extracted_data["assignments"], 
+        # Generate micro-tasks for assignments with proper IDs
+        assignments_with_micro = generate_assignment_microtasks_with_ids(
+            data_with_ids["assignments"], 
             busy_intervals,
             default_micro_task_count=3
         )
@@ -957,11 +965,12 @@ def process_syllabi():
         
         return jsonify({
             "status": "success",
-            "assignments_found": len(extracted_data["assignments"]),
-            "tasks_found": len(extracted_data["tasks"]),
+            "course_id": course_id,
+            "assignments_found": len(assignments_with_micro["assignments"]),
+            "tasks_found": len(data_with_ids["tasks"]),
             "total_micro_tasks": sum(len(a["micro_tasks"]) for a in assignments_with_micro["assignments"]),
             "assignments": assignments_with_micro["assignments"],
-            "tasks": extracted_data["tasks"]
+            "tasks": data_with_ids["tasks"]
         }), 200
         
     except Exception as e:

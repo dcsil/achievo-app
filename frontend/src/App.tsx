@@ -9,6 +9,7 @@ import Settings from './pages/Settings';
 import ToDo from './pages/ToDo';
 import AddTask from './pages/AddTask';
 import UploadTimetable from './pages/UploadTimetable';
+import UploadSyllabi from './pages/UploadSyllabi';
 import Layout from './components/layout';
 
 
@@ -28,6 +29,7 @@ function App() {
           <Route path="/settings" element={<Layout><Settings /></Layout>} />
           <Route path="/add-task" element={<Layout><AddTask /></Layout>} />
           <Route path="/upload-timetable" element={<Layout><UploadTimetable /></Layout>} />
+          <Route path="/upload-syllabi" element={<Layout><UploadSyllabi /></Layout>} />
           {/* Redirect any unknown routes to landing page */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

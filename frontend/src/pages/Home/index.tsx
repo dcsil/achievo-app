@@ -251,14 +251,14 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
             
             <button
               onClick={() => {
-                console.log('Navigating to add-task...');
-                navigate('/add-task');
+                console.log('Navigating to upload-syllabi...');
+                navigate('/upload-syllabi');
               }}
               className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl p-4 hover:scale-105 transition-transform shadow-lg"
             >
               <div className="text-center">
                 <div className="text-2xl mb-2">➕</div>
-                <div className="font-bold text-sm">Add Task</div>
+                <div className="font-bold text-sm">Upload Syllabi</div>
                 <div className="text-xs opacity-90 mt-1">Create a new task</div>
               </div>
             </button>
