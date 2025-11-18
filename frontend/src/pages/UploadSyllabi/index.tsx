@@ -177,15 +177,6 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
             "task_id": "26277304-92a5-4872-9875-d6bfc4d20a54",
             "type": "exam",
             "user_id": "paul_paw_test"
-          },
-          {
-            "course_id": "CSC067",
-            "description": "Practice quiz",
-            "is_completed": false,
-            "reward_points": 10,
-            "task_id": "d047ce98-78b7-4208-a1dd-b1f696357258",
-            "type": "exam",
-            "user_id": "paul_paw_test"
           }
         ],
         "tasks_found": 3,
@@ -329,7 +320,7 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
             )}
 
             {/* Help text */}
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-6">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-6"> 
               <p className="text-blue-700 text-sm">
                 💡 To add these tasks to your schedule, visit the <strong>Add Task</strong> page and create them manually with the details shown above.
               </p>
