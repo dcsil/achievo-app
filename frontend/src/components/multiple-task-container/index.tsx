@@ -2,29 +2,49 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../../api-contexts/user-context';
 import TaskComplete from '../task-complete';
+import TaskComponent from '../task-component';
 import { getAssignment } from '../../api-contexts/get-assignments';
 
-interface TaskContainerProps {
+interface MultipleTaskContainerProps {
   tasks: any[];
   userId: string;
   onTaskCompleted?: (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => void;
   onTasksUpdate?: (tasks: any[]) => void;
   onRefreshData?: () => void;
   showCompleteButton?: boolean;
+  dateString?: string;
 }
 
-function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, onRefreshData, showCompleteButton = true }: TaskContainerProps) {
-  const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
+function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, onRefreshData, showCompleteButton = true, dateString }: MultipleTaskContainerProps) {
   const [showOverlay, setShowOverlay] = useState(false);
-  const [taskList, setTaskList] = useState(tasks);
+  const [taskList, setTaskList] = useState(Array.isArray(tasks) ? tasks : []);
   const [pointsEarned, setPointsEarned] = useState(0);
   const [isCompleting, setIsCompleting] = useState(false);
   const [selectedTaskWithAssignment, setSelectedTaskWithAssignment] = useState<any>(null);
+  const [showAllTasks, setShowAllTasks] = useState(false);
+  const tasksPerPage = 5;
 
   // Sync local state with parent's tasks prop
   useEffect(() => {
-    setTaskList(tasks);
+    // Ensure tasks is always an array
+    if (Array.isArray(tasks)) {
+      setTaskList(tasks);
+      // Reset to collapsed view when tasks change
+      setShowAllTasks(false);
+    } else {
+      console.error('MultipleTaskContainer received non-array tasks:', tasks);
+      setTaskList([]);
+      setShowAllTasks(false);
+    }
   }, [tasks]);
+
+  // Show more/collapse logic
+  const displayedTasks = showAllTasks ? taskList : taskList.slice(0, tasksPerPage);
+  const hasMoreTasks = taskList.length > tasksPerPage;
+
+  const toggleShowAllTasks = () => {
+    setShowAllTasks(prev => !prev);
+  };
 
   const handleCompleteTask = async (task: any) => {
     if (isCompleting) return;
@@ -70,6 +90,11 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, onRefres
       const updatedTasks = taskList.filter(t => t.task_id !== task.task_id);
       setTaskList(updatedTasks);
       
+      // If after removing task we have <= tasksPerPage, collapse the view
+      if (updatedTasks.length <= tasksPerPage) {
+        setShowAllTasks(false);
+      }
+      
       // Notify parent component
       if (onTaskCompleted) {
         onTaskCompleted(task.task_id, task.type, response.points_earned, task.course_id);
@@ -94,6 +119,25 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, onRefres
     setSelectedTaskWithAssignment(null);
   };
 
+  const formatDateForDisplay = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+      return "Today";
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return "Tomorrow";
+    } else {
+      return date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    }
+  };
+
   return (
     <div>
       {taskList.length === 0 ? (
@@ -111,92 +155,56 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, onRefres
           </p>
         </div>
       ) : (
-        <ul className="space-y-2">
-          {taskList.map((task) => (
-            <li 
-              key={task.task_id} 
-              onMouseEnter={() => setHoveredTaskId(task.task_id)}
-              onMouseLeave={() => setHoveredTaskId(null)}
-            >
-              <div className={`w-full border-2 ${
-                showCompleteButton 
-                  ? `border-${task.course_color}-200 bg-white`
-                  : 'border-green-200 bg-green-50'
-              } rounded-xl transition-all duration-300 ease-in-out ${
-                hoveredTaskId === task.task_id ? (
-                  showCompleteButton 
-                    ? `shadow-lg border-${task.course_color}-300 scale-[1.01]`
-                    : 'shadow-lg border-green-300 scale-[1.01]' 
-                ) : 'shadow-sm'
-              }`}>
-                {/* Task header - always visible */}
-                <div className="flex items-center justify-between p-4">
-                  <div className="flex-1 min-w-0 mr-4">
-                    <h3 className="font-semibold text-lg text-gray-900 mb-1 leading-tight">
-                      {task.description}
-                    </h3>
-                    <span className={`inline-block rounded-full text-sm mt-1 font-medium text-white py-1 px-3 truncate max-w-full ${
-                      task.course_color ? `bg-${task.course_color}-400` : 'bg-gray-400'
-                    }`}>
-                      {task.course_name || 'Personal'}
-                    </span>
-                  </div>
-                  
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-lg font-bold text-gray-900">
-                      {new Date(task.scheduled_end_at).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}
-                    </p>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">due</p>
-                  </div>
+        <div>
+          {dateString && (
+            <h3 className="text-lg font-medium text-gray-700 mb-2 border-b border-gray-200 pb-1">
+              {formatDateForDisplay(dateString)}
+              <span className="ml-2 text-sm font-normal text-gray-500">
+                ({tasks.length} task{tasks.length !== 1 ? 's' : ''})
+              </span>
+            </h3>
+          )}
+          
+          <ul className="space-y-2">
+            {Array.isArray(displayedTasks) ? displayedTasks.map((task) => (
+              <TaskComponent
+                key={task.task_id}
+                task={task}
+                onCompleteTask={handleCompleteTask}
+                showCompleteButton={showCompleteButton}
+                isCompleting={isCompleting}
+              />
+            )) : (
+              <li>
+                <div className="text-center py-4 text-red-500">
+                  Error: Invalid task data received
                 </div>
-
-                {/* Task actions - shown on hover */}
-                {showCompleteButton && (
-                  <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                    hoveredTaskId === task.task_id 
-                      ? 'max-h-24 opacity-100' 
-                      : 'max-h-0 opacity-0'
-                  }`}>
-                    <div className="px-4 pb-4 pt-0 border-t border-orange-100">
-                      <div className="flex items-center justify-between gap-4 mt-3">
-                        {/* Task points display */}
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xl">🪙</span>
-                          <span className="text-sm font-semibold text-gray-700">
-                            Complete task to earn points!
-                          </span>
-                        </div>
-
-                        {/* Complete button */}
-                        <button
-                          onClick={() => handleCompleteTask(task)}
-                          disabled={isCompleting}
-                          className={`px-5 py-2 text-white font-semibold text-sm bg-gradient-to-r from-orange-400 to-orange-500 rounded-lg shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 ${
-                            isCompleting ? 'opacity-50 cursor-not-allowed' : ''
-                          }`}
-                        >
-                          {isCompleting ? 'Completing...' : '✓ Complete'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+              </li>
+            )}
+          </ul>
+          
+          {/* Show More / Collapse Controls */}
+          {hasMoreTasks && (
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={toggleShowAllTasks}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex items-center gap-2"
+              >
+                {showAllTasks ? (
+                  <>
+                    <span>▲</span>
+                    Collapse ({taskList.length - tasksPerPage} less)
+                  </>
+                ) : (
+                  <>
+                    <span>▼</span>
+                    Show More ({taskList.length - tasksPerPage} more)
+                  </>
                 )}
-
-                {/* Completed status - shown for completed tasks */}
-                {!showCompleteButton && (
-                  <div className="px-4 pb-4 pt-0 border-t border-green-100">
-                    <div className="flex items-center justify-center gap-2 mt-3">
-                      <span className="text-xl">✅</span>
-                      <span className="text-sm font-semibold text-green-700">
-                        Task Completed!
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+              </button>
+            </div>
+          )}
+        </div>
       )}
       
       {/* Task Completion Overlay */}
@@ -222,4 +230,4 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, onRefres
   );
 }
 
-export default TaskContainer;
+export default MultipleTaskContainer;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiService, User } from '../../api-contexts/user-context';
-import TaskContainer from '../../components/task-container';
+import MultipleTaskContainer from '../../components/multiple-task-container';
 
 interface TasksProps {
   user?: User | null;
@@ -279,7 +279,7 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
       </div>
 
       {/* TaskContainer - pass filtered tasks and control complete button visibility */}
-      <TaskContainer
+      <MultipleTaskContainer
         tasks={filteredTasks}
         userId={userId}
         onTaskCompleted={handleTaskCompleted}
