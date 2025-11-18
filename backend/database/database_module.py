@@ -173,6 +173,7 @@ def create_assignments_table(cursor):
         due_date TIMESTAMP NOT NULL,
         completion_points INT NOT NULL,
         is_complete BOOLEAN NOT NULL,
+        actual_completion_date TIMESTAMP,
         FOREIGN KEY (course_id) REFERENCES courses(course_id)
     )
     """)
@@ -192,6 +193,7 @@ def create_tasks_table(cursor):
         scheduled_end_at TIMESTAMP,
         is_completed BOOLEAN NOT NULL,
         completion_date_at TIMESTAMP,
+        is_last_task BOOLEAN,
         reward_points INT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(user_id),
         FOREIGN KEY (assignment_id) REFERENCES assignments(assignment_id),
@@ -208,7 +210,8 @@ def create_blind_box_series_table(cursor):
         name VARCHAR(100) NOT NULL,
         description STRING,
         cost_points INT NOT NULL,
-        release_date TIMESTAMP
+        release_date TIMESTAMP,
+        image STRING
     )
     """)
 
@@ -222,6 +225,7 @@ def create_blind_box_figures_table(cursor):
         name VARCHAR(100) NOT NULL,
         rarity VARCHAR(50),
         weight FLOAT, -- relative probability weight for random draws
+        image STRING,
         FOREIGN KEY (series_id) REFERENCES blind_box_series(series_id)
     )
     """)
