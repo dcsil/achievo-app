@@ -193,11 +193,85 @@ const AddTask: React.FC<AddTaskProps> = ({ user, userId = 'paul_paw_test' }) => 
       };
 
       const response = await tasksApiService.createTask(taskData);
-      
-      setMessage({ 
-        type: 'success', 
-        text: `Task created successfully! 🎉 Task ID: ${response.task_id.slice(0, 8)}...` 
-      });
+
+      // create notification for reminder at scheduled at time
+      // if task is personal, add notification for scheduled start time
+      if (formData.type === 'personal' && formData.scheduled_start_at) {
+        const notifId = `personal-${response.task_id}`;
+        const startTime = new Date(formData.scheduled_start_at).getTime();
+        const now = Date.now();
+        
+        // Only create alarm if the scheduled time is in the future
+        if (startTime > now) {
+          try {
+            chrome.alarms.create(notifId, { when: startTime });
+            console.log(`Alarm created for task ${response.task_id} at ${new Date(startTime)}`);
+            
+            // Show confirmation that reminder is set
+            setMessage({
+              type: 'success',
+              text: `Task created successfully! 🎉 Reminder set for ${new Date(startTime).toLocaleString()}`
+            });
+          } catch (error) {
+            console.error('Failed to create alarm:', error);
+            setMessage({
+              type: 'success',
+              text: `Task created successfully! ⚠️ Could not set reminder - please check extension permissions.`
+            });
+          }
+        } else {
+          // If scheduled time is in the past, show warning
+          setMessage({
+            type: 'success',
+            text: `Task created successfully! ⚠️ Note: Scheduled time is in the past, no reminder set.`
+          });
+        }
+      } else {
+        // For non-personal tasks, show standard success message
+        setMessage({
+          type: 'success',
+          text: `Task created successfully! 🎉 Task ID: ${response.task_id.slice(0, 8)}...`
+        });
+      }
+
+      // if it's work/study related, turn on the do tasks reminders
+      const workStudyTypes = ['assignment', 'study', 'project', 'reading', 'research'];
+      if (workStudyTypes.includes(formData.type)) {
+        const taskReminderNotifId = 'task-reminder';
+        
+        // Check if daily task reminder alarm already exists
+        chrome.alarms.get(taskReminderNotifId, (alarm) => {
+          if (!alarm) {
+            // Set up daily recurring alarm at 11:00 PM
+            const now = new Date();
+            const reminderTime = new Date();
+            reminderTime.setHours(23, 0, 0, 0); // 11:00 PM daily
+
+            // If 11 PM has already passed today, start tomorrow
+            if (reminderTime <= now) {
+              reminderTime.setDate(reminderTime.getDate() + 1);
+            }
+            
+            // Create daily recurring alarm
+            chrome.alarms.create(taskReminderNotifId, {
+              when: reminderTime.getTime(),
+              periodInMinutes: 24 * 60 // Repeat every 24 hours (1440 minutes)
+            });
+            
+            // Set up alarm listener for the notification
+            chrome.alarms.onAlarm.addListener((alarm) => {
+              if (alarm.name === taskReminderNotifId) {
+                chrome.notifications.create(`${taskReminderNotifId}-${Date.now()}`, {
+                  type: 'basic',
+                  iconUrl: '../../assets/achievo-clap-transparent.png',
+                  title: 'Daily Task Reminder',
+                  message: 'Time to tackle your work/study tasks! Stay focused and earn those points! 🎯📚',
+                });
+              }
+            });
+          }
+        });
+      }
       
       resetForm();
 

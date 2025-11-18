@@ -6,7 +6,7 @@ import TaskComplete from '../task-complete';
 interface TaskContainerProps {
   tasks: any[];
   userId: string;
-  onTaskCompleted?: (taskId: string, pointsEarned: number, courseId?: string) => void;
+  onTaskCompleted?: (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => void;
   onTasksUpdate?: (tasks: any[]) => void;
 }
 
@@ -45,7 +45,7 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskCo
       
       // Notify parent component
       if (onTaskCompleted) {
-        onTaskCompleted(task.task_id, response.points_earned, task.course_id);
+        onTaskCompleted(task.task_id, task.type, response.points_earned, task.course_id);
       }
       
       if (onTasksUpdate) {

@@ -32,7 +32,7 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
     }
   };
 
-  const handleTaskCompleted = async (taskId: string, pointsEarned: number, courseId?: string) => {
+  const handleTaskCompleted = async (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => {
     // Remove completed task from all tasks
     setAllTasks(prev => prev.filter(task => task.task_id !== taskId));
     
@@ -50,6 +50,58 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
     } catch (err) {
       console.error('Failed to refresh user data:', err);
     }
+
+    // Clear any scheduled notifications for this completed task
+    try {
+
+      // if personal notification alarm exists, clear it
+      if (taskType === 'personal') {
+
+        const alarmId = `personal-${taskId}`;
+        
+        // Check if alarm exists before trying to clear it
+        chrome.alarms.get(alarmId, (alarm) => {
+          if (alarm) {
+            chrome.alarms.clear(alarmId, (wasCleared) => {
+              if (wasCleared) {
+                console.log(`✅ Cleared notification alarm for task ${taskId}`);
+              } else {
+                console.warn(`⚠️ Failed to clear alarm for task ${taskId}`);
+              }
+            });
+          } else {
+            console.log(`ℹ️ No alarm found for task ${taskId} - already cleared or not set`);
+          }
+        });
+      }
+
+      const workStudyTypes = ['assignment', 'study', 'project', 'reading', 'research'];
+      // for work/study tasks, if there are no more left of the same type, clear the recurring alarm
+      if (workStudyTypes.includes(taskType)) {
+        const nonCompletedTasks = allTasks.filter(task => task.is_completed === false);
+        const remainingTasks = nonCompletedTasks.filter(task => task.task_type === taskType && task.task_id !== taskId);
+        if (remainingTasks.length === 0) {
+          const alarmId = 'task-reminder';
+          chrome.alarms.get(alarmId, (alarm) => {
+            if (alarm) {
+              chrome.alarms.clear(alarmId, (wasCleared) => {
+                if (wasCleared) {
+                  console.log(`✅ Cleared recurring alarm for task type ${taskType}`);
+                }
+                else {
+                  console.warn(`⚠️ Failed to clear recurring alarm for task type ${taskType}`);
+                }
+              });
+            }
+          });
+        }
+      }
+
+    } catch (notifError) {
+      // Don't let notification errors break the completion flow
+      console.warn('Failed to clear task notification in Home component:', notifError);
+    }
+
   };
 
   const handleTasksUpdate = (updatedTasks: any[]) => {
