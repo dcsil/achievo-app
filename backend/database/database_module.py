@@ -136,6 +136,9 @@ def create_users_table(cursor):
     CREATE TABLE IF NOT EXISTS users (
         user_id VARCHAR(50) PRIMARY KEY,
         canvas_username VARCHAR(255),
+        canvas_domain STRING,
+        canvas_api_key STRING,
+        profile_picture STRING,
         total_points INT NOT NULL,
         current_level INT NOT NULL,
         last_activity_at TIMESTAMP
