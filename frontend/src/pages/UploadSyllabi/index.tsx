@@ -179,7 +179,7 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
             "user_id": "paul_paw_test"
           }
         ],
-        "tasks_found": 3,
+        "tasks_found": 2,
         "total_micro_tasks": 6
       } as SyllabiResult;
 
@@ -318,13 +318,6 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
                 </div>
               </div>
             )}
-
-            {/* Help text */}
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-6"> 
-              <p className="text-blue-700 text-sm">
-                💡 To add these tasks to your schedule, visit the <strong>Add Task</strong> page and create them manually with the details shown above.
-              </p>
-            </div>
 
             {/* Actions */}
             <div className="text-center pt-4 border-t">
