@@ -26,12 +26,18 @@ SET timezone = 'UTC';
 CREATE TABLE IF NOT EXISTS users (
   user_id VARCHAR(50) PRIMARY KEY,
   canvas_username VARCHAR(255),
+  canvas_domain TEXT,
+  canvas_api_key TEXT, -- encrypted at rest via pgsodium security label in production
+  profile_picture TEXT,
   total_points INTEGER NOT NULL DEFAULT 0,
   current_level INTEGER NOT NULL DEFAULT 0,
   last_activity_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- If pgsodium is enabled and a key named 'api_key' exists, apply transparent encryption:
+-- SECURITY LABEL FOR pgsodium ON COLUMN users.canvas_api_key IS 'ENCRYPT WITH KEY api_key';
 
 -- 2) courses
 CREATE TABLE IF NOT EXISTS courses (
