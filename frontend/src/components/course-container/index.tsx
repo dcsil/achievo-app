@@ -23,7 +23,9 @@ function CourseContainer ({ name, courseId, color, refreshKey }: { name: string,
             }
         };
 
-        fetchAssignments();
+        if (courseId) {
+            fetchAssignments();
+        }
     }, [courseId, name, refreshKey]);
 
     return (
@@ -48,7 +50,8 @@ function CourseContainer ({ name, courseId, color, refreshKey }: { name: string,
                 
                 {!loading && !error && assignList.length === 0 && (
                     <div className="text-center py-3">
-                        <p className="text-gray-500 text-sm">No assignments!</p>
+                        <p className="text-gray-500 text-sm">No assignments found</p>
+                        <p className="text-gray-400 text-xs mt-1">Upload your timetable or syllabus to populate assignments</p>
                     </div>
                 )}
                 

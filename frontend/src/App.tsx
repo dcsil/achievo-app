@@ -8,6 +8,7 @@ import Rewards from './pages/Rewards';
 import Settings from './pages/Settings';
 import ToDo from './pages/ToDo';
 import AddTask from './pages/AddTask';
+import UploadTimetable from './pages/UploadTimetable';
 import Layout from './components/layout';
 
 
@@ -26,6 +27,7 @@ function App() {
           <Route path="/todo" element={<Layout><ToDo /></Layout>} />
           <Route path="/settings" element={<Layout><Settings /></Layout>} />
           <Route path="/add-task" element={<Layout><AddTask /></Layout>} />
+          <Route path="/upload-timetable" element={<UploadTimetable />} />
           {/* Redirect any unknown routes to landing page */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

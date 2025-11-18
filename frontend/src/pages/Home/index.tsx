@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiService, User } from '../../api-contexts/user-context';
 import TaskContainer from '../../components/task-container';
 import CourseContainer from '../../components/course-container';
@@ -11,6 +12,7 @@ interface HomeProps {
 }
 
 const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_test' }) => {
+  const navigate = useNavigate();
   const [todayTasks, setTodayTasks] = useState<any[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -227,6 +229,40 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
                 />
               </div>
             ))}
+        </div>
+
+        {/* Quick Actions Section */}
+        <div className="max-w-md mx-auto p-2 mb-6">
+          <h2 className="text-xl font-semibold text-left mb-3">Quick Actions</h2>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                console.log('Navigating to upload-timetable...');
+                navigate('/upload-timetable');
+              }}
+              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-4 hover:scale-105 transition-transform shadow-lg"
+            >
+              <div className="text-center">
+                <div className="text-2xl mb-2">📅</div>
+                <div className="font-bold text-sm">Upload Timetable</div>
+                <div className="text-xs opacity-90 mt-1">Import your class schedule</div>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => {
+                console.log('Navigating to add-task...');
+                navigate('/add-task');
+              }}
+              className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl p-4 hover:scale-105 transition-transform shadow-lg"
+            >
+              <div className="text-center">
+                <div className="text-2xl mb-2">➕</div>
+                <div className="font-bold text-sm">Add Task</div>
+                <div className="text-xs opacity-90 mt-1">Create a new task</div>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -9,12 +9,15 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 from app.utils.file_utils import extract_tables_from_pdf
 
-user_id = "YOUR_USER_ID"
+user_id = "paul_paw_test"
 term = "2025 Fall"
-assignment_id = "YOUR_ASSIGNMENT_ID"
+assignment_id = None
 pdf_path = "backend/app/storage/uploads/timetable.pdf"
 
-start_date = date_parse("2025-09-02")
+original_start_date = date_parse("2025-09-02")
+current_date = datetime.now().date()
+start_date = max(original_start_date.date(), current_date)
+start_date = datetime.combine(start_date, datetime.min.time())  # Convert back to datetime
 end_date = date_parse("2025-12-02")
 breaks = [
     (date_parse("2025-10-27"), date_parse("2025-10-31")),
@@ -46,7 +49,7 @@ def extract_timetable_courses(pdf_path, user_id, term):
                     # Initialize course entry if not present
                     if course_code not in courses:
                         courses[course_code] = {
-                            "course_id": course_code,
+                            "course_id": str(uuid.uuid4()),
                             "user_id": user_id,
                             "course_name": course_code,
                             "course_code": course_code,
@@ -136,7 +139,7 @@ def generate_tasks_for_courses(courses, user_id, assignment_id, start_date, end_
                         "user_id": user_id,
                         "assignment_id": assignment_id,
                         "course_id": course["course_id"],
-                        "description": f"{course['course_name']} ({course['course_code']}) class session",
+                        "description": f"{course['course_name']} class session",
                         "type": "class",
                         "scheduled_start_at": start_dt.isoformat(),
                         "scheduled_end_at": end_dt.isoformat(),
