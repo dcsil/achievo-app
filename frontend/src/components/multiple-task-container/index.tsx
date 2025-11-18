@@ -13,9 +13,10 @@ interface MultipleTaskContainerProps {
   onRefreshData?: () => void;
   showCompleteButton?: boolean;
   dateString?: string;
+  timeAdjustment?: boolean;  // UTC to EST?
 }
 
-function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, onRefreshData, showCompleteButton = true, dateString }: MultipleTaskContainerProps) {
+function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, onRefreshData, showCompleteButton = true, dateString, timeAdjustment = true }: MultipleTaskContainerProps) {
   const [showOverlay, setShowOverlay] = useState(false);
   const [taskList, setTaskList] = useState(Array.isArray(tasks) ? tasks : []);
   const [pointsEarned, setPointsEarned] = useState(0);
@@ -173,6 +174,7 @@ function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, 
                 onCompleteTask={handleCompleteTask}
                 showCompleteButton={showCompleteButton}
                 isCompleting={isCompleting}
+                timeAdjustment={timeAdjustment}
               />
             )) : (
               <li>
