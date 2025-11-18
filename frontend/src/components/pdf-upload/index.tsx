@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface PdfUploadFormProps {
   courses: Array<{ course_id: string; name: string }>;
@@ -28,6 +28,34 @@ const PdfUploadForm: React.FC<PdfUploadFormProps> = ({
   subtitle = "Select a course and upload a PDF file"
 }) => {
   const needsCourseSelection = courses.length > 0;
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile && droppedFile.type === 'application/pdf') {
+      // Create a proper fake event or use a more direct approach
+      const fakeEvent = {
+        target: { files: [droppedFile] }
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
+      onFileSelect(fakeEvent);
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -64,7 +92,16 @@ const PdfUploadForm: React.FC<PdfUploadFormProps> = ({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             PDF File *
           </label>
-          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-orange-400 transition-colors">
+          <div 
+            className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
+              dragOver 
+                ? 'border-orange-400 bg-orange-50' 
+                : 'border-gray-300 hover:border-orange-400'
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             <div className="space-y-4">
               <div className="flex justify-center">
                 <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
