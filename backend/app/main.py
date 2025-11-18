@@ -245,6 +245,7 @@ def post_db_task():
     scheduled_end_at = payload.get("scheduled_end_at")
     is_completed = payload.get("is_completed", False)
     reward_points = payload.get("reward_points", 0)
+    is_last_task = payload.get("is_last_task")
 
     if not task_id or not user_id or not description or not task_type:
         return jsonify({"error": "task_id, user_id, description, and type are required"}), 400
@@ -260,7 +261,8 @@ def post_db_task():
             scheduled_start_at=scheduled_start_at,
             scheduled_end_at=scheduled_end_at,
             is_completed=is_completed,
-            reward_points=reward_points
+            reward_points=reward_points,
+            is_last_task=is_last_task
         )
         return jsonify({"status": "created", "task_id": task_id}), 201
     except Exception as e:
@@ -391,6 +393,7 @@ def post_db_assignment():
     due_date = payload.get("due_date")
     completion_points = payload.get("completion_points", 0)
     is_complete = payload.get("is_complete", False)
+    actual_completion_date = payload.get("actual_completion_date")
 
     if not assignment_id or not course_id or not title or not due_date:
         return jsonify({"error": "assignment_id, course_id, title, and due_date are required"}), 400
@@ -402,7 +405,8 @@ def post_db_assignment():
             title=title,
             due_date=due_date,
             completion_points=completion_points,
-            is_complete=is_complete
+            is_complete=is_complete,
+            actual_completion_date=actual_completion_date
         )
         return jsonify({"status": "created", "assignment_id": assignment_id}), 201
     except Exception as e:
@@ -657,11 +661,13 @@ def purchase_blind_box():
             "purchase_id": purchase_id,
             "series_id": series_id,
             "series_name": series.get("name"),
+            "series_image": series.get("image"),
             "cost_points": series_cost,
             "awarded_figure": {
                 "figure_id": selected_figure.get("figure_id"),
                 "name": selected_figure.get("name"),
-                "rarity": selected_figure.get("rarity")
+                "rarity": selected_figure.get("rarity"),
+                "image": selected_figure.get("image")
             },
             "remaining_points": new_points
         }), 201
