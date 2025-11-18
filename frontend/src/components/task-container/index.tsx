@@ -175,6 +175,7 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskCo
             isOpen={showOverlay}
             task={{
               title: selectedTaskWithAssignment.description,
+              course_color: selectedTaskWithAssignment.course_color,
               id: selectedTaskWithAssignment.task_id
             }}
             assignment={selectedTaskWithAssignment.completedAssignmentTitle}

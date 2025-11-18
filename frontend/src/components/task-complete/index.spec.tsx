@@ -21,6 +21,7 @@ describe('TaskComplete Component', () => {
     isOpen: true,
     task: {
       title: 'Complete project proposal',
+      course_color: 'blue',
       id: 'task-123'
     },
     assignment : null,
@@ -61,6 +62,7 @@ describe('TaskComplete Component', () => {
     test('renders with provided task title', async () => {
       const customTask = {
         title: 'Custom task title',
+        course_color: 'red',
         id: 'custom-task'
       };
       
@@ -533,6 +535,7 @@ describe('TaskComplete Component', () => {
     test('handles task with very long title', async () => {
       const longTask = { 
         title: 'This is a very long task title that might overflow the container', 
+        course_color: 'blue',
         id: 'long-task' 
       };
       
@@ -546,6 +549,7 @@ describe('TaskComplete Component', () => {
     test('handles special characters in task title', async () => {
       const specialTask = { 
         title: 'Task with special chars: @#$%^&*()', 
+        course_color: 'green',
         id: 'special-task' 
       };
       

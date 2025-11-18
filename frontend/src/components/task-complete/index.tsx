@@ -6,6 +6,7 @@ interface TaskCompleteProps {
   isOpen: boolean;
   task: {
     title: string;
+    course_color: string;
     id: string;
   };
   assignment: string | null;
@@ -104,9 +105,9 @@ const TaskComplete: React.FC<TaskCompleteProps> = ({
                 <p className="text-gray-600 text-sm mb-1">From completing task:</p>
                 <p className="text-gray-800 font-semibold">"{taskCompleted}"</p>
                 {assignment && assignment.trim() !== '' && (
-                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-green-700 text-sm font-medium">🎉 Assignment Completed!</p>
-                    <p className="text-green-800 font-semibold">"{assignment}"</p>
+                  <div className={`mt-2 p-2 bg-${task.course_color}-50 border border-${task.course_color}-200 rounded-lg`}>
+                    <p className={`text-${task.course_color}-700 text-sm font-medium`}>🎉 Assignment Completed!</p>
+                    <p className={`text-${task.course_color}-800 font-semibold`}>"{assignment}"</p>
                   </div>
                 )}
               </div>

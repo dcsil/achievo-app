@@ -297,6 +297,7 @@ def complete_db_task(task_id):
         # Complete the task
         task_repo.complete_task(task_id)
         
+        description = task.get("description")
         assignment_id = task.get("assignment_id")
         reward_points = task.get("reward_points", 0)
         user_id = task.get("user_id")
@@ -307,7 +308,7 @@ def complete_db_task(task_id):
         if assignment_id:
             uncompleted_tasks = task_repo.fetch_uncompleted_by_assignment(assignment_id)
             
-            if len(uncompleted_tasks) == 0:
+            if len(uncompleted_tasks) == 0 or description == "Submit Assignment":
                 assignment_repo.complete_assignment(assignment_id)
                 assignment = assignment_repo.fetch_by_id(assignment_id)
                 completion_points = assignment.get("completion_points", 0) if assignment else 0
@@ -315,6 +316,11 @@ def complete_db_task(task_id):
 
                 if user_id:
                     users_repo.update_points(user_id, completion_points)
+                
+                if description == "Submit Assignment" and len(uncompleted_tasks) > 0:
+                    # set all other tasks for this assignment to completed, but don't award points
+                    for t in uncompleted_tasks:
+                        task_repo.complete_task(t.get("task_id"))
                 
                 return jsonify({
                     "status": "completed",
