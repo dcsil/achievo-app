@@ -8,17 +8,17 @@ class BlindBoxSeriesRepository:
 
     def fetch_all(self) -> List[Dict]:
         client = DBClient.connect()
-        res = client.table(self.table).select("series_id,name,description,cost_points,release_date").execute()
+        res = client.table(self.table).select("series_id,name,description,cost_points,release_date,image").execute()
         return res.data or []
 
     def fetch_affordable_series(self, user_points: int) -> List[Dict]:
         client = DBClient.connect()
-        res = client.table(self.table).select("series_id,name,description,cost_points,release_date").lte("cost_points", user_points).execute()
+        res = client.table(self.table).select("series_id,name,description,cost_points,release_date,image").lte("cost_points", user_points).execute()
         return res.data or []
 
     def fetch_by_id(self, series_id: str) -> Optional[Dict]:
         client = DBClient.connect()
-        res = client.table(self.table).select("series_id,name,description,cost_points,release_date").eq("series_id", series_id).execute()
+        res = client.table(self.table).select("series_id,name,description,cost_points,release_date,image").eq("series_id", series_id).execute()
         rows = res.data or []
         return rows[0] if rows else None
 
@@ -29,6 +29,7 @@ class BlindBoxSeriesRepository:
         description: str,
         cost_points: int,
         release_date: str = None,
+        image: Optional[str] = None,
     ) -> bool:
         client = DBClient.connect()
         payload = {
@@ -37,6 +38,7 @@ class BlindBoxSeriesRepository:
             "description": description,
             "cost_points": cost_points,
             "release_date": release_date,
+            "image": image,
         }
         # Remove None values
         clean_payload = {k: v for k, v in payload.items() if v is not None}

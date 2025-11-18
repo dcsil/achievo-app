@@ -8,7 +8,7 @@ class UserBlindBoxesRepository:
 
     join_select = (
         "purchase_id,user_id,series_id,purchased_at,opened_at,awarded_figure_id," \
-        "blind_box_figures(name,rarity),blind_box_series(name)"
+        "blind_box_figures(name,rarity,image),blind_box_series(name,image)"
     )
 
     def _flatten(self, rows: List[Dict]) -> List[Dict]:
@@ -19,13 +19,17 @@ class UserBlindBoxesRepository:
             if isinstance(fig, dict):
                 r["figure_name"] = fig.get("name")
                 r["figure_rarity"] = fig.get("rarity")
+                r["figure_image"] = fig.get("image")
             elif isinstance(fig, list) and fig:
                 r["figure_name"] = fig[0].get("name")
                 r["figure_rarity"] = fig[0].get("rarity")
+                r["figure_image"] = fig[0].get("image")
             if isinstance(ser, dict):
                 r["series_name"] = ser.get("name")
+                r["series_image"] = ser.get("image")
             elif isinstance(ser, list) and ser:
                 r["series_name"] = ser[0].get("name")
+                r["series_image"] = ser[0].get("image")
             r.pop("blind_box_figures", None)
             r.pop("blind_box_series", None)
             flattened.append(r)

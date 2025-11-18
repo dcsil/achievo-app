@@ -166,6 +166,9 @@ def post_db_user():
     payload = request.get_json() or {}
     user_id = payload.get("user_id")
     canvas_username = payload.get("canvas_username")
+    canvas_domain = payload.get("canvas_domain")
+    canvas_api_key = payload.get("canvas_api_key")
+    profile_picture = payload.get("profile_picture")
     total_points = payload.get("total_points", 0)
     current_level = payload.get("current_level", 0)
 
@@ -173,7 +176,15 @@ def post_db_user():
         return jsonify({"error": "user_id is required"}), 400
 
     try:
-        UsersRepository().create(user_id=user_id, canvas_username=canvas_username, total_points=total_points, current_level=current_level)
+        UsersRepository().create(
+            user_id=user_id,
+            canvas_username=canvas_username,
+            canvas_domain=canvas_domain,
+            canvas_api_key=canvas_api_key,  # write-only; not returned in API responses
+            profile_picture=profile_picture,
+            total_points=total_points,
+            current_level=current_level,
+        )
         return jsonify({"status": "created", "user_id": user_id}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -234,6 +245,7 @@ def post_db_task():
     scheduled_end_at = payload.get("scheduled_end_at")
     is_completed = payload.get("is_completed", False)
     reward_points = payload.get("reward_points", 0)
+    is_last_task = payload.get("is_last_task")
 
     if not task_id or not user_id or not description or not task_type:
         return jsonify({"error": "task_id, user_id, description, and type are required"}), 400
@@ -249,7 +261,8 @@ def post_db_task():
             scheduled_start_at=scheduled_start_at,
             scheduled_end_at=scheduled_end_at,
             is_completed=is_completed,
-            reward_points=reward_points
+            reward_points=reward_points,
+            is_last_task=is_last_task
         )
         return jsonify({"status": "created", "task_id": task_id}), 201
     except Exception as e:
@@ -380,6 +393,7 @@ def post_db_assignment():
     due_date = payload.get("due_date")
     completion_points = payload.get("completion_points", 0)
     is_complete = payload.get("is_complete", False)
+    actual_completion_date = payload.get("actual_completion_date")
 
     if not assignment_id or not course_id or not title or not due_date:
         return jsonify({"error": "assignment_id, course_id, title, and due_date are required"}), 400
@@ -391,7 +405,8 @@ def post_db_assignment():
             title=title,
             due_date=due_date,
             completion_points=completion_points,
-            is_complete=is_complete
+            is_complete=is_complete,
+            actual_completion_date=actual_completion_date
         )
         return jsonify({"status": "created", "assignment_id": assignment_id}), 201
     except Exception as e:
@@ -646,11 +661,13 @@ def purchase_blind_box():
             "purchase_id": purchase_id,
             "series_id": series_id,
             "series_name": series.get("name"),
+            "series_image": series.get("image"),
             "cost_points": series_cost,
             "awarded_figure": {
                 "figure_id": selected_figure.get("figure_id"),
                 "name": selected_figure.get("name"),
-                "rarity": selected_figure.get("rarity")
+                "rarity": selected_figure.get("rarity"),
+                "image": selected_figure.get("image")
             },
             "remaining_points": new_points
         }), 201
