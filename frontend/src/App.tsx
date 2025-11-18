@@ -27,7 +27,7 @@ function App() {
           <Route path="/todo" element={<Layout><ToDo /></Layout>} />
           <Route path="/settings" element={<Layout><Settings /></Layout>} />
           <Route path="/add-task" element={<Layout><AddTask /></Layout>} />
-          <Route path="/upload-timetable" element={<UploadTimetable />} />
+          <Route path="/upload-timetable" element={<Layout><UploadTimetable /></Layout>} />
           {/* Redirect any unknown routes to landing page */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
