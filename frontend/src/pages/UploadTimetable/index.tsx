@@ -308,14 +308,6 @@ const UploadTimetable: React.FC<UploadTimetableProps> = ({ user, userId = 'paul_
                             onTaskCompleted={() => {}}
                             onTasksUpdate={() => {}}
                           />
-                          
-                          {courseTasks.length > 5 && (
-                            <div className="text-center py-2">
-                              <p className="text-gray-500 text-sm">
-                                Showing 5 of {courseTasks.length} tasks for this course
-                              </p>
-                            </div>
-                          )}
                         </div>
                       ) : (
                         <p className="text-gray-500 text-sm text-center">No tasks generated for this course</p>
