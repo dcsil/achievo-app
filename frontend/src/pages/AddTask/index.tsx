@@ -233,45 +233,6 @@ const AddTask: React.FC<AddTaskProps> = ({ user, userId = 'paul_paw_test' }) => 
           text: `Task created successfully! 🎉 Task ID: ${response.task_id.slice(0, 8)}...`
         });
       }
-
-      // if it's work/study related, turn on the do tasks reminders
-      const workStudyTypes = ['assignment', 'study', 'project', 'reading', 'research'];
-      if (workStudyTypes.includes(formData.type)) {
-        const taskReminderNotifId = 'task-reminder';
-        
-        // Check if daily task reminder alarm already exists
-        chrome.alarms.get(taskReminderNotifId, (alarm) => {
-          if (!alarm) {
-            // Set up daily recurring alarm at 11:00 PM
-            const now = new Date();
-            const reminderTime = new Date();
-            reminderTime.setHours(23, 0, 0, 0); // 11:00 PM daily
-
-            // If 11 PM has already passed today, start tomorrow
-            if (reminderTime <= now) {
-              reminderTime.setDate(reminderTime.getDate() + 1);
-            }
-            
-            // Create daily recurring alarm
-            chrome.alarms.create(taskReminderNotifId, {
-              when: reminderTime.getTime(),
-              periodInMinutes: 24 * 60 // Repeat every 24 hours (1440 minutes)
-            });
-            
-            // Set up alarm listener for the notification
-            chrome.alarms.onAlarm.addListener((alarm) => {
-              if (alarm.name === taskReminderNotifId) {
-                chrome.notifications.create(`${taskReminderNotifId}-${Date.now()}`, {
-                  type: 'basic',
-                  iconUrl: '../../assets/achievo-clap-transparent.png',
-                  title: 'Daily Task Reminder',
-                  message: 'Time to tackle your work/study tasks! Stay focused and earn those points! 🎯📚',
-                });
-              }
-            });
-          }
-        });
-      }
       
       resetForm();
 

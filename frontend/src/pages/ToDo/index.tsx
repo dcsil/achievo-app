@@ -75,28 +75,6 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
         });
       }
 
-      const workStudyTypes = ['assignment', 'study', 'project', 'reading', 'research'];
-      // for work/study tasks, if there are no more left of the same type, clear the recurring alarm
-      if (workStudyTypes.includes(taskType)) {
-        const nonCompletedTasks = allTasks.filter(task => task.is_completed === false);
-        const remainingTasks = nonCompletedTasks.filter(task => task.task_type === taskType && task.task_id !== taskId);
-        if (remainingTasks.length === 0) {
-          const alarmId = 'task-reminder';
-          chrome.alarms.get(alarmId, (alarm) => {
-            if (alarm) {
-              chrome.alarms.clear(alarmId, (wasCleared) => {
-                if (wasCleared) {
-                  console.log(`✅ Cleared recurring alarm for task type ${taskType}`);
-                }
-                else {
-                  console.warn(`⚠️ Failed to clear recurring alarm for task type ${taskType}`);
-                }
-              });
-            }
-          });
-        }
-      }
-
     } catch (notifError) {
       // Don't let notification errors break the completion flow
       console.warn('Failed to clear task notification in Home component:', notifError);
