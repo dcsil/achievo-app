@@ -5,6 +5,7 @@ import { addCoursesApiService } from '../../api-contexts/add-courses';
 import { User } from '../../api-contexts/user-context';
 import TaskContainer from '../../components/task-container';
 import CourseContainer from '../../components/course-container';
+import PdfUploadForm from '../../components/pdf-upload';
 
 interface UploadTimetableProps {
   user?: User | null;
@@ -17,7 +18,6 @@ const UploadTimetable: React.FC<UploadTimetableProps> = ({ user, userId = 'paul_
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState<TimetableProcessResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [dragOver, setDragOver] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -28,29 +28,6 @@ const UploadTimetable: React.FC<UploadTimetableProps> = ({ user, userId = 'paul_
       setError(null);
     } else {
       setError('Please select a PDF file');
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && droppedFile.type === 'application/pdf') {
-      setFile(droppedFile);
-      setError(null);
-    } else {
-      setError('Please drop a PDF file');
     }
   };
 
@@ -140,82 +117,20 @@ const UploadTimetable: React.FC<UploadTimetableProps> = ({ user, userId = 'paul_
       </div>
 
       {/* Upload Section */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Upload PDF Timetable</h2>
-        
-        {/* File Drop Zone */}
-        <div
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-            dragOver 
-              ? 'border-orange-400 bg-orange-50' 
-              : 'border-gray-300 hover:border-orange-300'
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          <div className="flex flex-col items-center">
-            <div className="text-4xl mb-4">📄</div>
-            {file ? (
-              <div className="text-center">
-                <p className="text-lg font-medium text-green-600 mb-2">✓ File Selected</p>
-                <p className="text-gray-600">{file.name}</p>
-                <p className="text-sm text-gray-500">Size: {(file.size / 1024 / 1024).toFixed(2)} MB</p>
-              </div>
-            ) : (
-              <div className="text-center">
-                <p className="text-lg font-medium text-gray-700 mb-2">
-                  Drag and drop your PDF timetable here
-                </p>
-                <p className="text-gray-500 mb-4">or click to browse files</p>
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="file-input"
-                />
-                <label
-                  htmlFor="file-input"
-                  className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 cursor-pointer transition-colors"
-                >
-                  Choose PDF File
-                </label>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Error Display */}
-        {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-            ❌ {error}
-          </div>
-        )}
-
-        {/* Upload Button */}
-        {file && (
-          <div className="mt-6 flex justify-center">
-            <button
-              onClick={handleUpload}
-              disabled={isUploading}
-              className={`px-8 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-bold shadow-lg transition-transform ${
-                isUploading 
-                  ? 'opacity-50 cursor-not-allowed' 
-                  : 'hover:scale-105'
-              }`}
-            >
-              {isUploading ? (
-                <>
-                  <span className="inline-block animate-spin mr-2">⏳</span>
-                  Processing Timetable...
-                </>
-              ) : (
-                '🚀 Process Timetable'
-              )}
-            </button>
-          </div>
-        )}
+      <div className="mb-6">
+        <PdfUploadForm
+          courses={[]} // Timetable doesn't need course selection
+          selectedCourseId=""
+          onCourseChange={() => {}} // No-op since no course selection needed
+          selectedFile={file}
+          onFileSelect={handleFileChange}
+          onUpload={handleUpload}
+          isUploading={isUploading}
+          error={error || ''}
+          uploadButtonText="🚀 Process Timetable"
+          title="Upload PDF Timetable"
+          subtitle="Upload your PDF timetable to automatically extract courses and generate class session tasks"
+        />
       </div>
 
       {/* Results Section */}
@@ -327,3 +242,4 @@ const UploadTimetable: React.FC<UploadTimetableProps> = ({ user, userId = 'paul_
 };
 
 export default UploadTimetable;
+          

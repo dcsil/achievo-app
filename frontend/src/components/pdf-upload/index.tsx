@@ -27,6 +27,8 @@ const PdfUploadForm: React.FC<PdfUploadFormProps> = ({
   title = "Upload PDF",
   subtitle = "Select a course and upload a PDF file"
 }) => {
+  const needsCourseSelection = courses.length > 0;
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
       <div className="mb-6">
@@ -35,25 +37,27 @@ const PdfUploadForm: React.FC<PdfUploadFormProps> = ({
       </div>
 
       <div className="space-y-6">
-        {/* Course Selection */}
-        <div>
-          <label htmlFor="course" className="block text-sm font-medium text-gray-700 mb-2">
-            Select Course *
-          </label>
-          <select
-            id="course"
-            value={selectedCourseId}
-            onChange={(e) => onCourseChange(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white text-gray-900"
-          >
-            <option value="">Choose a course...</option>
-            {courses.map((course) => (
-              <option key={course.course_id} value={course.course_id}>
-                {course.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Course Selection - Only show if courses are provided */}
+        {needsCourseSelection && (
+          <div>
+            <label htmlFor="course" className="block text-sm font-medium text-gray-700 mb-2">
+              Select Course *
+            </label>
+            <select
+              id="course"
+              value={selectedCourseId}
+              onChange={(e) => onCourseChange(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white text-gray-900"
+            >
+              <option value="">Choose a course...</option>
+              {courses.map((course) => (
+                <option key={course.course_id} value={course.course_id}>
+                  {course.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* File Upload */}
         <div>
@@ -111,9 +115,9 @@ const PdfUploadForm: React.FC<PdfUploadFormProps> = ({
         {/* Upload Button */}
         <button
           onClick={onUpload}
-          disabled={!selectedFile || !selectedCourseId || isUploading}
+          disabled={!selectedFile || (needsCourseSelection && !selectedCourseId) || isUploading}
           className={`w-full py-3 px-6 rounded-xl font-semibold transition-all duration-200 ${
-            !selectedFile || !selectedCourseId || isUploading
+            !selectedFile || (needsCourseSelection && !selectedCourseId) || isUploading
               ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
               : 'bg-orange-500 text-white hover:bg-orange-600 hover:shadow-lg transform hover:-translate-y-0.5'
           }`}
