@@ -76,8 +76,38 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
     }
   };
 
+  // Function to refresh task data from backend
+  const refreshTaskData = async () => {
+    try {
+      // Fetch fresh task data from backend
+      const tasksData = await apiService.getTasks(userId);
+      
+      // Split tasks into today and upcoming
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const todayTasksList = tasksData.filter((task: any) => {
+        const taskDate = new Date(task.scheduled_end_at);
+        taskDate.setHours(0, 0, 0, 0);
+        return taskDate.getTime() === today.getTime();
+      });
+
+      const upcomingTasksList = tasksData.filter((task: any) => {
+        const taskDate = new Date(task.scheduled_end_at);
+        taskDate.setHours(0, 0, 0, 0);
+        return taskDate.getTime() > today.getTime();
+      });
+
+      setTodayTasks(todayTasksList);
+      setUpcomingTasks(upcomingTasksList);
+      console.log('✅ Refreshed task data from backend');
+    } catch (err) {
+      console.error('Failed to refresh task data:', err);
+    }
+  };
+
   const handleTaskCompleted = async (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => {
-  // Remove the completed task from both lists immediately
+  // Remove the completed task from both lists immediately for better UX
   setTodayTasks(prev => prev.filter(task => task.task_id !== taskId));
   setUpcomingTasks(prev => prev.filter(task => task.task_id !== taskId));
   
@@ -203,6 +233,8 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
             userId={userId}
             onTaskCompleted={handleTaskCompleted}
             onTasksUpdate={(tasks) => handleTasksUpdate(tasks, 'today')}
+            onRefreshData={refreshTaskData}
+            showCompleteButton={true}
           />
         </div>
 
@@ -221,6 +253,8 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
             userId={userId}
             onTaskCompleted={handleTaskCompleted}
             onTasksUpdate={(tasks) => handleTasksUpdate(tasks, 'upcoming')}
+            onRefreshData={refreshTaskData}
+            showCompleteButton={true}
           />
         </div>
 

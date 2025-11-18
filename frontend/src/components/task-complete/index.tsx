@@ -11,6 +11,7 @@ interface TaskCompleteProps {
   };
   assignment: string | null;
   onClose: () => void;
+  onRefreshData?: () => void;
   coinsEarned?: number;
   userId: string;
 }
@@ -20,6 +21,7 @@ const TaskComplete: React.FC<TaskCompleteProps> = ({
   task, 
   assignment,
   onClose,
+  onRefreshData,
   coinsEarned = 100,
   userId
 }) => {
@@ -56,6 +58,10 @@ const TaskComplete: React.FC<TaskCompleteProps> = ({
 
   const handleFinish = () => {
     onClose();
+    // Refresh data after closing overlay
+    if (onRefreshData) {
+      onRefreshData();
+    }
     // Reset state when closed
     setNewTotal(null);
   };

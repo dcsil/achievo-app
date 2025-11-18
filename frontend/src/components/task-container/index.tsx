@@ -9,9 +9,11 @@ interface TaskContainerProps {
   userId: string;
   onTaskCompleted?: (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => void;
   onTasksUpdate?: (tasks: any[]) => void;
+  onRefreshData?: () => void;
+  showCompleteButton?: boolean;
 }
 
-function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskContainerProps) {
+function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, onRefreshData, showCompleteButton = true }: TaskContainerProps) {
   const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
   const [taskList, setTaskList] = useState(tasks);
@@ -95,10 +97,18 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskCo
   return (
     <div>
       {taskList.length === 0 ? (
-        <div className="text-center py-6 px-4 bg-orange-50 rounded-xl border-2 border-dashed border-orange-200">
-          <div className="text-3xl mb-2">🎉</div>
-          <p className="text-gray-700 font-semibold text-sm">No tasks yet!</p>
-          <p className="text-gray-500 text-xs mt-1">You're all caught up</p>
+        <div className={`text-center py-6 px-4 rounded-xl border-2 border-dashed ${
+          showCompleteButton 
+            ? 'bg-orange-50 border-orange-200' 
+            : 'bg-gray-50 border-gray-200'
+        }`}>
+          <div className="text-3xl mb-2">{showCompleteButton ? '🎉' : '📂'}</div>
+          <p className="text-gray-700 font-semibold text-sm">
+            {showCompleteButton ? 'No tasks yet!' : 'No completed tasks yet!'}
+          </p>
+          <p className="text-gray-500 text-xs mt-1">
+            {showCompleteButton ? 'You\'re all caught up' : 'Complete some tasks to see them here'}
+          </p>
         </div>
       ) : (
         <ul className="space-y-2">
@@ -108,8 +118,16 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskCo
               onMouseEnter={() => setHoveredTaskId(task.task_id)}
               onMouseLeave={() => setHoveredTaskId(null)}
             >
-              <div className={`w-full border-2 border-${task.course_color}-200 bg-white rounded-xl transition-all duration-300 ease-in-out ${
-                hoveredTaskId === task.task_id ? `shadow-lg border-${task.course_color}-300 scale-[1.01]` : 'shadow-sm'
+              <div className={`w-full border-2 ${
+                showCompleteButton 
+                  ? `border-${task.course_color}-200 bg-white`
+                  : 'border-green-200 bg-green-50'
+              } rounded-xl transition-all duration-300 ease-in-out ${
+                hoveredTaskId === task.task_id ? (
+                  showCompleteButton 
+                    ? `shadow-lg border-${task.course_color}-300 scale-[1.01]`
+                    : 'shadow-lg border-green-300 scale-[1.01]' 
+                ) : 'shadow-sm'
               }`}>
                 {/* Task header - always visible */}
                 <div className="flex items-center justify-between p-4">
@@ -133,34 +151,48 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskCo
                 </div>
 
                 {/* Task actions - shown on hover */}
-                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                  hoveredTaskId === task.task_id 
-                    ? 'max-h-24 opacity-100' 
-                    : 'max-h-0 opacity-0'
-                }`}>
-                  <div className="px-4 pb-4 pt-0 border-t border-orange-100">
-                    <div className="flex items-center justify-between gap-4 mt-3">
-                      {/* Task points display */}
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xl">🪙</span>
-                        <span className="text-sm font-semibold text-gray-700">
-                          Complete task to earn points!
-                        </span>
-                      </div>
+                {showCompleteButton && (
+                  <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                    hoveredTaskId === task.task_id 
+                      ? 'max-h-24 opacity-100' 
+                      : 'max-h-0 opacity-0'
+                  }`}>
+                    <div className="px-4 pb-4 pt-0 border-t border-orange-100">
+                      <div className="flex items-center justify-between gap-4 mt-3">
+                        {/* Task points display */}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xl">🪙</span>
+                          <span className="text-sm font-semibold text-gray-700">
+                            Complete task to earn points!
+                          </span>
+                        </div>
 
-                      {/* Complete button */}
-                      <button
-                        onClick={() => handleCompleteTask(task)}
-                        disabled={isCompleting}
-                        className={`px-5 py-2 text-white font-semibold text-sm bg-gradient-to-r from-orange-400 to-orange-500 rounded-lg shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 ${
-                          isCompleting ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
-                      >
-                        {isCompleting ? 'Completing...' : '✓ Complete'}
-                      </button>
+                        {/* Complete button */}
+                        <button
+                          onClick={() => handleCompleteTask(task)}
+                          disabled={isCompleting}
+                          className={`px-5 py-2 text-white font-semibold text-sm bg-gradient-to-r from-orange-400 to-orange-500 rounded-lg shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 ${
+                            isCompleting ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          {isCompleting ? 'Completing...' : '✓ Complete'}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {/* Completed status - shown for completed tasks */}
+                {!showCompleteButton && (
+                  <div className="px-4 pb-4 pt-0 border-t border-green-100">
+                    <div className="flex items-center justify-center gap-2 mt-3">
+                      <span className="text-xl">✅</span>
+                      <span className="text-sm font-semibold text-green-700">
+                        Task Completed!
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </li>
           ))}
@@ -180,6 +212,7 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskCo
             }}
             assignment={selectedTaskWithAssignment.completedAssignmentTitle}
             onClose={handleCloseOverlay}
+            onRefreshData={onRefreshData}
             coinsEarned={pointsEarned}
             userId={userId}
           />
