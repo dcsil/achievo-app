@@ -1,29 +1,45 @@
 import React from 'react';
 
 interface MysteryBoxProps {
+  seriesName: string;
+  description: string;
   cost: number;
   canAfford: boolean;
   isOpening: boolean;
   userPoints: number;
+  seriesImage?: string; // Add series cover image
   onPurchase: () => void;
 }
 
 const MysteryBox: React.FC<MysteryBoxProps> = ({ 
+  seriesName,
+  description,
   cost, 
   canAfford, 
   isOpening, 
   userPoints,
+  seriesImage,
   onPurchase 
 }) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Series 1 Blindbox</h2>
-        <p className="text-gray-600 mb-4">Collect all 12 unique items!</p>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">{seriesName}</h2>
+        <p className="text-gray-600 mb-4">{description}</p>
         
         <div className="relative inline-block mb-6">
-          <div className={`text-8xl transition-transform duration-300 ${isOpening ? 'animate-bounce' : ''}`}>
-            📦
+          <div className={`transition-transform duration-300 ${isOpening ? 'animate-bounce' : ''}`}>
+            {seriesImage ? (
+              <img 
+                src={seriesImage} 
+                alt={seriesName}
+                className="w-32 h-32 object-contain mx-auto"
+              />
+            ) : (
+              <div className="w-32 h-32 bg-gradient-to-br from-orange-400 to-pink-500 rounded-2xl flex items-center justify-center text-white text-4xl font-bold">
+                ?
+              </div>
+            )}
           </div>
           {isOpening && (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -48,14 +64,14 @@ const MysteryBox: React.FC<MysteryBoxProps> = ({
                 Opening...
               </span>
             ) : (
-              <>Open Blindbox - {cost} 🪙</>
+              <>Open Blindbox - {cost} Points</>
             )}
           </button>
         </div>
 
         {!canAfford && (
           <p className="text-red-500 text-sm">
-            Need {cost - userPoints} more coins!
+            Need {cost - userPoints} more points!
           </p>
         )}
       </div>

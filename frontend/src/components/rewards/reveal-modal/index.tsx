@@ -13,9 +13,9 @@ const RevealModal: React.FC<RevealModalProps> = ({ isOpen, item, isDuplicate, on
 
   const getRarityGradient = (rarity: string) => {
     switch (rarity) {
-      case 'legendary': return 'from-yellow-400 to-orange-500';
-      case 'epic': return 'from-purple-400 to-pink-500';
+      case 'secret': return 'from-purple-500 to-pink-500';
       case 'rare': return 'from-blue-400 to-cyan-500';
+      case 'common': return 'from-gray-400 to-gray-500';
       default: return 'from-gray-400 to-gray-500';
     }
   };
@@ -33,8 +33,12 @@ const RevealModal: React.FC<RevealModalProps> = ({ isOpen, item, isDuplicate, on
           <div className="text-6xl mb-4">🎉</div>
           <h3 className="text-2xl font-bold text-gray-800 mb-6">You got!</h3>
           
-          <div className={`text-9xl my-6 animate-bounce`}>
-            {item.emoji}
+          <div className="my-6 flex items-center justify-center">
+            <img 
+              src={item.image} 
+              alt={item.name}
+              className="w-48 h-48 object-contain animate-bounce"
+            />
           </div>
           
           <h4 className="text-3xl font-bold text-gray-800 mb-4">
