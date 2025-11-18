@@ -54,7 +54,7 @@ function AssignmentProgressContainer ({ assignments, color }: { assignments: Ass
                         </p>
                     ) : (
                         <p className="text-xs text-gray-500 mt-1">
-                            {assign.is_complete ? 1 : 0} of 1 task completed
+                            0 of 0 tasks completed
                         </p>
                     )}
                 </div>

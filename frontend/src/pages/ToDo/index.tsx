@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiService, User } from '../../api-contexts/user-context';
-import TaskContainer from '../../components/task-container';
+import MultipleTaskContainer from '../../components/multiple-task-container';
 
 interface TasksProps {
   user?: User | null;
@@ -10,9 +10,10 @@ interface TasksProps {
 
 const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw_test' }) => {
   const [allTasks, setAllTasks] = useState<any[]>([]);
+  const [completedTasks, setCompletedTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue'>('all');
+  const [filter, setFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue' | 'completed'>('all');
 
   useEffect(() => {
     fetchTasks();
@@ -22,8 +23,13 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
     try {
       setLoading(true);
       setError(null);
-      const tasksData = await apiService.getTasks(userId);
+      // Fetch incomplete tasks
+      const tasksData = await apiService.getTasks(userId, undefined, undefined, false);
       setAllTasks(tasksData);
+      
+      // Fetch completed tasks  
+      const completedTasksData = await apiService.getTasks(userId, undefined, undefined, true);
+      setCompletedTasks(completedTasksData);
     } catch (err) {
       console.error('Failed to fetch tasks:', err);
       setError('Failed to load tasks. Please try again later.');
@@ -32,9 +38,31 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
     }
   };
 
-  const handleTaskCompleted = async (taskId: string, pointsEarned: number, courseId?: string) => {
-    // Remove completed task from all tasks
+  // Function to refresh task data from backend without loading state
+  const refreshTaskData = async () => {
+    try {
+      // Fetch fresh incomplete tasks
+      const tasksData = await apiService.getTasks(userId, undefined, undefined, false);
+      setAllTasks(tasksData);
+      
+      // Fetch fresh completed tasks  
+      const completedTasksData = await apiService.getTasks(userId, undefined, undefined, true);
+      setCompletedTasks(completedTasksData);
+      console.log('✅ Refreshed task data from backend');
+    } catch (err) {
+      console.error('Failed to refresh task data:', err);
+    }
+  };
+
+  const handleTaskCompleted = async (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => {
+    // Find the completed task from all tasks
+    const completedTask = allTasks.find(task => task.task_id === taskId);
+    
+    // Remove completed task from all tasks and add to completed tasks
     setAllTasks(prev => prev.filter(task => task.task_id !== taskId));
+    if (completedTask) {
+      setCompletedTasks(prev => [{ ...completedTask, is_completed: true }, ...prev]);
+    }
     
     // Update user points
     if (user && updateUserPoints) {
@@ -50,6 +78,36 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
     } catch (err) {
       console.error('Failed to refresh user data:', err);
     }
+
+    // Clear any scheduled notifications for this completed task
+    try {
+
+      // if personal notification alarm exists, clear it
+      if (taskType === 'personal') {
+
+        const alarmId = `personal-${taskId}`;
+        
+        // Check if alarm exists before trying to clear it
+        chrome.alarms.get(alarmId, (alarm) => {
+          if (alarm) {
+            chrome.alarms.clear(alarmId, (wasCleared) => {
+              if (wasCleared) {
+                console.log(`✅ Cleared notification alarm for task ${taskId}`);
+              } else {
+                console.warn(`⚠️ Failed to clear alarm for task ${taskId}`);
+              }
+            });
+          } else {
+            console.log(`ℹ️ No alarm found for task ${taskId} - already cleared or not set`);
+          }
+        });
+      }
+
+    } catch (notifError) {
+      // Don't let notification errors break the completion flow
+      console.warn('Failed to clear task notification in Home component:', notifError);
+    }
+
   };
 
   const handleTasksUpdate = (updatedTasks: any[]) => {
@@ -64,6 +122,9 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     switch (filter) {
+      case 'completed':
+        return completedTasks;
+        
       case 'today':
         return allTasks.filter(task => {
           const taskDate = new Date(task.scheduled_end_at);
@@ -95,6 +156,9 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
     today.setHours(0, 0, 0, 0);
 
     switch (filterType) {
+      case 'completed':
+        return completedTasks.length;
+        
       case 'today':
         return allTasks.filter(task => {
           const taskDate = new Date(task.scheduled_end_at);
@@ -201,15 +265,27 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
           >
             Overdue ({getFilterCount('overdue')})
           </button>
+          <button
+            onClick={() => setFilter('completed')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              filter === 'completed'
+                ? 'bg-green-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Completed ({getFilterCount('completed')})
+          </button>
         </div>
       </div>
 
-      {/* Your existing TaskContainer - just pass filtered tasks */}
-      <TaskContainer
+      {/* TaskContainer - pass filtered tasks and control complete button visibility */}
+      <MultipleTaskContainer
         tasks={filteredTasks}
         userId={userId}
         onTaskCompleted={handleTaskCompleted}
         onTasksUpdate={handleTasksUpdate}
+        onRefreshData={refreshTaskData}
+        showCompleteButton={filter !== 'completed'}
       />
     </div>
   );

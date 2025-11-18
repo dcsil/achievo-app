@@ -50,17 +50,21 @@ const AddTask: React.FC<AddTaskProps> = ({ user, userId = 'paul_paw_test' }) => 
   const [showTemplates, setShowTemplates] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Set default dates (today and tomorrow)
+  // Set default dates (today and tomorrow) in EST
   useEffect(() => {
     const now = new Date();
     const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    // Convert to EST (UTC-5) by subtracting 5 hours
+    const nowEST = new Date(now.getTime() - 5 * 60 * 60 * 1000);
+    const tomorrowEST = new Date(tomorrow.getTime() - 5 * 60 * 60 * 1000);
+
     setFormData(prev => ({
       ...prev,
-      scheduled_start_at: now.toISOString().slice(0, 16),
-      scheduled_end_at: tomorrow.toISOString().slice(0, 16),
+      scheduled_start_at: nowEST.toISOString().slice(0, 16),
+      scheduled_end_at: tomorrowEST.toISOString().slice(0, 16),
     }));
   }, []);
 
@@ -138,13 +142,17 @@ const AddTask: React.FC<AddTaskProps> = ({ user, userId = 'paul_paw_test' }) => 
     const now = new Date();
     const endTime = new Date(now.getTime() + template.duration * 60 * 60 * 1000);
 
+    // Convert to EST (UTC-5) by subtracting 5 hours
+    const nowEST = new Date(now.getTime() - 5 * 60 * 60 * 1000);
+    const endTimeEST = new Date(endTime.getTime() - 5 * 60 * 60 * 1000);
+
     setFormData(prev => ({
       ...prev,
       description: template.description,
       type: template.type,
       reward_points: template.points,
-      scheduled_start_at: now.toISOString().slice(0, 16),
-      scheduled_end_at: endTime.toISOString().slice(0, 16),
+      scheduled_start_at: nowEST.toISOString().slice(0, 16),
+      scheduled_end_at: endTimeEST.toISOString().slice(0, 16),
     }));
 
     setShowTemplates(false);
@@ -156,13 +164,17 @@ const AddTask: React.FC<AddTaskProps> = ({ user, userId = 'paul_paw_test' }) => 
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    // Convert to EST (UTC-5) by subtracting 5 hours
+    const nowEST = new Date(now.getTime() - 5 * 60 * 60 * 1000);
+    const tomorrowEST = new Date(tomorrow.getTime() - 5 * 60 * 60 * 1000);
+
     setFormData({
       description: '',
       type: '',
       course_id: '',
       assignment_id: '',
-      scheduled_start_at: now.toISOString().slice(0, 16),
-      scheduled_end_at: tomorrow.toISOString().slice(0, 16),
+      scheduled_start_at: nowEST.toISOString().slice(0, 16),
+      scheduled_end_at: tomorrowEST.toISOString().slice(0, 16),
       reward_points: 10,
     });
     setErrors({});
@@ -180,6 +192,20 @@ const AddTask: React.FC<AddTaskProps> = ({ user, userId = 'paul_paw_test' }) => 
     setMessage(null);
 
     try {
+      // // Convert EST times back to UTC for database storage
+      // let scheduledStartUTC = undefined;
+      // let scheduledEndUTC = undefined;
+      
+      // if (formData.scheduled_start_at) {
+      //   const startEST = new Date(formData.scheduled_start_at);
+      //   scheduledStartUTC = new Date(startEST.getTime() + 5 * 60 * 60 * 1000).toISOString();
+      // }
+      
+      // if (formData.scheduled_end_at) {
+      //   const endEST = new Date(formData.scheduled_end_at);
+      //   scheduledEndUTC = new Date(endEST.getTime() + 5 * 60 * 60 * 1000).toISOString();
+      // }
+
       const taskData = {
         task_id: uuidv4(),
         user_id: userId,
@@ -187,17 +213,54 @@ const AddTask: React.FC<AddTaskProps> = ({ user, userId = 'paul_paw_test' }) => 
         type: formData.type,
         course_id: formData.course_id || undefined,
         assignment_id: formData.assignment_id || undefined,
+        // scheduled_start_at: scheduledStartUTC,
+        // scheduled_end_at: scheduledEndUTC,
         scheduled_start_at: formData.scheduled_start_at || undefined,
         scheduled_end_at: formData.scheduled_end_at || undefined,
         reward_points: formData.reward_points,
       };
 
       const response = await tasksApiService.createTask(taskData);
-      
-      setMessage({ 
-        type: 'success', 
-        text: `Task created successfully! 🎉 Task ID: ${response.task_id.slice(0, 8)}...` 
-      });
+
+      // create notification for reminder at scheduled at time
+      // if task is personal, add notification for scheduled start time
+      if (formData.type === 'personal' && formData.scheduled_start_at) {
+        const notifId = `personal-${response.task_id}`;
+        const startTime = new Date(formData.scheduled_start_at).getTime();
+        const now = Date.now();
+        
+        // Only create alarm if the scheduled time is in the future
+        if (startTime > now) {
+          try {
+            chrome.alarms.create(notifId, { when: startTime });
+            console.log(`Alarm created for task ${response.task_id} at ${new Date(startTime)}`);
+            
+            // Show confirmation that reminder is set
+            setMessage({
+              type: 'success',
+              text: `Task created successfully! 🎉 Reminder set for ${new Date(startTime).toLocaleString()}`
+            });
+          } catch (error) {
+            console.error('Failed to create alarm:', error);
+            setMessage({
+              type: 'success',
+              text: `Task created successfully! ⚠️ Could not set reminder - please check extension permissions.`
+            });
+          }
+        } else {
+          // If scheduled time is in the past, show warning
+          setMessage({
+            type: 'success',
+            text: `Task created successfully! ⚠️ Note: Scheduled time is in the past, no reminder set.`
+          });
+        }
+      } else {
+        // For non-personal tasks, show standard success message
+        setMessage({
+          type: 'success',
+          text: `Task created successfully! 🎉`
+        });
+      }
       
       resetForm();
 

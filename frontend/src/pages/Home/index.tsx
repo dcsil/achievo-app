@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService, User } from '../../api-contexts/user-context';
-import TaskContainer from '../../components/task-container';
+import MultipleTaskContainer from '../../components/multiple-task-container';
 import CourseContainer from '../../components/course-container';
 import { getCourses, CourseForUI } from '../../api-contexts/get-courses';
 
@@ -14,11 +14,53 @@ interface HomeProps {
 const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_test' }) => {
   const navigate = useNavigate();
   const [todayTasks, setTodayTasks] = useState<any[]>([]);
-  const [upcomingTasks, setUpcomingTasks] = useState<any[]>([]);
+  const [upcomingTasks, setUpcomingTasks] = useState<{ [key: string]: any[] }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [courses, setCourses] = useState<CourseForUI[]>([]);
   const [courseRefreshKey, setCourseRefreshKey] = useState<{ [key: string]: number }>({});
+  const [showAllUpcomingDays, setShowAllUpcomingDays] = useState(false);
+  const maxDaysToShow = 3;
+
+  // Helper function to group tasks by date
+  const groupTasksByDate = (tasks: any[]) => {
+    const grouped: { [key: string]: any[] } = {};
+    
+    tasks.forEach((task: any) => {
+      const taskDate = new Date(task.scheduled_end_at);
+      const dateKey = taskDate.toDateString(); // Format: "Mon Nov 18 2025"
+      
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(task);
+    });
+    
+    return grouped;
+  };
+
+  // Helper function to get total count of upcoming tasks
+  const getTotalUpcomingTasksCount = (groupedTasks: { [key: string]: any[] }) => {
+    return Object.values(groupedTasks).reduce((total, tasks) => total + tasks.length, 0);
+  };
+
+  // Helper function to get displayed upcoming days
+  const getDisplayedUpcomingDays = () => {
+    const sortedDays = Object.entries(upcomingTasks)
+      .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime());
+    
+    return showAllUpcomingDays ? sortedDays : sortedDays.slice(0, maxDaysToShow);
+  };
+
+  // Helper function to check if there are more days to show
+  const hasMoreUpcomingDays = () => {
+    return Object.keys(upcomingTasks).length > maxDaysToShow;
+  };
+
+  // Function to toggle show all upcoming days
+  const toggleShowAllUpcomingDays = () => {
+    setShowAllUpcomingDays(prev => !prev);
+  };
 
   // Fetch all data when component mounts
   useEffect(() => {
@@ -53,7 +95,9 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
       });
 
       setTodayTasks(todayTasksList);
-      setUpcomingTasks(upcomingTasksList);
+      setUpcomingTasks(groupTasksByDate(upcomingTasksList));
+      // Reset upcoming days view when data changes
+      setShowAllUpcomingDays(false);
 
       // Fetch courses data
       await fetchCourses();
@@ -78,10 +122,81 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
     }
   };
 
-  const handleTaskCompleted = async (taskId: string, pointsEarned: number, courseId?: string) => {
-  // Remove the completed task from both lists immediately
+  // Function to refresh task data from backend
+  const refreshTaskData = async () => {
+    try {
+      // Fetch fresh task data from backend
+      const tasksData = await apiService.getTasks(userId);
+      
+      // Split tasks into today and upcoming
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const todayTasksList = tasksData.filter((task: any) => {
+        const taskDate = new Date(task.scheduled_end_at);
+        taskDate.setHours(0, 0, 0, 0);
+        return taskDate.getTime() === today.getTime();
+      });
+
+      const upcomingTasksList = tasksData.filter((task: any) => {
+        const taskDate = new Date(task.scheduled_end_at);
+        taskDate.setHours(0, 0, 0, 0);
+        return taskDate.getTime() > today.getTime();
+      });
+
+      setTodayTasks(todayTasksList);
+      setUpcomingTasks(groupTasksByDate(upcomingTasksList));
+      // Reset upcoming days view when refreshing data
+      setShowAllUpcomingDays(false);
+      console.log('✅ Refreshed task data from backend');
+    } catch (err) {
+      console.error('Failed to refresh task data:', err);
+    }
+  };
+
+  const handleTaskCompleted = async (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => {
+  // Remove the completed task from both lists immediately for better UX
   setTodayTasks(prev => prev.filter(task => task.task_id !== taskId));
-  setUpcomingTasks(prev => prev.filter(task => task.task_id !== taskId));
+  setUpcomingTasks(prev => {
+    const updated = { ...prev };
+    Object.keys(updated).forEach(dateKey => {
+      updated[dateKey] = updated[dateKey].filter(task => task.task_id !== taskId);
+      // Remove empty date groups
+      if (updated[dateKey].length === 0) {
+        delete updated[dateKey];
+      }
+    });
+    return updated;
+  });
+  
+  // Clear any scheduled notifications for this completed task
+    try {
+
+      // if personal notification alarm exists, clear it
+      if (taskType === 'personal') {
+
+        const alarmId = `personal-${taskId}`;
+        
+        // Check if alarm exists before trying to clear it
+        chrome.alarms.get(alarmId, (alarm) => {
+          if (alarm) {
+            chrome.alarms.clear(alarmId, (wasCleared) => {
+              if (wasCleared) {
+                console.log(`✅ Cleared notification alarm for task ${taskId}`);
+              } else {
+                console.warn(`⚠️ Failed to clear alarm for task ${taskId}`);
+              }
+            });
+          } else {
+            console.log(`ℹ️ No alarm found for task ${taskId} - already cleared or not set`);
+          }
+        });
+      }
+
+  } catch (notifError) {
+    // Don't let notification errors break the completion flow
+    console.warn('Failed to clear task notification in Home component:', notifError);
+  }
   
   // Update Layout's user points optimistically for better UX
   if (user && updateUserPoints) {
@@ -126,7 +241,7 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
     if (section === 'today') {
       setTodayTasks(updatedTasks);
     } else {
-      setUpcomingTasks(updatedTasks);
+      setUpcomingTasks(groupTasksByDate(updatedTasks));
     }
   };
 
@@ -171,11 +286,13 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
               </span>
             )}
           </h2>
-          <TaskContainer 
+          <MultipleTaskContainer 
             tasks={todayTasks}
             userId={userId}
             onTaskCompleted={handleTaskCompleted}
             onTasksUpdate={(tasks) => handleTasksUpdate(tasks, 'today')}
+            onRefreshData={refreshTaskData}
+            showCompleteButton={true}
           />
         </div>
 
@@ -183,18 +300,76 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
         <div className="max-w-md mx-auto p-2">
           <h2 className="text-xl font-semibold text-left mb-2">
             Upcoming Tasks
-            {upcomingTasks.length > 0 && (
+            {getTotalUpcomingTasksCount(upcomingTasks) > 0 && (
               <span className="ml-2 text-sm font-normal text-gray-500">
-                ({upcomingTasks.length})
+                ({getTotalUpcomingTasksCount(upcomingTasks)})
               </span>
             )}
           </h2>
-          <TaskContainer 
-            tasks={upcomingTasks}
-            userId={userId}
-            onTaskCompleted={handleTaskCompleted}
-            onTasksUpdate={(tasks) => handleTasksUpdate(tasks, 'upcoming')}
-          />
+          {Object.keys(upcomingTasks).length === 0 ? (
+            <MultipleTaskContainer 
+              tasks={[]}
+              userId={userId}
+              onTaskCompleted={handleTaskCompleted}
+              onTasksUpdate={(tasks) => {
+                // For empty upcoming tasks, just set empty grouped object
+                setUpcomingTasks({});
+              }}
+              onRefreshData={refreshTaskData}
+              showCompleteButton={true}
+            />
+          ) : (
+            <>
+              {getDisplayedUpcomingDays().map(([dateString, tasks]) => (
+                <div key={dateString} className="mb-6">
+                  <MultipleTaskContainer 
+                    tasks={tasks}
+                    userId={userId}
+                    onTaskCompleted={handleTaskCompleted}
+                    onTasksUpdate={(updatedTasks) => {
+                      // Update only this specific date group
+                      setUpcomingTasks(prev => {
+                        const newState = { ...prev };
+                        if (updatedTasks.length === 0) {
+                          // If no tasks left for this date, remove the date group
+                          delete newState[dateString];
+                        } else {
+                          // Update the tasks for this date
+                          newState[dateString] = updatedTasks;
+                        }
+                        return newState;
+                      });
+                    }}
+                    onRefreshData={refreshTaskData}
+                    showCompleteButton={true}
+                    dateString={dateString}
+                  />
+                </div>
+              ))}
+              
+              {/* Show More / Collapse Controls for Days */}
+              {hasMoreUpcomingDays() && (
+                <div className="flex justify-center mt-4 mb-6">
+                  <button
+                    onClick={toggleShowAllUpcomingDays}
+                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex items-center gap-2"
+                  >
+                    {showAllUpcomingDays ? (
+                      <>
+                        <span>▲</span>
+                        Collapse ({Object.keys(upcomingTasks).length - maxDaysToShow} fewer days)
+                      </>
+                    ) : (
+                      <>
+                        <span>▼</span>
+                        Show More ({Object.keys(upcomingTasks).length - maxDaysToShow} more days)
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* Courses Section */}

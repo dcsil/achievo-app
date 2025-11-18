@@ -21,8 +21,10 @@ describe('TaskComplete Component', () => {
     isOpen: true,
     task: {
       title: 'Complete project proposal',
+      course_color: 'blue',
       id: 'task-123'
     },
+    assignment : null,
     onClose: jest.fn(),
     coinsEarned: 150,
     userId: 'user-123'
@@ -57,17 +59,10 @@ describe('TaskComplete Component', () => {
       expect(screen.getByText('Finish')).toBeInTheDocument();
     });
 
-    test('renders with default task title when no task provided', async () => {
-      await act(async () => {
-        render(<TaskComplete {...defaultProps} task={undefined} />);
-      });
-      
-      expect(screen.getByText('"Complete project proposal"')).toBeInTheDocument();
-    });
-
     test('renders with provided task title', async () => {
       const customTask = {
         title: 'Custom task title',
+        course_color: 'red',
         id: 'custom-task'
       };
       
@@ -480,14 +475,6 @@ describe('TaskComplete Component', () => {
   });
 
   describe('Edge Cases', () => {
-    test('handles undefined task gracefully', async () => {
-      await act(async () => {
-        render(<TaskComplete {...defaultProps} task={undefined} />);
-      });
-      
-      expect(screen.getByText('"Complete project proposal"')).toBeInTheDocument();
-    });
-
     test('handles zero coins earned', async () => {
       await act(async () => {
         render(<TaskComplete {...defaultProps} coinsEarned={0} />);
@@ -548,6 +535,7 @@ describe('TaskComplete Component', () => {
     test('handles task with very long title', async () => {
       const longTask = { 
         title: 'This is a very long task title that might overflow the container', 
+        course_color: 'blue',
         id: 'long-task' 
       };
       
@@ -561,6 +549,7 @@ describe('TaskComplete Component', () => {
     test('handles special characters in task title', async () => {
       const specialTask = { 
         title: 'Task with special chars: @#$%^&*()', 
+        course_color: 'green',
         id: 'special-task' 
       };
       

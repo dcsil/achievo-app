@@ -101,7 +101,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+    <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
       <nav className="flex items-end justify-around max-w-6xl mx-auto px-4 relative">
         {navItems.map((item) => {
           if (item.isSpecial) {
