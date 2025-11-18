@@ -4,10 +4,11 @@ import './index.css';
 
 interface TaskCompleteProps {
   isOpen: boolean;
-  task?: {
+  task: {
     title: string;
     id: string;
   };
+  assignment: string | null;
   onClose: () => void;
   coinsEarned?: number;
   userId: string;
@@ -16,13 +17,22 @@ interface TaskCompleteProps {
 const TaskComplete: React.FC<TaskCompleteProps> = ({ 
   isOpen, 
   task, 
+  assignment,
   onClose,
   coinsEarned = 100,
   userId
 }) => {
   const [newTotal, setNewTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
-  const taskCompleted = task?.title || "Complete project proposal";
+  const taskCompleted = task.title;
+
+  let fullCompletedTitle = '';
+  // if assignment exists, include it in the title
+  if (taskCompleted && assignment && assignment.trim() !== '') {
+    fullCompletedTitle = `Task: ${taskCompleted}" \nand \n Assignment:"${assignment}"`;
+  } else {
+    fullCompletedTitle = `Task: ${taskCompleted}`;
+  }
 
   // Fetch updated user data when overlay opens
   useEffect(() => {
@@ -91,8 +101,14 @@ const TaskComplete: React.FC<TaskCompleteProps> = ({
 
               {/* Task completed */}
               <div className="mb-4">
-                <p className="text-gray-600 text-sm mb-1">From completing:</p>
+                <p className="text-gray-600 text-sm mb-1">From completing task:</p>
                 <p className="text-gray-800 font-semibold">"{taskCompleted}"</p>
+                {assignment && assignment.trim() !== '' && (
+                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-green-700 text-sm font-medium">🎉 Assignment Completed!</p>
+                    <p className="text-green-800 font-semibold">"{assignment}"</p>
+                  </div>
+                )}
               </div>
 
               {/* New Total */}

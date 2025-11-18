@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../../api-contexts/user-context';
 import TaskComplete from '../task-complete';
+import { getAssignment } from '../../api-contexts/get-assignments';
 
 interface TaskContainerProps {
   tasks: any[];
@@ -13,10 +14,10 @@ interface TaskContainerProps {
 function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskContainerProps) {
   const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskList, setTaskList] = useState(tasks);
   const [pointsEarned, setPointsEarned] = useState(0);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [selectedTaskWithAssignment, setSelectedTaskWithAssignment] = useState<any>(null);
 
   // Sync local state with parent's tasks prop
   useEffect(() => {
@@ -28,16 +29,40 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskCo
     
     try {
       setIsCompleting(true);
-      setSelectedTask(task);
       
       // Call backend to complete the task
       const response = await apiService.completeTask(task.task_id);
-      
-      // Set the points earned for the overlay
-      setPointsEarned(response.points_earned);
-      
-      // Show the completion overlay
+      let totalPointsEarned = response.points_earned;
+      let endMessage = `Task completed. Points earned: ${response.points_earned}`;
+      let completedAssignmentTitle: string | null = null;
+
+      // check if assignment was completed
+      if (response.assignment_completed && task.assignment_id) {
+        
+        // grab assignment points from backend
+        const assignmentResponse = await getAssignment(task.assignment_id);
+
+        totalPointsEarned += assignmentResponse.completion_points;
+        endMessage += `\nAssignment completed! Additional points earned: ${assignmentResponse.completion_points}`;
+        console.log(`Assignment completed. Additional points earned: ${assignmentResponse.completion_points}`);
+        completedAssignmentTitle = assignmentResponse.title;
+        console.log(`Assignment: ${assignmentResponse.title}`);
+      }
+
+      console.log(`About to set assignment title: ${completedAssignmentTitle}`);
+
+      // Set all state values at once to avoid timing issues
+      setPointsEarned(totalPointsEarned);
+      setSelectedTaskWithAssignment({
+        ...task,
+        completedAssignmentTitle: completedAssignmentTitle
+      });
       setShowOverlay(true);
+      
+      // Log after state is set
+      setTimeout(() => {
+        console.log(`Assignment title should now be available`);
+      }, 100);
       
       // Remove task from local state
       const updatedTasks = taskList.filter(t => t.task_id !== task.task_id);
@@ -51,12 +76,9 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskCo
       if (onTasksUpdate) {
         onTasksUpdate(updatedTasks);
       }
-      
-      console.log(`Task completed. Points earned: ${response.points_earned}`);
-      
-      if (response.assignment_completed) {
-        console.log(`🎉 Assignment ${response.assignment_id} also completed!`);
-      }
+
+      console.log(endMessage);
+
     } catch (error) {
       console.error('Failed to complete task:', error);
       setIsCompleting(false);
@@ -66,8 +88,8 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskCo
 
   const handleCloseOverlay = () => {
     setShowOverlay(false);
-    setSelectedTask(null);
     setIsCompleting(false);
+    setSelectedTaskWithAssignment(null);
   };
 
   return (
@@ -146,17 +168,21 @@ function TaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate }: TaskCo
       )}
       
       {/* Task Completion Overlay */}
-      {selectedTask && (
-        <TaskComplete 
-          isOpen={showOverlay}
-          task={{
-            title: selectedTask.description,
-            id: selectedTask.task_id
-          }}
-          onClose={handleCloseOverlay}
-          coinsEarned={pointsEarned}
-          userId={userId}
-        />
+      {selectedTaskWithAssignment && (
+        <>
+          {console.log('Rendering TaskComplete with assignment:', selectedTaskWithAssignment.completedAssignmentTitle)}
+          <TaskComplete 
+            isOpen={showOverlay}
+            task={{
+              title: selectedTaskWithAssignment.description,
+              id: selectedTaskWithAssignment.task_id
+            }}
+            assignment={selectedTaskWithAssignment.completedAssignmentTitle}
+            onClose={handleCloseOverlay}
+            coinsEarned={pointsEarned}
+            userId={userId}
+          />
+        </>
       )}
     </div>
   );

@@ -24,6 +24,27 @@ export interface Assignment {
   completed_task_count?: number; // Number of completed tasks
 }
 
+export async function getAssignment(assignmentId: string): Promise<Assignment> {
+  try {
+    const response = await fetch(`http://127.0.0.1:5000/db/assignments/${assignmentId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const assignment: Assignment = await response.json();
+    return assignment;
+  } catch (error) {
+    console.error('Error fetching assignment:', error);
+    throw error;
+  }
+}
+
 // Helper function to get tasks for a specific assignment
 async function getTasksForAssignment(assignmentId: string, userId: string = "paul_paw_test"): Promise<Task[]> {
   try {

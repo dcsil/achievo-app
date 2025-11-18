@@ -23,6 +23,7 @@ describe('TaskComplete Component', () => {
       title: 'Complete project proposal',
       id: 'task-123'
     },
+    assignment : null,
     onClose: jest.fn(),
     coinsEarned: 150,
     userId: 'user-123'
@@ -55,14 +56,6 @@ describe('TaskComplete Component', () => {
       
       expect(screen.getByText('CONGRATS!!!')).toBeInTheDocument();
       expect(screen.getByText('Finish')).toBeInTheDocument();
-    });
-
-    test('renders with default task title when no task provided', async () => {
-      await act(async () => {
-        render(<TaskComplete {...defaultProps} task={undefined} />);
-      });
-      
-      expect(screen.getByText('"Complete project proposal"')).toBeInTheDocument();
     });
 
     test('renders with provided task title', async () => {
@@ -480,14 +473,6 @@ describe('TaskComplete Component', () => {
   });
 
   describe('Edge Cases', () => {
-    test('handles undefined task gracefully', async () => {
-      await act(async () => {
-        render(<TaskComplete {...defaultProps} task={undefined} />);
-      });
-      
-      expect(screen.getByText('"Complete project proposal"')).toBeInTheDocument();
-    });
-
     test('handles zero coins earned', async () => {
       await act(async () => {
         render(<TaskComplete {...defaultProps} coinsEarned={0} />);
