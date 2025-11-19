@@ -4,7 +4,7 @@ interface AwardedFigure {
   figure_id: string;
   name: string;
   rarity?: 'common' | 'rare' | 'secret';
-  image?: string; // Include image in awarded figure
+  image?: string; 
 }
 
 interface PurchaseResult {
@@ -27,7 +27,7 @@ interface UserFigure {
   awarded_figure_id: string;
   figure_name?: string;
   rarity?: 'common' | 'rare' | 'secret';
-  image?: string; // Include image in user figures
+  image?: string; 
 }
 
 interface BlindBoxPurchaseContextType {
@@ -45,7 +45,7 @@ export const BlindBoxPurchaseProvider: React.FC<{ children: React.ReactNode }> =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE = 'http://localhost:5000';
+  const API_BASE = 'http://127.0.0.1:5000';
 
   const purchaseBlindBox = useCallback(async (userId: string, seriesId?: string): Promise<PurchaseResult> => {
     setLoading(true);
@@ -80,25 +80,36 @@ export const BlindBoxPurchaseProvider: React.FC<{ children: React.ReactNode }> =
   }, []);
 
   const getUserFigures = useCallback(async (userId: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${API_BASE}/db/users/${userId}/figures`);
+  setLoading(true);
+  setError(null);
+  try {
+    const response = await fetch(`${API_BASE}/db/users/${userId}/figures`);
 
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to fetch user figures');
-      }
-
-      const data = await response.json();
-      setUserFigures(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      throw err;
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to fetch user figures');
     }
-  }, []);
+
+    const data = await response.json();
+    
+    // Handle paginated response - extract the 'results' array
+    if (data.results && Array.isArray(data.results)) {
+      setUserFigures(data.results);
+    } else if (Array.isArray(data)) {
+      // Fallback: direct array response
+      setUserFigures(data);
+    } else {
+      console.error('Unexpected response format:', data);
+      setUserFigures([]);
+    }
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'An error occurred');
+    setUserFigures([]); // Set empty array on error
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   return (
     <BlindBoxPurchaseContext.Provider value={{ 

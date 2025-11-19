@@ -1,4 +1,3 @@
-// src/pages/rewards/index.tsx
 import React, { useState, useEffect } from 'react';
 import { User } from '../../api-contexts/user-context';
 import { useBlindBoxSeries } from '../../api-contexts/blindbox/get-blindbox-series';
@@ -9,7 +8,6 @@ import MysteryBox from '../../components/rewards/mystery-box';
 import CollectionGrid from '../../components/rewards/collection-grid';
 import RevealModal from '../../components/rewards/reveal-modal';
 import { CollectibleItem } from '../../components/rewards/collection-item';
-
 
 interface RewardsProps {
   user?: User | null;
@@ -26,29 +24,63 @@ const Rewards: React.FC<RewardsProps> = ({ user, userId, updateUserPoints }) => 
   const [revealedItem, setRevealedItem] = useState<CollectibleItem | null>(null);
   const [showReveal, setShowReveal] = useState(false);
 
-  // Get Series 1 (you can make this dynamic later)
+  // Get Series 2
   const series2 = series.find(s => s.series_id === 'S2') || series[0];
   const blindboxCost = series2?.cost_points || 100;
 
-  // Convert backend figures to CollectibleItem format
-  const collectibleItems: CollectibleItem[] = figures.map(fig => ({
-    id: fig.figure_id,
-    name: fig.name,
-    image: fig.image || '', // Add image from backend
-    rarity: (fig.rarity || 'common') as 'secret' | 'rare' | 'common' // Updated rarity types
-  }));
+  // Convert backend figures to CollectibleItem format - ONLY Series 2 figures
+  const collectibleItems: CollectibleItem[] = figures
+    .filter(fig => fig.series_id === 'S2')
+    .map(fig => ({
+      id: fig.figure_id,
+      name: fig.name,
+      image: fig.image || '',
+      rarity: (fig.rarity || 'common') as 'secret' | 'rare' | 'common'
+    }));
 
-  // Get user's owned figure IDs
-  const ownedFigureIds = userFigures.map(uf => uf.awarded_figure_id);
+  // Remove all the debug logging and just keep the simple cursor functions:
+
+  // Save figures to localStorage ONLY when they change
+  useEffect(() => {
+    if (collectibleItems.length > 0) {
+      const existingFigures = localStorage.getItem('cursor_figures');
+      const newFigures = JSON.stringify(collectibleItems);
+      
+      // Only update if different to prevent unnecessary events
+      if (existingFigures !== newFigures) {
+        localStorage.setItem('cursor_figures', newFigures);
+        window.dispatchEvent(new CustomEvent('figures-updated'));
+      }
+    }
+  }, [collectibleItems]);
+
+  // Simple cursor functions
+  const equipCursor = (figureId: string) => {
+    localStorage.setItem('equipped_cursor', figureId);
+    window.dispatchEvent(new CustomEvent('cursor-changed'));
+  };
+
+  const unequipCursor = () => {
+    localStorage.removeItem('equipped_cursor');
+    window.dispatchEvent(new CustomEvent('cursor-changed'));
+  };
+
+  const equippedCursorId = localStorage.getItem('equipped_cursor');
+
+  // Get user's owned figure IDs - ONLY Series 2 figures
+  const ownedFigureIds = userFigures
+    .filter(uf => {
+      const figure = figures.find(f => f.figure_id === uf.awarded_figure_id);
+      return figure?.series_id === 'S2';
+    })
+    .map(uf => uf.awarded_figure_id);
 
   const canAfford = user ? user.total_points >= blindboxCost : false;
 
   useEffect(() => {
-    // Fetch all series and figures on mount
     fetchAllSeries();
     fetchAllFigures();
     
-    // Fetch user's collection if userId is available
     if (userId) {
       getUserFigures(userId);
     }
@@ -60,23 +92,19 @@ const Rewards: React.FC<RewardsProps> = ({ user, userId, updateUserPoints }) => 
     setIsOpening(true);
 
     try {
-      // Purchase blindbox - this returns the awarded figure
       const result = await purchaseBlindBox(userId, series2.series_id);
 
-      // Update user points in parent component
       if (updateUserPoints) {
         updateUserPoints(result.remaining_points);
       }
 
-      // Simulate opening animation
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      // Set revealed item
       const revealedFigure: CollectibleItem = {
         id: result.awarded_figure.figure_id,
         name: result.awarded_figure.name,
-        image: result.awarded_figure.image || '', // Add image from result
-        rarity: (result.awarded_figure.rarity || 'common') as 'secret' | 'rare' | 'common' // Updated rarity types
+        image: result.awarded_figure.image || '',
+        rarity: (result.awarded_figure.rarity || 'common') as 'secret' | 'rare' | 'common'
       };
       
       setRevealedItem(revealedFigure);
@@ -94,12 +122,10 @@ const Rewards: React.FC<RewardsProps> = ({ user, userId, updateUserPoints }) => 
     setRevealedItem(null);
   };
 
-  // Check if the revealed item is a duplicate
   const isDuplicate = revealedItem 
     ? userFigures.filter(uf => uf.awarded_figure_id === revealedItem.id).length > 1 
     : false;
 
-  // Show loading state
   if (seriesLoading || figuresLoading) {
     return (
       <div className="px-6 py-6 max-w-4xl mx-auto pb-20 flex items-center justify-center min-h-screen">
@@ -123,7 +149,7 @@ const Rewards: React.FC<RewardsProps> = ({ user, userId, updateUserPoints }) => 
           canAfford={canAfford}
           isOpening={isOpening}
           userPoints={user?.total_points || 0}
-          seriesImage={series2.image} // Add series cover image
+          seriesImage={series2.image}
           onPurchase={handlePurchase}
         />
       )}
@@ -131,6 +157,9 @@ const Rewards: React.FC<RewardsProps> = ({ user, userId, updateUserPoints }) => 
       <CollectionGrid
         items={collectibleItems}
         collection={ownedFigureIds}
+        equippedCursorId={equippedCursorId}
+        onEquipCursor={equipCursor}
+        onUnequipCursor={unequipCursor}
       />
 
       <RevealModal

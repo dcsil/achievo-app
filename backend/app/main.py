@@ -180,7 +180,7 @@ def post_db_user():
             user_id=user_id,
             canvas_username=canvas_username,
             canvas_domain=canvas_domain,
-            canvas_api_key=canvas_api_key,  # write-only; not returned in API responses
+            canvas_api_key=canvas_api_key,
             profile_picture=profile_picture,
             total_points=total_points,
             current_level=current_level,
@@ -199,6 +199,50 @@ def delete_db_user(user_id):
             return jsonify({"status": "deleted", "user_id": user_id}), 200
         else:
             return jsonify({"error": "User not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/db/users/<user_id>/figures", methods=["GET"])
+def get_user_figures(user_id):
+    """Get user's blind box figures with optional filtering and pagination."""
+    limit = request.args.get("limit", type=int) or 50
+    offset = request.args.get("offset", type=int) or 0
+    rarity = request.args.get("rarity")
+    series_id = request.args.get("series_id")
+    try:
+        repo = UserBlindBoxesRepository()
+        figures = repo.fetch_by_user(user_id)
+        # Filtering
+        if rarity:
+            figures = [f for f in figures if f.get("figure_rarity") == rarity]
+        if series_id:
+            figures = [f for f in figures if f.get("series_id") == series_id]
+        total = len(figures)
+        paged = figures[offset: offset + limit]
+        return jsonify({
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "results": paged
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/db/users/<user_id>/progress", methods=["GET"])
+def get_user_progress(user_id):
+    try:
+        users_repo = UsersRepository()
+        user = users_repo.fetch_by_id(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        info = _compute_level_progress(user.get("total_points", 0), user.get("current_level", 0))
+        return jsonify({
+            "user_id": user_id,
+            "total_points": user.get("total_points", 0),
+            **info
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -302,19 +346,16 @@ def complete_db_task(task_id):
         assignment_repo = AssignmentsRepository()
         users_repo = UsersRepository()
         
-        # First, get the task to retrieve assignment_id, reward_points, and user_id
         task = task_repo.fetch_by_id(task_id)
         if not task:
             return jsonify({"error": "Task not found"}), 404
         
-        # Complete the task
         task_repo.complete_task(task_id)
         
         assignment_id = task.get("assignment_id")
         reward_points = task.get("reward_points", 0)
         user_id = task.get("user_id")
         
-        # Check if there's an assignment and if all tasks are completed
         if assignment_id:
             uncompleted_tasks = task_repo.fetch_uncompleted_by_assignment(assignment_id)
             
@@ -369,7 +410,6 @@ def get_db_assignments():
         
         repo = AssignmentsRepository()
         
-        # If any filters are provided, use fetch_with_filters
         if due_date or title or course_id:
             assignments = repo.fetch_with_filters(
                 due_date=due_date,
@@ -449,6 +489,24 @@ def delete_db_assignment(assignment_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/db/assignments/progress", methods=["GET"])
+def get_assignment_progress():
+    user_id = request.args.get("user_id")
+    course_id = request.args.get("course_id")
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+    try:
+        repo = AssignmentsRepository()
+        if course_id:
+            assignments = repo.fetch_with_filters(course_id=course_id)
+        else:
+            assignments = repo.fetch_all()
+        augmented = _calculate_assignment_progress_for_user(user_id, assignments)
+        return jsonify(augmented), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # ---------- COURSES ROUTES ----------
 @app.route("/db/courses", methods=["GET"])
 def get_db_courses():
@@ -467,19 +525,9 @@ def get_db_courses():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @app.route("/db/courses", methods=["POST"])
 def post_db_course():
-    """Create a course record.
-
-    Body JSON fields:
-      - course_id (str, required)
-      - user_id (str, required)
-      - course_name (str, required)
-      - course_code (str, optional)
-      - canvas_course_id (str, optional)
-      - term (str, optional)
-      - color (str, optional)
-    """
     payload = request.get_json() or {}
     course_id = payload.get("course_id")
     user_id = payload.get("user_id")
@@ -507,7 +555,41 @@ def post_db_course():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/db/courses/progress", methods=["GET"])
+def get_courses_progress():
+    user_id = request.args.get("user_id")
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+    try:
+        courses_repo = CoursesRepository()
+        courses = courses_repo.fetch_all()
+        user_courses = [c for c in courses if c.get("user_id") == user_id]
+        progress = _calculate_course_progress(user_id, user_courses)
+        return jsonify(progress), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # ---------- BLIND BOX ROUTES ----------
+@app.route("/db/blind-box-series", methods=["GET"])
+def get_blind_box_series():
+    """List all blind box series or get a specific one."""
+    try:
+        series_id = request.args.get("series_id")
+        repo = BlindBoxSeriesRepository()
+        
+        if series_id:
+            series = repo.fetch_by_id(series_id)
+            if series is None:
+                return jsonify({"error": "Series not found"}), 404
+            return jsonify(series), 200
+        else:
+            series_list = repo.fetch_all()
+            return jsonify(series_list), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/db/blind-box-series", methods=["POST"])
 def post_blind_box_series():
     payload = request.get_json() or {}
@@ -542,6 +624,52 @@ def delete_blind_box_series(series_id):
             return jsonify({"status": "deleted", "series_id": series_id}), 200
         else:
             return jsonify({"error": "Series not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/db/blind-box-series/affordable", methods=["GET"])
+def get_affordable_blind_box_series():
+    """Return blind box series affordable for a given user."""
+    user_id = request.args.get("user_id")
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+    try:
+        users_repo = UsersRepository()
+        series_repo = BlindBoxSeriesRepository()
+        user = users_repo.fetch_by_id(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        user_points = user.get("total_points", 0)
+        affordable = series_repo.fetch_affordable_series(user_points)
+        return jsonify({
+            "user_id": user_id,
+            "user_points": user_points,
+            "affordable_series": affordable
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/db/blind-box-figures", methods=["GET"])
+def get_blind_box_figures():
+    """List all figures or filter by series/figure_id."""
+    try:
+        series_id = request.args.get("series_id")
+        figure_id = request.args.get("figure_id")
+        repo = BlindBoxFiguresRepository()
+        
+        if figure_id:
+            figure = repo.fetch_by_id(figure_id)
+            if figure is None:
+                return jsonify({"error": "Figure not found"}), 404
+            return jsonify(figure), 200
+        elif series_id:
+            figures = repo.fetch_by_series(series_id)
+            return jsonify(figures), 200
+        else:
+            figures = repo.fetch_all()
+            return jsonify(figures), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -584,9 +712,6 @@ def delete_blind_box_figure(figure_id):
         return jsonify({"error": str(e)}), 500
 
 
- 
-
-
 @app.route("/db/blind-boxes/purchase", methods=["POST"])
 def purchase_blind_box():
     payload = request.get_json() or {}
@@ -602,14 +727,12 @@ def purchase_blind_box():
         figures_repo = BlindBoxFiguresRepository()
         user_boxes_repo = UserBlindBoxesRepository()
         
-        # Get user's current points
         user = users_repo.fetch_by_id(user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
         
         user_points = user.get("total_points", 0)
         
-        # If series_id is provided, use it; otherwise, select from affordable series
         if series_id:
             series = series_repo.fetch_by_id(series_id)
             if not series:
@@ -619,27 +742,22 @@ def purchase_blind_box():
             if user_points < series_cost:
                 return jsonify({"error": "Insufficient points"}), 400
         else:
-            # Get all affordable series
             affordable_series = series_repo.fetch_affordable_series(user_points)
             
             if not affordable_series:
                 return jsonify({"error": "No affordable blind box series available"}), 400
             
-            # Select a random series (you could also let the frontend choose)
             series = random.choice(affordable_series)
             series_id = series.get("series_id")
             series_cost = series.get("cost_points", 0)
         
-        # Select a random figure from the series
         selected_figure = figures_repo.select_random_figure(series_id)
         
         if not selected_figure:
             return jsonify({"error": "No figures available in this series"}), 404
         
-        # Deduct points from user
         users_repo.update_points(user_id, -series_cost)
         
-        # Create purchase record
         purchase_id = str(uuid.uuid4())
         purchased_at = datetime.now().isoformat()
         
@@ -648,11 +766,10 @@ def purchase_blind_box():
             user_id=user_id,
             series_id=series_id,
             purchased_at=purchased_at,
-            opened_at=purchased_at,  # Automatically opened
+            opened_at=purchased_at,
             awarded_figure_id=selected_figure.get("figure_id")
         )
         
-        # Get updated user points
         updated_user = users_repo.fetch_by_id(user_id)
         new_points = updated_user.get("total_points", 0)
         
@@ -687,44 +804,10 @@ def delete_user_blind_box(purchase_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ---------------- Additional Gamification / Progress Endpoints ----------------
-
-@app.route("/db/blind-box-series", methods=["GET"])
-def get_blind_box_series():
-    """List all blind box series."""
-    try:
-        series = BlindBoxSeriesRepository().fetch_all()
-        return jsonify(series), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/db/blind-box-series/affordable", methods=["GET"])
-def get_affordable_blind_box_series():
-    """Return blind box series affordable for a given user based on their current points."""
-    user_id = request.args.get("user_id")
-    if not user_id:
-        return jsonify({"error": "user_id is required"}), 400
-    try:
-        users_repo = UsersRepository()
-        series_repo = BlindBoxSeriesRepository()
-        user = users_repo.fetch_by_id(user_id)
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-        user_points = user.get("total_points", 0)
-        affordable = series_repo.fetch_affordable_series(user_points)
-        return jsonify({
-            "user_id": user_id,
-            "user_points": user_points,
-            "affordable_series": affordable
-        }), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
 
 @app.route("/db/blind-boxes/preview", methods=["GET"])
 def preview_blind_boxes():
-    """Preview blind box purchase options (affordable series + current points)."""
+    """Preview blind box purchase options."""
     user_id = request.args.get("user_id")
     if not user_id:
         return jsonify({"error": "user_id is required"}), 400
@@ -744,90 +827,10 @@ def preview_blind_boxes():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-@app.route("/db/users/<user_id>/figures", methods=["GET"])
-def get_user_figures(user_id):  # redefined with filtering/pagination support
-    limit = request.args.get("limit", type=int) or 50
-    offset = request.args.get("offset", type=int) or 0
-    rarity = request.args.get("rarity")
-    series_id = request.args.get("series_id")
-    try:
-        repo = UserBlindBoxesRepository()
-        figures = repo.fetch_by_user(user_id)
-        # Filtering
-        if rarity:
-            figures = [f for f in figures if f.get("figure_rarity") == rarity]
-        if series_id:
-            figures = [f for f in figures if f.get("series_id") == series_id]
-        total = len(figures)
-        paged = figures[offset: offset + limit]
-        return jsonify({
-            "total": total,
-            "limit": limit,
-            "offset": offset,
-            "results": paged
-        }), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/db/assignments/progress", methods=["GET"])
-def get_assignment_progress():
-    user_id = request.args.get("user_id")
-    course_id = request.args.get("course_id")
-    if not user_id:
-        return jsonify({"error": "user_id is required"}), 400
-    try:
-        repo = AssignmentsRepository()
-        if course_id:
-            assignments = repo.fetch_with_filters(course_id=course_id)
-        else:
-            assignments = repo.fetch_all()
-        augmented = _calculate_assignment_progress_for_user(user_id, assignments)
-        return jsonify(augmented), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/db/courses/progress", methods=["GET"])
-def get_courses_progress():
-    user_id = request.args.get("user_id")
-    if not user_id:
-        return jsonify({"error": "user_id is required"}), 400
-    try:
-        courses_repo = CoursesRepository()
-        courses = courses_repo.fetch_all()
-        # Filter courses for user (client was doing this previously)
-        user_courses = [c for c in courses if c.get("user_id") == user_id]
-        progress = _calculate_course_progress(user_id, user_courses)
-        return jsonify(progress), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/db/users/<user_id>/progress", methods=["GET"])
-def get_user_progress(user_id):
-    try:
-        users_repo = UsersRepository()
-        user = users_repo.fetch_by_id(user_id)
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-        info = _compute_level_progress(user.get("total_points", 0), user.get("current_level", 0))
-        return jsonify({
-            "user_id": user_id,
-            "total_points": user.get("total_points", 0),
-            **info
-        }), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
+# ---------- DASHBOARD ROUTE ----------
 @app.route("/db/dashboard", methods=["GET"])
 def get_dashboard():
-    """Batch endpoint aggregating user, tasks (today/upcoming), course progress, and counts.
-
-    This reduces number of round-trips required by the Home screen.
-    """
+    """Batch endpoint aggregating user, tasks, course progress."""
     user_id = request.args.get("user_id")
     if not user_id:
         return jsonify({"error": "user_id is required"}), 400
@@ -838,7 +841,7 @@ def get_dashboard():
         user = users_repo.fetch_by_id(user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
-        # Tasks (incomplete only by default)
+        
         tasks = tasks_repo.fetch_by_user(user_id=user_id, is_completed=False)
         today = datetime.utcnow().date()
         today_tasks = []
@@ -855,12 +858,12 @@ def get_dashboard():
                 today_tasks.append(t)
             elif dt.date() > today:
                 upcoming_tasks.append(t)
-        # Course progress
+        
         courses = courses_repo.fetch_all()
         user_courses = [c for c in courses if c.get("user_id") == user_id]
         course_progress = _calculate_course_progress(user_id, user_courses)
         progress_info = _compute_level_progress(user.get("total_points", 0), user.get("current_level", 0))
-        # Placeholder notifications count (future implementation)
+        
         notifications_unread_count = 0
         return jsonify({
             "user": user,
@@ -875,36 +878,22 @@ def get_dashboard():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 # ---------- TIMETABLE ROUTES ----------
 @app.route("/api/timetable/process", methods=["POST"])
 def process_timetable():
-    """
-    Process uploaded timetable PDF and return courses and tasks.
-    Only requires PDF file upload - uses hardcoded values from read_timetable.py
-
-    testing:
-    curl -X POST http://127.0.0.1:5000/api/timetable/process \
-        -F "file=@backend/app/storage/uploads/timetable.pdf"
-    """
+    """Process uploaded timetable PDF and return courses and tasks."""
     try:
-        # Handle file upload
         filepath, error_response = handle_file_upload(request, UPLOAD_FOLDER)
         if error_response:
             return error_response
         
-        # Use hardcoded values from read_timetable.py
         from app.services.read_timetable import user_id, term, assignment_id, start_date, end_date, breaks, holidays
         
-        # Extract courses from PDF using imported function
         courses = extract_timetable_courses(filepath, user_id, term)
-        
-        # Generate tasks using imported function
         tasks = generate_tasks_for_courses(
             courses, user_id, assignment_id, start_date, end_date, breaks, holidays
         )
         
-        # Clean up uploaded file
         try:
             os.remove(filepath)
         except:
@@ -934,39 +923,26 @@ def process_timetable():
 # ---------- SYLLABI ROUTES ----------
 @app.route("/api/syllabi/process", methods=["POST"])
 def process_syllabi():
-    """
-    Process uploaded syllabi PDF and return assignments with micro-tasks and exam/quiz tasks.
-    Only requires PDF file upload - automatically generates micro-tasks for assignments.
-
-    testing:
-    curl -X POST http://127.0.0.1:5000/api/syllabi/process \
-        -F "file=@backend/app/storage/uploads/dummy.pdf" 
-        -F 'busy_intervals=[{"start": "2025-11-13T09:00:00", "end": "2025-11-13T14:00:00"}]'
-    """
+    """Process uploaded syllabi PDF and return assignments with micro-tasks."""
     try:
-        # Handle file upload
         filepath, error_response = handle_file_upload(request, UPLOAD_FOLDER)
         if error_response:
             return error_response
         
-        # Extract assignments and tasks from PDF using AI
         extracted_data = extract_tasks_assignments_from_pdf(filepath)
         
-        # Get busy intervals from form data (optional)
         busy_intervals_json = request.form.get("busy_intervals", "[]")
         try:
             busy_intervals = json.loads(busy_intervals_json)
         except json.JSONDecodeError:
             busy_intervals = []
         
-        # Generate micro-tasks for assignments
         assignments_with_micro = generate_assignment_microtasks(
             extracted_data["assignments"], 
             busy_intervals,
             default_micro_task_count=3
         )
         
-        # Clean up uploaded file
         try:
             os.remove(filepath)
         except:

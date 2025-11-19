@@ -3,19 +3,43 @@ import React from 'react';
 interface CollectibleItem {
   id: string;
   name: string;
-  image: string; // Supabase image URL
+  image: string;
   rarity: 'secret' | 'rare' | 'common';
 }
 
 interface CollectionGridProps {
   items: CollectibleItem[];
   collection: string[];
+  equippedCursorId?: string | null;
+  onEquipCursor?: (figureId: string) => void;
+  onUnequipCursor?: () => void;
 }
 
-const CollectionGrid: React.FC<CollectionGridProps> = ({ items, collection }) => {
-  // Separate regular items and secret item
-  const regularItems = items.filter(item => item.rarity !== 'secret').slice(0, 9);
-  const secretItem = items.find(item => item.rarity === 'secret');
+const CollectionGrid: React.FC<CollectionGridProps> = ({ 
+  items, 
+  collection, 
+  equippedCursorId, 
+  onEquipCursor, 
+  onUnequipCursor 
+}) => {
+  // Sort items by ID to ensure consistent ordering (1-9, then 10)
+  const sortedItems = [...items].sort((a, b) => {
+    const aNum = parseInt(a.id) || 0;
+    const bNum = parseInt(b.id) || 0;
+    return aNum - bNum;
+  });
+
+  // Items 1-9 go in the regular grid
+  const regularItems = sortedItems.filter(item => {
+    const itemNum = parseInt(item.id) || 0;
+    return itemNum >= 1 && itemNum <= 9;
+  });
+
+  // Item 10 is the secret item
+  const secretItem = sortedItems.find(item => {
+    const itemNum = parseInt(item.id) || 0;
+    return itemNum === 10;
+  });
 
   const isOwned = (itemId: string) => collection.includes(itemId);
 
@@ -23,75 +47,91 @@ const CollectionGrid: React.FC<CollectionGridProps> = ({ items, collection }) =>
     switch (rarity) {
       case 'secret': return 'from-purple-500 via-pink-500 to-purple-600';
       case 'rare': return 'from-blue-400 to-cyan-500';
-      case 'common': return 'from-gray-400 to-gray-500';
+      case 'common': return 'from-amber-400 to-orange-500';
       default: return 'from-gray-400 to-gray-500';
     }
   };
 
   const getRarityGlow = (rarity: string) => {
     switch (rarity) {
-      case 'secret': return 'shadow-[0_0_30px_rgba(168,85,247,0.6)]';
-      case 'rare': return 'shadow-[0_0_20px_rgba(59,130,246,0.3)]';
+      case 'secret': return 'shadow-[0_0_40px_rgba(168,85,247,0.5)]';
+      case 'rare': return 'shadow-[0_0_25px_rgba(59,130,246,0.4)]';
+      case 'common': return 'shadow-[0_0_20px_rgba(251,146,60,0.3)]';
       default: return '';
     }
   };
 
   return (
-    <div className="mt-8">
-      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <span>🎁</span>
-        <span>Your Collection</span>
-        <span className="text-sm font-normal text-gray-500 ml-2">
-          ({collection.length}/{items.length})
+    <div className="mt-12">
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+          <span className="text-4xl">🎁</span>
+          <span>Your Collection</span>
+        </h2>
+        <span className="text-2xl font-bold text-gray-500">
+          {new Set(collection).size}/10
         </span>
-      </h2>
+      </div>
 
       {/* 3x3 Grid */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-3 gap-4 mb-12">
         {regularItems.map((item) => {
           const owned = isOwned(item.id);
+          const isEquipped = equippedCursorId === item.id;
+          
           return (
             <div
               key={item.id}
               className={`
-                relative aspect-square rounded-xl p-4 
-                flex flex-col items-center justify-center
+                relative rounded-xl p-4 
+                flex flex-col items-center justify-between
                 transition-all duration-300
                 ${owned 
-                  ? `bg-gradient-to-br ${getRarityColor(item.rarity)} ${getRarityGlow(item.rarity)} scale-100 hover:scale-105` 
-                  : 'bg-gray-100 hover:bg-gray-200 opacity-50'
+                  ? `bg-gradient-to-br ${getRarityColor(item.rarity)} ${getRarityGlow(item.rarity)} hover:scale-105` 
+                  : 'bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300'
                 }
+                ${isEquipped ? 'ring-4 ring-yellow-400 ring-offset-2' : ''}
               `}
+              style={{ height: '220px' }}
             >
-              {/* Rarity indicator */}
-              {owned && (
-                <div className="absolute top-2 right-2">
-                  <div className={`w-2 h-2 rounded-full bg-white shadow-lg`} />
-                </div>
-              )}
-
-              {/* Image */}
-              <div className={`text-5xl mb-2 transition-all duration-300 ${owned ? 'filter-none' : 'grayscale blur-sm'}`}>
+              {/* Image Container */}
+              <div className={`flex items-center justify-center mb-2 ${owned ? '' : 'opacity-30'}`} style={{ height: '100px' }}>
                 {owned ? (
                   <img 
                     src={item.image} 
                     alt={item.name} 
-                    className="w-full h-full object-contain"
+                    className="max-h-full object-contain drop-shadow-lg"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-4xl">?</div>
+                  <div className="text-5xl text-gray-400">🔒</div>
                 )}
               </div>
 
               {/* Name */}
-              <div className={`text-center text-sm font-medium ${owned ? 'text-white' : 'text-gray-400'}`}>
+              <div className={`text-center text-sm font-bold px-2 py-1.5 rounded-lg w-full ${owned ? 'text-white bg-black/20 backdrop-blur-sm' : 'text-gray-400'}`}>
                 {owned ? item.name : '???'}
               </div>
 
-              {/* Lock icon for unowned */}
-              {!owned && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-4xl text-gray-400">🔒</div>
+              {/* Equip Button */}
+              {owned && onEquipCursor && onUnequipCursor && (
+                <button
+                  onClick={() => isEquipped ? onUnequipCursor() : onEquipCursor(item.id)}
+                  className={`mt-2 w-full px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    isEquipped
+                      ? 'bg-yellow-400 text-gray-900 hover:bg-yellow-500'
+                      : 'bg-white/90 text-gray-800 hover:bg-white'
+                  }`}
+                >
+                  {isEquipped ? '✓ Equipped' : 'Equip Cursor'}
+                </button>
+              )}
+
+              {/* Rarity Badge */}
+              {owned && (
+                <div className="absolute top-2 right-2">
+                  <div className="px-2 py-0.5 bg-white/90 backdrop-blur-sm rounded-full text-xs font-bold text-gray-800 shadow-lg">
+                    {item.rarity.toUpperCase()}
+                  </div>
                 </div>
               )}
             </div>
@@ -99,96 +139,145 @@ const CollectionGrid: React.FC<CollectionGridProps> = ({ items, collection }) =>
         })}
       </div>
 
-      {/* Secret Item - Special Section */}
-      {secretItem && (
-        <div className="mt-12 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 blur-3xl animate-pulse" />
+      {/* Secret Item - Always show even if locked */}
+      {secretItem ? (
+        <div className="mt-8 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 blur-3xl" />
           
           <div className="relative">
             <div className="flex items-center justify-center gap-2 mb-4">
-              <span className="text-xl animate-pulse">✨</span>
-              <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">
-                Secret Item
+              <span className="text-xl">✨</span>
+              <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 animate-pulse">
+                Ultra Rare Secret
               </h3>
-              <span className="text-xl animate-pulse">✨</span>
+              <span className="text-xl">✨</span>
             </div>
 
             <div className="flex justify-center">
               <div
                 className={`
-                  relative w-48 aspect-square rounded-2xl p-6
-                  flex flex-col items-center justify-center
+                  relative rounded-xl p-4
+                  flex flex-col items-center justify-between
                   transition-all duration-500
                   ${isOwned(secretItem.id)
-                    ? 'bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 shadow-[0_0_60px_rgba(168,85,247,0.8)] scale-100 hover:scale-105 animate-pulse'
-                    : 'bg-gradient-to-br from-gray-800 to-gray-900 opacity-60'
+                    ? 'bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 shadow-[0_0_50px_rgba(168,85,247,0.6)] hover:scale-105'
+                    : 'bg-gradient-to-br from-gray-100 to-gray-200'
                   }
+                  ${equippedCursorId === secretItem.id ? 'ring-4 ring-yellow-400 ring-offset-2' : ''}
                 `}
+                style={{ width: '200px', height: '240px' }}
               >
-                {/* Animated border effect */}
+                {/* Animated border */}
                 {isOwned(secretItem.id) && (
-                  <div className="absolute inset-0 rounded-2xl">
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 opacity-75 blur-sm animate-spin" style={{ animationDuration: '3s' }} />
-                  </div>
+                  <>
+                    <div className="absolute inset-0 rounded-xl overflow-hidden">
+                      <div className="absolute inset-[-2px] rounded-xl bg-gradient-to-r from-purple-300 via-pink-300 to-purple-300 opacity-50 blur-sm animate-spin" style={{ animationDuration: '4s' }} />
+                    </div>
+                    
+                    {/* Corner sparkles */}
+                    <span className="absolute top-2 left-2 text-lg animate-pulse">✨</span>
+                    <span className="absolute top-2 right-2 text-lg animate-pulse" style={{ animationDelay: '0.5s' }}>✨</span>
+                    <span className="absolute bottom-2 left-2 text-lg animate-pulse" style={{ animationDelay: '1s' }}>✨</span>
+                    <span className="absolute bottom-2 right-2 text-lg animate-pulse" style={{ animationDelay: '1.5s' }}>✨</span>
+                  </>
                 )}
 
                 {/* Content */}
-                <div className="relative z-10">
-                  {/* Stars decoration */}
-                  {isOwned(secretItem.id) && (
-                    <>
-                      <span className="absolute -top-4 -left-4 text-2xl text-yellow-300 animate-pulse">✨</span>
-                      <span className="absolute -top-4 -right-4 text-2xl text-yellow-300 animate-pulse" style={{ animationDelay: '0.5s' }}>✨</span>
-                      <span className="absolute -bottom-4 -left-4 text-2xl text-yellow-300 animate-pulse" style={{ animationDelay: '1s' }}>✨</span>
-                      <span className="absolute -bottom-4 -right-4 text-2xl text-yellow-300 animate-pulse" style={{ animationDelay: '1.5s' }}>✨</span>
-                    </>
-                  )}
-
-                  {/* Image */}
-                  <div className={`text-7xl mb-3 transition-all duration-300 ${isOwned(secretItem.id) ? 'filter-none animate-bounce' : 'grayscale blur-md'}`}
-                       style={{ animationDuration: '2s' }}>
+                <div className="relative z-10 flex flex-col items-center justify-between h-full w-full">
+                  <div className={`flex items-center justify-center ${isOwned(secretItem.id) ? '' : 'opacity-30'}`} style={{ height: '100px' }}>
                     {isOwned(secretItem.id) ? (
                       <img 
                         src={secretItem.image} 
                         alt={secretItem.name} 
-                        className="w-32 h-32 object-contain mx-auto"
+                        className="max-h-full object-contain drop-shadow-2xl"
+                        style={{ animation: 'float 3s ease-in-out infinite' }}
                       />
                     ) : (
-                      <div className="w-32 h-32 flex items-center justify-center text-gray-600 text-6xl mx-auto">?</div>
+                      <div className="text-5xl text-gray-400">🔒</div>
                     )}
                   </div>
 
-                  {/* Name */}
-                  <div className={`text-center text-lg font-bold ${isOwned(secretItem.id) ? 'text-white' : 'text-gray-500'}`}>
-                    {isOwned(secretItem.id) ? secretItem.name : '???'}
+                  <div className="w-full">
+                    <div className={`text-center text-sm font-bold px-2 py-1.5 rounded-lg w-full mb-1 ${isOwned(secretItem.id) ? 'text-white bg-black/20 backdrop-blur-sm' : 'text-gray-400 bg-white/50'}`}>
+                      {isOwned(secretItem.id) ? secretItem.name : '???'}
+                    </div>
+
+                    {/* Equip Button for Secret Item */}
+                    {isOwned(secretItem.id) && onEquipCursor && onUnequipCursor && (
+                      <button
+                        onClick={() => 
+                          equippedCursorId === secretItem.id 
+                            ? onUnequipCursor() 
+                            : onEquipCursor(secretItem.id)
+                        }
+                        className={`mt-2 w-full px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          equippedCursorId === secretItem.id
+                            ? 'bg-yellow-400 text-gray-900 hover:bg-yellow-500'
+                            : 'bg-white/90 text-gray-800 hover:bg-white'
+                        }`}
+                      >
+                        {equippedCursorId === secretItem.id ? '✓ Equipped' : 'Equip Cursor'}
+                      </button>
+                    )}
+
+                    {isOwned(secretItem.id) ? (
+                      <div className="px-2 py-0.5 bg-white/30 backdrop-blur-md rounded-full text-xs font-black text-white text-center mt-1">
+                        SECRET
+                      </div>
+                    ) : (
+                      <div className="px-2 py-0.5 bg-gray-300 rounded-full text-xs font-bold text-gray-600 text-center">
+                        LOCKED
+                      </div>
+                    )}
                   </div>
-
-                  {/* Rarity badge */}
-                  {isOwned(secretItem.id) && (
-                    <div className="mt-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-semibold text-white">
-                      ✨ ULTRA RARE ✨
-                    </div>
-                  )}
-
-                  {/* Lock for unowned */}
-                  {!isOwned(secretItem.id) && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-6xl text-gray-600">🔒</div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
 
-            {/* Secret hint */}
             {!isOwned(secretItem.id) && (
-              <p className="text-center mt-4 text-sm text-gray-500 italic">
-                An extremely rare mystery awaits...
+              <p className="text-center mt-3 text-sm text-gray-500 italic">
+                A legendary mystery awaits...
               </p>
             )}
           </div>
         </div>
+      ) : (
+        // Placeholder if secret item doesn't exist yet
+        <div className="mt-8 relative">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <span className="text-xl">✨</span>
+            <h3 className="text-xl font-bold text-gray-400">
+              Ultra Rare Secret
+            </h3>
+            <span className="text-xl">✨</span>
+          </div>
+          <div className="flex justify-center">
+            <div className="relative rounded-xl p-4 flex flex-col items-center justify-between bg-gradient-to-br from-gray-100 to-gray-200" style={{ width: '200px', height: '180px' }}>
+              <div className="flex items-center justify-center opacity-30" style={{ height: '100px' }}>
+                <div className="text-5xl text-gray-400">🔒</div>
+              </div>
+              <div className="w-full">
+                <div className="text-center text-sm font-bold px-2 py-1.5 rounded-lg w-full mb-1 text-gray-400 bg-white/50">
+                  ???
+                </div>
+                <div className="px-2 py-0.5 bg-gray-300 rounded-full text-xs font-bold text-gray-600 text-center">
+                  LOCKED
+                </div>
+              </div>
+            </div>
+          </div>
+          <p className="text-center mt-3 text-sm text-gray-500 italic">
+            A legendary mystery awaits...
+          </p>
+        </div>
       )}
+
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+      `}} />
     </div>
   );
 };

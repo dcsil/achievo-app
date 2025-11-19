@@ -57,7 +57,7 @@ class UsersRepository:
             client
             .table(self.table)
             .select(
-                "user_id,canvas_username,canvas_domain,profile_picture,canvas_api_key:pgsodium.decrypt(canvas_api_key,'user_key'),total_points,current_level,last_activity_at"
+                "user_id,canvas_username,canvas_domain,profile_picture,total_points,current_level,last_activity_at"
             )
             .eq("user_id", user_id)
             .execute()

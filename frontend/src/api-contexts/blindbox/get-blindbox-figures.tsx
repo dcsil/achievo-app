@@ -25,7 +25,7 @@ export const BlindBoxFiguresProvider: React.FC<{ children: React.ReactNode }> = 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE = 'http://localhost:5000';
+  const API_BASE = 'http://127.0.0.1:5000';
 
   const fetchAllFigures = useCallback(async () => {
     setLoading(true);
