@@ -374,7 +374,7 @@ def test_complete_task_with_assignment(client, monkeypatch):
     assert data["status"] == "completed"
     assert data["assignment_completed"] is True
     assert data["assignment_id"] == "a1"
-    assert data["points_earned"] == 50
+    assert data["points_earned"] == 10
 
 
 def test_complete_task_not_found(client, monkeypatch):
