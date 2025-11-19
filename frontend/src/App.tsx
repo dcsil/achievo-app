@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
@@ -9,11 +9,18 @@ import Settings from './pages/Settings';
 import ToDo from './pages/ToDo';
 import AddTask from './pages/AddTask';
 import Layout from './components/layout';
-
-
+import { initializeActivityTracking, isExtensionEnvironment } from './utils/extensionUtils';
 
 
 function App() {
+  useEffect(() => {
+    // Initialize extension activity tracking if running in extension environment
+    if (isExtensionEnvironment()) {
+      console.log('Initializing extension activity tracking...');
+      initializeActivityTracking();
+    }
+  }, []);
+
   return (
     <Router>
       <div className="App">
