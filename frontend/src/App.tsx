@@ -15,6 +15,8 @@ import { BlindBoxSeriesProvider } from './api-contexts/blindbox/get-blindbox-ser
 import { BlindBoxFiguresProvider } from './api-contexts/blindbox/get-blindbox-figures';
 import { BlindBoxPurchaseProvider } from './api-contexts/blindbox/purchase-blindbox';
 import { useCustomCursor } from './utils/use-custom-cursor';
+import { initializeActivityTracking, isExtensionEnvironment } from './utils/extensionUtils';
+
 
 // Create a wrapper component to access useLocation
 function AppContent() {
@@ -49,6 +51,14 @@ function AppContent() {
 
   // Apply cursor globally
   useCustomCursor(figuresForCursor);
+
+  useEffect(() => {
+    // Initialize extension activity tracking if running in extension environment
+    if (isExtensionEnvironment()) {
+      console.log('Initializing extension activity tracking...');
+      initializeActivityTracking();
+    }
+  }, []);
 
   return (
     <div className="App">

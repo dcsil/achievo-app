@@ -82,11 +82,11 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
     // Clear any scheduled notifications for this completed task
     try {
 
-      // if personal notification alarm exists, clear it
-      if (taskType === 'personal') {
+      // if exercise or break notification alarm exists, clear it
+      if (taskType === 'exercise' || taskType === 'break') {
 
-        const alarmId = `personal-${taskId}`;
-        
+        const alarmId = `${taskType}-${taskId}`;
+
         // Check if alarm exists before trying to clear it
         chrome.alarms.get(alarmId, (alarm) => {
           if (alarm) {

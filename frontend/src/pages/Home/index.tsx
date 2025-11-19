@@ -19,8 +19,9 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
   const [error, setError] = useState<string | null>(null);
   const [courses, setCourses] = useState<CourseForUI[]>([]);
   const [courseRefreshKey, setCourseRefreshKey] = useState<{ [key: string]: number }>({});
-  const [showAllUpcomingDays, setShowAllUpcomingDays] = useState(false);
-  const maxDaysToShow = 3;
+  const [daysToShow, setDaysToShow] = useState(3);
+  const initialDaysToShow = 3;
+  const daysPerIncrement = 3;
 
   // Helper function to group tasks by date
   const groupTasksByDate = (tasks: any[]) => {
@@ -49,17 +50,27 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
     const sortedDays = Object.entries(upcomingTasks)
       .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime());
     
-    return showAllUpcomingDays ? sortedDays : sortedDays.slice(0, maxDaysToShow);
+    return sortedDays.slice(0, daysToShow);
   };
 
   // Helper function to check if there are more days to show
   const hasMoreUpcomingDays = () => {
-    return Object.keys(upcomingTasks).length > maxDaysToShow;
+    return Object.keys(upcomingTasks).length > daysToShow;
   };
 
-  // Function to toggle show all upcoming days
-  const toggleShowAllUpcomingDays = () => {
-    setShowAllUpcomingDays(prev => !prev);
+  // Helper function to check if we can collapse days view
+  const canCollapseDays = () => {
+    return daysToShow > initialDaysToShow;
+  };
+
+  // Function to show more days
+  const handleShowMoreDays = () => {
+    setDaysToShow(prev => Math.min(prev + daysPerIncrement, Object.keys(upcomingTasks).length));
+  };
+
+  // Function to collapse days view
+  const handleCollapseDays = () => {
+    setDaysToShow(initialDaysToShow);
   };
 
   // Fetch all data when component mounts
@@ -97,7 +108,7 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
       setTodayTasks(todayTasksList);
       setUpcomingTasks(groupTasksByDate(upcomingTasksList));
       // Reset upcoming days view when data changes
-      setShowAllUpcomingDays(false);
+      setDaysToShow(initialDaysToShow);
 
       // Fetch courses data
       await fetchCourses();
@@ -147,7 +158,7 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
       setTodayTasks(todayTasksList);
       setUpcomingTasks(groupTasksByDate(upcomingTasksList));
       // Reset upcoming days view when refreshing data
-      setShowAllUpcomingDays(false);
+      setDaysToShow(initialDaysToShow);
       console.log('✅ Refreshed task data from backend');
     } catch (err) {
       console.error('Failed to refresh task data:', err);
@@ -172,11 +183,11 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
   // Clear any scheduled notifications for this completed task
     try {
 
-      // if personal notification alarm exists, clear it
-      if (taskType === 'personal') {
+      // if exercise or break notification alarm exists, clear it
+      if (taskType === 'exercise' || taskType === 'break') {
 
-        const alarmId = `personal-${taskId}`;
-        
+        const alarmId = `${taskType}-${taskId}`;
+
         // Check if alarm exists before trying to clear it
         chrome.alarms.get(alarmId, (alarm) => {
           if (alarm) {
@@ -348,24 +359,26 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
               ))}
               
               {/* Show More / Collapse Controls for Days */}
-              {hasMoreUpcomingDays() && (
-                <div className="flex justify-center mt-4 mb-6">
-                  <button
-                    onClick={toggleShowAllUpcomingDays}
-                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex items-center gap-2"
-                  >
-                    {showAllUpcomingDays ? (
-                      <>
-                        <span>▲</span>
-                        Collapse ({Object.keys(upcomingTasks).length - maxDaysToShow} fewer days)
-                      </>
-                    ) : (
-                      <>
-                        <span>▼</span>
-                        Show More ({Object.keys(upcomingTasks).length - maxDaysToShow} more days)
-                      </>
-                    )}
-                  </button>
+              {(hasMoreUpcomingDays() || canCollapseDays()) && (
+                <div className="flex justify-center mt-4 mb-6 gap-2">
+                  {canCollapseDays() && (
+                    <button
+                      onClick={handleCollapseDays}
+                      className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex items-center gap-2"
+                    >
+                      <span>▲</span>
+                      Collapse
+                    </button>
+                  )}
+                  {hasMoreUpcomingDays() && (
+                    <button
+                      onClick={handleShowMoreDays}
+                      className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex items-center gap-2"
+                    >
+                      <span>▼</span>
+                      Show {Math.min(daysPerIncrement, Object.keys(upcomingTasks).length - daysToShow)} More Days
+                    </button>
+                  )}
                 </div>
               )}
             </>
