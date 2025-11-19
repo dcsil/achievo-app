@@ -60,17 +60,26 @@ export const initializeActivityTracking = (): void => {
   document.addEventListener('click', updateActivity);
   document.addEventListener('keypress', updateActivity);
   document.addEventListener('scroll', updateActivity);
+  document.addEventListener('mousemove', updateActivity);
 
   // Update activity when the window gains focus
   window.addEventListener('focus', updateActivity);
+  
+  // Track when extension becomes visible (even if not focused)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      updateActivity();
+    }
+  });
 
-  // Set up periodic activity updates while user is active (every 5 minutes)
+  // Set up periodic activity updates while extension is actively being used (every 2 minutes)
   setInterval(() => {
-    // Only update if the document is visible and has focus
+    // Only update if document is visible AND the window has focus
+    // This ensures we only consider the extension "active" when user is actually looking at it
     if (document.visibilityState === 'visible' && document.hasFocus()) {
       updateActivity();
     }
-  }, 5 * 60 * 1000); // 5 minutes
+  }, 2 * 60 * 1000); // 2 minutes - more frequent updates
 };
 
 /**
@@ -80,4 +89,39 @@ export const isExtensionEnvironment = (): boolean => {
   return typeof chrome !== 'undefined' && 
          chrome.runtime && 
          chrome.runtime.id !== undefined;
+};
+
+/**
+ * Debug function to check current activity status
+ * Useful for testing the notification system
+ */
+export const debugActivityStatus = async (): Promise<void> => {
+  try {
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+      const storage = await chrome.storage.local.get(['isExtensionActive', 'lastActiveTime', 'user_id']);
+      const timeSinceActive = Date.now() - (storage.lastActiveTime || 0);
+      
+      // Check focused window status
+      let focusedWindowInfo = 'Unable to check';
+      try {
+        const focusedWindow = await chrome.windows.getCurrent();
+        focusedWindowInfo = `Window ${focusedWindow.id}, focused: ${focusedWindow.focused}`;
+      } catch (e) {
+        focusedWindowInfo = 'Error checking window';
+      }
+      
+      console.log('🔍 Extension Activity Debug:', {
+        isExtensionActive: storage.isExtensionActive,
+        lastActiveTime: new Date(storage.lastActiveTime).toLocaleTimeString(),
+        timeSinceActive: `${Math.round(timeSinceActive / 1000)} seconds ago`,
+        userId: storage.user_id,
+        documentVisible: document.visibilityState === 'visible',
+        documentFocused: document.hasFocus(),
+        focusedWindow: focusedWindowInfo,
+        willShowNotification: !storage.isExtensionActive || timeSinceActive > (1 * 60 * 1000)
+      });
+    }
+  } catch (error) {
+    console.error('Error debugging activity status:', error);
+  }
 };

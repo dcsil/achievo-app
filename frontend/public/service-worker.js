@@ -53,6 +53,38 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+// Track window focus changes to detect extension usage in focused window
+chrome.windows.onFocusChanged.addListener(async (windowId) => {
+  if (windowId !== chrome.windows.WINDOW_ID_NONE) {
+    // A window gained focus, check if it has the extension open
+    try {
+      const panel = await chrome.sidePanel.getOptions({ windowId: windowId });
+      if (panel && panel.enabled !== false) {
+        // Extension side panel is available in the focused window
+        chrome.storage.local.set({
+          isExtensionActive: true,
+          lastActiveTime: Date.now()
+        });
+      } else {
+        // Extension not open in the newly focused window
+        chrome.storage.local.set({
+          isExtensionActive: false
+        });
+      }
+    } catch (error) {
+      // Side panel not available in this window - extension not active
+      chrome.storage.local.set({
+        isExtensionActive: false
+      });
+    }
+  } else {
+    // No window is focused - extension not active
+    chrome.storage.local.set({
+      isExtensionActive: false
+    });
+  }
+});
+
 // Optional: Handle side panel setup
 chrome.runtime.onStartup.addListener(() => {
   console.log('Extension started');
@@ -107,12 +139,40 @@ async function isUserActive() {
     const { isExtensionActive, lastActiveTime } = result;
 
     // Consider user inactive if extension hasn't been used for 10 minutes
-    const inactiveThreshold = 10 * 60 * 1000; // 10 minutes in milliseconds
+    const inactiveThreshold = 1 * 60 * 1000; // 10 minutes in milliseconds
     const isRecentlyActive = (Date.now() - (lastActiveTime || 0)) < inactiveThreshold;
     
-    return isExtensionActive && isRecentlyActive;
+    // Only check if side panel is open in the FOCUSED window (not background windows)
+    const isSidePanelOpenInFocusedWindow = await checkIfSidePanelOpenInFocusedWindow();
+    
+    return (isExtensionActive && isRecentlyActive) || isSidePanelOpenInFocusedWindow;
   } catch (error) {
     console.error('Error checking user activity:', error);
+    return false;
+  }
+}
+
+// Function to check if side panel is open in the currently focused window only
+async function checkIfSidePanelOpenInFocusedWindow() {
+  try {
+    // Get only the focused window
+    const focusedWindow = await chrome.windows.getCurrent();
+    
+    if (!focusedWindow || !focusedWindow.focused) {
+      // No focused window or current window is not focused
+      return false;
+    }
+    
+    try {
+      // Check if side panel is open in the focused window
+      const panel = await chrome.sidePanel.getOptions({ windowId: focusedWindow.id });
+      return panel && panel.enabled !== false;
+    } catch (error) {
+      // Side panel not open in focused window
+      return false;
+    }
+  } catch (error) {
+    console.error('Error checking focused window side panel status:', error);
     return false;
   }
 }
