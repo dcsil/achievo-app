@@ -13,9 +13,9 @@ const RevealModal: React.FC<RevealModalProps> = ({ isOpen, item, isDuplicate, on
 
   const getRarityGradient = (rarity: string) => {
     switch (rarity) {
-      case 'legendary': return 'from-yellow-400 to-orange-500';
-      case 'epic': return 'from-purple-400 to-pink-500';
+      case 'secret': return 'from-purple-500 to-pink-500';
       case 'rare': return 'from-blue-400 to-cyan-500';
+      case 'common': return 'from-amber-400 to-orange-500';
       default: return 'from-gray-400 to-gray-500';
     }
   };
@@ -27,14 +27,19 @@ const RevealModal: React.FC<RevealModalProps> = ({ isOpen, item, isDuplicate, on
         style={{ animation: 'fadeIn 0.3s ease-out' }}
       >
         <div 
-          className="bg-white rounded-3xl p-8 max-w-lg w-full mx-4 text-center aspect-square flex flex-col justify-center"
-          style={{ animation: 'scaleIn 0.4s ease-out' }}
+          className="bg-white rounded-3xl p-8 max-w-lg w-full mx-4 text-center flex flex-col justify-center"
+          style={{ animation: 'popIn 0.5s ease-out', minHeight: '500px' }}
         >
           <div className="text-6xl mb-4">🎉</div>
           <h3 className="text-2xl font-bold text-gray-800 mb-6">You got!</h3>
           
-          <div className={`text-9xl my-6 animate-bounce`}>
-            {item.emoji}
+          <div className="my-6 flex items-center justify-center">
+            <img 
+              src={item.image} 
+              alt={item.name}
+              className="w-48 h-48 object-contain"
+              style={{ animation: 'slideUp 0.6s ease-out' }}
+            />
           </div>
           
           <h4 className="text-3xl font-bold text-gray-800 mb-4">
@@ -65,9 +70,14 @@ const RevealModal: React.FC<RevealModalProps> = ({ isOpen, item, isDuplicate, on
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        @keyframes scaleIn {
-          from { transform: scale(0.8); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
+        @keyframes popIn {
+          0% { transform: scale(0.8); opacity: 0; }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { transform: translateY(30px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
         }
       `}} />
     </>
