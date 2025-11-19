@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
 import LoginPage from './pages/Login';
@@ -11,11 +11,45 @@ import AddTask from './pages/AddTask';
 import UploadTimetable from './pages/UploadTimetable';
 import UploadSyllabi from './pages/UploadSyllabi';
 import Layout from './components/layout';
+import { BlindBoxSeriesProvider } from './api-contexts/blindbox/get-blindbox-series';
+import { BlindBoxFiguresProvider } from './api-contexts/blindbox/get-blindbox-figures';
+import { BlindBoxPurchaseProvider } from './api-contexts/blindbox/purchase-blindbox';
+import { useCustomCursor } from './utils/use-custom-cursor';
 
+// Create a wrapper component to access useLocation
+function AppContent() {
+  const [allFigures, setAllFigures] = useState([]);
+  const location = useLocation();
 
+  // Load figures for cursor from localStorage
+  useEffect(() => {
+    const loadFigures = async () => {
+      try {
+        const savedFigures = localStorage.getItem('cursor_figures');
+        if (savedFigures) {
+          setAllFigures(JSON.parse(savedFigures));
+        }
+      } catch (error) {
+        console.error('Failed to load cursor figures:', error);
+      }
+    };
+    loadFigures();
 
+    const handleFiguresUpdate = () => {
+      loadFigures();
+    };
 
-function App() {
+    window.addEventListener('figures-updated', handleFiguresUpdate);
+    return () => window.removeEventListener('figures-updated', handleFiguresUpdate);
+  }, []);
+
+  // Only apply cursor on authenticated pages (not login/signup/landing)
+  const isAuthPage = ['/', '/login', '/signup'].includes(location.pathname);
+  const figuresForCursor = isAuthPage ? [] : allFigures;
+
+  // Apply cursor globally
+  useCustomCursor(figuresForCursor);
+
   return (
     <Router>
       <div className="App">

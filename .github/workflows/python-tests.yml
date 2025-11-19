@@ -13,6 +13,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: credential
 
     defaults:
       run:
@@ -32,11 +33,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run pytest with coverage
-        run: pytest --cov=app app/utils/test_file_utils.py
+      - name: Create .env.test file
+        run: |
+          echo "SUPABASE_URL=${{ secrets.TEST_SUPABASE_URL }}" >> .env.test
+          echo "SUPABASE_KEY=${{ secrets.TEST_SUPABASE_KEY }}" >> .env.test
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env.test
 
-      - name: Generate HTML coverage report
-        run: pytest --cov=app --cov-report=html app/utils/test_file_utils.py
+      - name: Run pytest with coverage
+        run: pytest
 
       - name: Upload coverage report as artifact
         uses: actions/upload-artifact@v4

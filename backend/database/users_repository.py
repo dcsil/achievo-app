@@ -13,8 +13,8 @@ class UsersRepository:
             client
             .table(self.table)
             .select(
-                # Decrypt canvas_api_key using pgsodium before returning. Alias keeps field name consistent.
-                "user_id,canvas_username,canvas_domain,profile_picture,canvas_api_key:pgsodium.decrypt(canvas_api_key,'user_key'),total_points,current_level,last_activity_at"
+                # Skip pgsodium decryption for now - can be added back later when needed
+                "user_id,canvas_username,canvas_domain,profile_picture,total_points,current_level,last_activity_at"
             )
             .execute()
         )
@@ -57,6 +57,7 @@ class UsersRepository:
             client
             .table(self.table)
             .select(
+                # Skip pgsodium decryption for now - can be added back later when needed
                 "user_id,canvas_username,canvas_domain,profile_picture,total_points,current_level,last_activity_at"
             )
             .eq("user_id", user_id)
