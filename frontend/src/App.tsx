@@ -51,24 +51,35 @@ function AppContent() {
   useCustomCursor(figuresForCursor);
 
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/home" element={<Layout><Home /></Layout>} />
-          <Route path="/rewards" element={<Layout><Rewards /></Layout>} />
-          <Route path="/todo" element={<Layout><ToDo /></Layout>} />
-          <Route path="/settings" element={<Layout><Settings /></Layout>} />
-          <Route path="/add-task" element={<Layout><AddTask /></Layout>} />
-          <Route path="/upload-timetable" element={<Layout><UploadTimetable /></Layout>} />
-          <Route path="/upload-syllabi" element={<Layout><UploadSyllabi /></Layout>} />
-          {/* Redirect any unknown routes to landing page */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
-    </Router>
+    <div className="App">
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/home" element={<Layout><Home /></Layout>} />
+        <Route path="/rewards" element={<Layout><Rewards /></Layout>} />
+        <Route path="/todo" element={<Layout><ToDo /></Layout>} />
+        <Route path="/settings" element={<Layout><Settings /></Layout>} />
+        <Route path="/add-task" element={<Layout><AddTask /></Layout>} />
+        <Route path="/upload-timetable" element={<Layout><UploadTimetable /></Layout>} />
+        <Route path="/upload-syllabi" element={<Layout><UploadSyllabi /></Layout>} /> 
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <BlindBoxSeriesProvider>
+      <BlindBoxFiguresProvider>
+        <BlindBoxPurchaseProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </BlindBoxPurchaseProvider>
+      </BlindBoxFiguresProvider>
+    </BlindBoxSeriesProvider>
   );
 }
 
