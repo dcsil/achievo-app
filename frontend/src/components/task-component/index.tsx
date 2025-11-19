@@ -53,7 +53,7 @@ function TaskComponent({ task, onCompleteTask, showCompleteButton = true, isComp
                   {task.course_name}
                 </span>
               )}
-              <div className="text-sm text-gray-600">{task.type && TASK_TYPES.find(type => type.value === task.type)?.label || 'Task'}</div>
+              <div className="text-sm text-gray-600 truncate">{task.type && TASK_TYPES.find(type => type.value === task.type)?.label || 'Task'}</div>
             </div>
           </div>
           
