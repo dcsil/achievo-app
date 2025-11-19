@@ -8,3 +8,4 @@ flask
 werkzeug
 pytest-cov
 pdfplumber
+python-dateutil
