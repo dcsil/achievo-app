@@ -25,5 +25,6 @@ backend/node_modules/flask/sass/palette/_palette.function.scss
 backend/node_modules/flask/sass/palette/_palette.scss
 
 backend/.env
+backend/.env.test
 
 *.pyc
