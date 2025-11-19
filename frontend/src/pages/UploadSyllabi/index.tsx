@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { processSyllabus, validatePdfFile, SyllabiResult } from '../../api-contexts/syllabi-api';
 import { getCourses, CourseForUI } from '../../api-contexts/get-courses';
-import TaskContainer from '../../components/task-container';
+import MultipleTaskContainer from '../../components/multiple-task-container';
 import AssignmentProgressContainer from '../../components/assignment-progress-container';
 import PdfUploadForm from '../../components/pdf-upload';
 
@@ -270,9 +270,11 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
             {result.tasks.length > 0 && (
               <div className="mb-8">
                 <h4 className="text-lg font-bold text-gray-800 mb-4">🕐 tests ({result.tasks.length} total)</h4>
-                <TaskContainer 
+                <MultipleTaskContainer 
                   tasks={result.tasks}
                   userId={userId}
+                  timeAdjustment={false}
+                  showCompleteButton={false}
                 />
               </div>
             )}
@@ -303,9 +305,11 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
                           
                           {assignmentTasks.length > 0 ? (
                             <div className="space-y-2">
-                              <TaskContainer 
+                              <MultipleTaskContainer 
                                 tasks={assignmentTasks}
                                 userId={userId}
+                                timeAdjustment={false}
+                                showCompleteButton={false}
                               />
                             </div>
                           ) : (

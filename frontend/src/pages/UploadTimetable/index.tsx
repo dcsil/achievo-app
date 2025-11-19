@@ -3,7 +3,7 @@ import { TimetableProcessResult, timetableApiService } from '../../api-contexts/
 import { tasksApiService } from '../../api-contexts/add-tasks';
 import { addCoursesApiService } from '../../api-contexts/add-courses';
 import { User } from '../../api-contexts/user-context';
-import TaskContainer from '../../components/task-container';
+import MultipleTaskContainer from '../../components/multiple-task-container';
 import CourseContainer from '../../components/course-container';
 import PdfUploadForm from '../../components/pdf-upload';
 
@@ -108,6 +108,29 @@ const UploadTimetable: React.FC<UploadTimetableProps> = ({ user, userId = 'paul_
     }
   };
 
+  // Helper function to group tasks by date
+  const groupTasksByDate = (tasks: any[]) => {
+    const grouped: { [date: string]: any[] } = {};
+    
+    tasks.forEach(task => {
+      const dateKey = new Date(task.scheduled_start_at).toDateString();
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(task);
+    });
+    
+    // Sort dates
+    const sortedDates = Object.keys(grouped).sort((a, b) => 
+      new Date(a).getTime() - new Date(b).getTime()
+    );
+    
+    return sortedDates.map(date => ({
+      date,
+      tasks: grouped[date]
+    }));
+  };
+
   return (
     <div className="px-6 py-6 max-w-6xl mx-auto pb-20">
       {/* Header */}
@@ -171,7 +194,7 @@ const UploadTimetable: React.FC<UploadTimetableProps> = ({ user, userId = 'paul_
               >
                 {isSaving ? (
                   <>
-                    <span className="inline-block animate-spin mr-2">⏳</span>
+                    <span className="inline-block animate-spin mr-2 center">⏳</span>
                     Saving to Dashboard...
                   </>
                 ) : (
@@ -195,7 +218,7 @@ const UploadTimetable: React.FC<UploadTimetableProps> = ({ user, userId = 'paul_
             <div className="space-y-6">
               {result.courses.map((course) => {
                 const courseTasks = result.tasks.filter(task => task.course_id === course.course_id);
-                const displayTasks = courseTasks.slice(0, 5); // Show first 5 tasks per course
+                const groupedTasks = groupTasksByDate(courseTasks);
                 
                 return (
                   <div key={course.course_id} className="border border-gray-200 rounded-lg p-4">
@@ -209,20 +232,31 @@ const UploadTimetable: React.FC<UploadTimetableProps> = ({ user, userId = 'paul_
                       />
                     </div>
                     
-                    {/* Course Tasks */}
+                    {/* Course Tasks by Date */}
                     <div>
                       <h4 className="text-md font-semibold text-gray-700 mb-3 text-center">
-                        Generated Tasks ({courseTasks.length} total)
+                        New Generated Tasks ({courseTasks.length} total)
                       </h4>
                       
-                      {displayTasks.length > 0 ? (
-                        <div className="space-y-2">
-                          <TaskContainer 
-                            tasks={displayTasks}
-                            userId={userId}
-                            onTaskCompleted={() => {}}
-                            onTasksUpdate={() => {}}
-                          />
+                      {groupedTasks.length > 0 ? (
+                        <div className="space-y-4">
+                          {groupedTasks.map(({ date, tasks: dateTasks }) => {
+                            const displayTasks = dateTasks.slice(0, 5); // Show first 5 tasks per date
+                            
+                            return (
+                              <div key={`${course.course_id}-${date}`} className="space-y-2">
+                                <MultipleTaskContainer 
+                                  tasks={displayTasks}
+                                  userId={userId}
+                                  onTaskCompleted={() => {}}
+                                  onTasksUpdate={() => {}}
+                                  timeAdjustment={false}
+                                  showCompleteButton={false}
+                                  dateString={date}
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
                       ) : (
                         <p className="text-gray-500 text-sm text-center">No tasks generated for this course</p>
@@ -242,4 +276,3 @@ const UploadTimetable: React.FC<UploadTimetableProps> = ({ user, userId = 'paul_
 };
 
 export default UploadTimetable;
-          
