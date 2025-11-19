@@ -2,10 +2,10 @@
 import React from 'react';
 
 export interface CollectibleItem {
-  id: number;
+  id: string;
   name: string;
-  emoji: string;
-  rarity: 'legendary' | 'epic' | 'rare' | 'common';
+  image: string; // Supabase image URL
+  rarity: 'secret' | 'rare' | 'common';
 }
 
 interface CollectionItemProps {
@@ -16,18 +16,18 @@ interface CollectionItemProps {
 const CollectionItem: React.FC<CollectionItemProps> = ({ item, isOwned }) => {
   const getRarityBorder = (rarity: string) => {
     switch (rarity) {
-      case 'legendary': return 'border-yellow-400 shadow-yellow-400/50';
-      case 'epic': return 'border-purple-400 shadow-purple-400/50';
+      case 'secret': return 'border-purple-400 shadow-purple-400/50';
       case 'rare': return 'border-blue-400 shadow-blue-400/50';
+      case 'common': return 'border-gray-300 shadow-gray-300/50';
       default: return 'border-gray-300 shadow-gray-300/50';
     }
   };
 
   const getRarityBadge = (rarity: string) => {
     switch (rarity) {
-      case 'legendary': return 'bg-yellow-200 text-yellow-800';
-      case 'epic': return 'bg-purple-200 text-purple-800';
+      case 'secret': return 'bg-purple-200 text-purple-800';
       case 'rare': return 'bg-blue-200 text-blue-800';
+      case 'common': return 'bg-gray-200 text-gray-800';
       default: return 'bg-gray-200 text-gray-800';
     }
   };
@@ -42,7 +42,13 @@ const CollectionItem: React.FC<CollectionItemProps> = ({ item, isOwned }) => {
     >
       {isOwned ? (
         <>
-          <div className="text-5xl mb-2">{item.emoji}</div>
+          <div className="w-full h-20 flex items-center justify-center mb-2 px-2">
+            <img 
+              src={item.image} 
+              alt={item.name} 
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
           <p className="text-xs font-semibold text-gray-700 text-center px-1">
             {item.name}
           </p>
@@ -52,7 +58,7 @@ const CollectionItem: React.FC<CollectionItemProps> = ({ item, isOwned }) => {
         </>
       ) : (
         <>
-          <div className="text-5xl mb-2 opacity-20">❓</div>
+          <div className="text-5xl mb-2 text-gray-300">?</div>
           <p className="text-xs text-gray-400">Locked</p>
         </>
       )}
