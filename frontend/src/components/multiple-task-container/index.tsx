@@ -22,29 +22,36 @@ function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, 
   const [pointsEarned, setPointsEarned] = useState(0);
   const [isCompleting, setIsCompleting] = useState(false);
   const [selectedTaskWithAssignment, setSelectedTaskWithAssignment] = useState<any>(null);
-  const [showAllTasks, setShowAllTasks] = useState(false);
-  const tasksPerPage = 5;
+  const [tasksToShow, setTasksToShow] = useState(5);
+  const initialTasksPerPage = 5;
+  const tasksPerIncrement = 3;
 
   // Sync local state with parent's tasks prop
   useEffect(() => {
     // Ensure tasks is always an array
     if (Array.isArray(tasks)) {
       setTaskList(tasks);
-      // Reset to collapsed view when tasks change
-      setShowAllTasks(false);
+      // Reset to initial view when tasks change
+      setTasksToShow(initialTasksPerPage);
     } else {
       console.error('MultipleTaskContainer received non-array tasks:', tasks);
       setTaskList([]);
-      setShowAllTasks(false);
+      setTasksToShow(initialTasksPerPage);
     }
   }, [tasks]);
 
   // Show more/collapse logic
-  const displayedTasks = showAllTasks ? taskList : taskList.slice(0, tasksPerPage);
-  const hasMoreTasks = taskList.length > tasksPerPage;
+  const displayedTasks = taskList.slice(0, tasksToShow);
+  const hasMoreTasks = taskList.length > tasksToShow;
+  const canShowMore = tasksToShow < taskList.length;
+  const canCollapse = tasksToShow > initialTasksPerPage;
 
-  const toggleShowAllTasks = () => {
-    setShowAllTasks(prev => !prev);
+  const handleShowMore = () => {
+    setTasksToShow(prev => Math.min(prev + tasksPerIncrement, taskList.length));
+  };
+
+  const handleCollapse = () => {
+    setTasksToShow(initialTasksPerPage);
   };
 
   const handleCompleteTask = async (task: any) => {
@@ -91,9 +98,11 @@ function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, 
       const updatedTasks = taskList.filter(t => t.task_id !== task.task_id);
       setTaskList(updatedTasks);
       
-      // If after removing task we have <= tasksPerPage, collapse the view
-      if (updatedTasks.length <= tasksPerPage) {
-        setShowAllTasks(false);
+      // Adjust tasksToShow if needed after removing task
+      if (updatedTasks.length <= initialTasksPerPage) {
+        setTasksToShow(initialTasksPerPage);
+      } else if (tasksToShow > updatedTasks.length) {
+        setTasksToShow(updatedTasks.length);
       }
       
       // Notify parent component
@@ -186,24 +195,26 @@ function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, 
           </ul>
           
           {/* Show More / Collapse Controls */}
-          {hasMoreTasks && (
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={toggleShowAllTasks}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex items-center gap-2"
-              >
-                {showAllTasks ? (
-                  <>
-                    <span>▲</span>
-                    Collapse ({taskList.length - tasksPerPage} less)
-                  </>
-                ) : (
-                  <>
-                    <span>▼</span>
-                    Show More ({taskList.length - tasksPerPage} more)
-                  </>
-                )}
-              </button>
+          {(hasMoreTasks || canCollapse) && (
+            <div className="flex justify-center mt-4 gap-2">
+              {canCollapse && (
+                <button
+                  onClick={handleCollapse}
+                  className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex items-center gap-2"
+                >
+                  <span>▲</span>
+                  Collapse
+                </button>
+              )}
+              {canShowMore && (
+                <button
+                  onClick={handleShowMore}
+                  className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex items-center gap-2"
+                >
+                  <span>▼</span>
+                  Show {Math.min(tasksPerIncrement, taskList.length - tasksToShow)} More Tasks
+                </button>
+              )}
             </div>
           )}
         </div>
