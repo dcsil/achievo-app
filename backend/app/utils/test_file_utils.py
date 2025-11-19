@@ -2,16 +2,9 @@ import os
 import io
 import tempfile
 import pytest
-from flask import Flask, request
+from flask import request
 from werkzeug.datastructures import FileStorage
-import file_utils
-
-@pytest.fixture
-def app():
-    app = Flask(__name__)
-    app.config['TESTING'] = True
-    app.config['UPLOAD_FOLDER'] = tempfile.mkdtemp()
-    return app
+from app.utils import file_utils
 
 
 def test_allowed_file_pdf():
