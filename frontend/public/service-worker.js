@@ -54,12 +54,23 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   console.log('Alarm triggered:', alarm.name);
   
   // Handle task-specific reminders
-  if (alarm.name.startsWith('personal-')) {
-    const taskId = alarm.name.replace('personal-', '');
+  if (alarm.name.startsWith('exercise-')) {
+    const taskId = alarm.name.replace('exercise-', '');
     chrome.notifications.create(`notification-${taskId}`, {
       type: 'basic',
       iconUrl: 'achievo-clap-transparent.png',
-      title: 'Task Reminder',
+      title: 'Workout Reminder',
+      message: 'Time to go work out 💪!',
+      priority: 2,
+    });
+  }
+
+  if (alarm.name.startsWith('break-')) {
+    const taskId = alarm.name.replace('break-', '');
+    chrome.notifications.create(`notification-${taskId}`, {
+      type: 'basic',
+      iconUrl: 'achievo-clap-transparent.png',
+      title: 'Take a Break Reminder',
       message: 'Time to take a break!',
       priority: 2,
     });

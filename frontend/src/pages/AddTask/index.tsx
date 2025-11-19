@@ -428,9 +428,9 @@ const AddTask: React.FC<AddTaskProps> = ({ user, userId = 'paul_paw_test' }) => 
       const response = await tasksApiService.createTask(taskData);
 
       // create notification for reminder at scheduled at time
-      // if task is personal, add notification for scheduled start time
-      if (formData.type === 'personal' && formData.scheduled_start_at) {
-        const notifId = `personal-${response.task_id}`;
+      // if task is exercise or break, add notification for scheduled start time
+      if ((formData.type === 'exercise' || formData.type === 'break') && formData.scheduled_start_at) {
+        const notifId = `${formData.type}-${response.task_id}`;
         const startTime = new Date(formData.scheduled_start_at).getTime();
         const now = Date.now();
         
