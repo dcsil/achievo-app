@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import clap from '../../assets/achievo-clap-transparent.png';
+import { setUserId, isExtensionEnvironment } from '../../utils/extensionUtils';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -16,7 +17,8 @@ const LoginPage: React.FC = () => {
   // Dummy credentials
   const DUMMY_CREDENTIALS = {
     email: 'paul.paw@example.com',
-    password: 'password123'
+    password: 'password123',
+    userId: 'paul_paw_test' // Dummy user ID for the extension
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -43,11 +45,18 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     if (email === DUMMY_CREDENTIALS.email && password === DUMMY_CREDENTIALS.password) {
-    // Success - navigate to home page
-    console.log('Login successful', { email, remember });
-    navigate('/home');
+      // Success - set user ID in extension storage if running in extension
+      if (isExtensionEnvironment()) {
+        setUserId(DUMMY_CREDENTIALS.userId).catch(err => {
+          console.error('Failed to set user ID in extension:', err);
+        });
+      }
+      
+      // Navigate to home page
+      console.log('Login successful', { email, remember });
+      navigate('/home');
     } else {
-    setError('Invalid email or password. Please try again.');
+      setError('Invalid email or password. Please try again.');
     }
     setIsLoading(false);
   };

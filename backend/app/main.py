@@ -352,31 +352,40 @@ def complete_db_task(task_id):
         
         task_repo.complete_task(task_id)
         
+        description = task.get("description")
         assignment_id = task.get("assignment_id")
         reward_points = task.get("reward_points", 0)
         user_id = task.get("user_id")
+
+        total_points = reward_points
         
         if assignment_id:
             uncompleted_tasks = task_repo.fetch_uncompleted_by_assignment(assignment_id)
             
-            if len(uncompleted_tasks) == 0:
+            if len(uncompleted_tasks) == 0 or description == "Submit Assignment":
                 assignment_repo.complete_assignment(assignment_id)
                 assignment = assignment_repo.fetch_by_id(assignment_id)
                 completion_points = assignment.get("completion_points", 0) if assignment else 0
-                
+                total_points += completion_points
+
                 if user_id:
                     users_repo.update_points(user_id, completion_points)
+                
+                if description == "Submit Assignment" and len(uncompleted_tasks) > 0:
+                    # set all other tasks for this assignment to completed, but don't award points
+                    for t in uncompleted_tasks:
+                        task_repo.complete_task(t.get("task_id"))
                 
                 return jsonify({
                     "status": "completed",
                     "task_id": task_id,
                     "assignment_completed": True,
                     "assignment_id": assignment_id,
-                    "points_earned": completion_points
+                    "points_earned": reward_points
                 }), 200
         
         if user_id:
-            users_repo.update_points(user_id, reward_points)
+            users_repo.update_points(user_id, total_points)
         
         return jsonify({
             "status": "completed",
@@ -420,6 +429,20 @@ def get_db_assignments():
             assignments = repo.fetch_all()
         
         return jsonify(assignments), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/db/assignments/<assignment_id>", methods=["GET"])
+def get_db_assignment_by_id(assignment_id):
+    try:
+        repo = AssignmentsRepository()
+        assignment = repo.fetch_by_id(assignment_id)
+        
+        if not assignment:
+            return jsonify({"error": "Assignment not found"}), 404
+        
+        return jsonify(assignment), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

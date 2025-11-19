@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import TaskContainer from './index';
+import MultipleTaskContainer from './index';
 import { apiService } from '../../api-contexts/user-context';
 
 // Mock the API service
@@ -28,7 +28,7 @@ jest.mock('../task-complete', () => {
 
 const mockApiService = apiService as jest.Mocked<typeof apiService>;
 
-describe('TaskContainer Component', () => {
+describe('MultipleMultipleTaskContainer Component', () => {
   const mockTasks = [
     {
       task_id: 'task-1',
@@ -76,7 +76,7 @@ describe('TaskContainer Component', () => {
 
   describe('Rendering', () => {
     test('renders tasks when tasks array is not empty', () => {
-      render(<TaskContainer {...defaultProps} />);
+      render(<MultipleTaskContainer {...defaultProps} />);
       
       expect(screen.getByText('Complete assignment 1')).toBeInTheDocument();
       expect(screen.getByText('Study for exam')).toBeInTheDocument();
@@ -85,7 +85,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('renders empty state when no tasks', () => {
-      render(<TaskContainer {...defaultProps} tasks={[]} />);
+      render(<MultipleTaskContainer {...defaultProps} tasks={[]} />);
       
       expect(screen.getByText('No tasks yet!')).toBeInTheDocument();
       expect(screen.getByText("You're all caught up")).toBeInTheDocument();
@@ -93,7 +93,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('displays due dates correctly', () => {
-      render(<TaskContainer {...defaultProps} />);
+      render(<MultipleTaskContainer {...defaultProps} />);
       
       expect(screen.getByText('12/25')).toBeInTheDocument();
       expect(screen.getByText('12/26')).toBeInTheDocument();
@@ -101,7 +101,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('renders tasks with course colors', () => {
-      const { container } = render(<TaskContainer {...defaultProps} />);
+      const { container } = render(<MultipleTaskContainer {...defaultProps} />);
       
       const mathCourse = screen.getByText('Math 101');
       const physicsCourse = screen.getByText('Physics 201');
@@ -118,7 +118,7 @@ describe('TaskContainer Component', () => {
         }
       ];
       
-      render(<TaskContainer {...defaultProps} tasks={tasksWithoutColor} />);
+      render(<MultipleTaskContainer {...defaultProps} tasks={tasksWithoutColor} />);
       
       const courseElement = screen.getByText('Math 101');
       expect(courseElement).toHaveClass('bg-gray-400');
@@ -132,13 +132,13 @@ describe('TaskContainer Component', () => {
         }
       ];
       
-      render(<TaskContainer {...defaultProps} tasks={tasksWithoutCourseName} />);
+      render(<MultipleTaskContainer {...defaultProps} tasks={tasksWithoutCourseName} />);
       
       expect(screen.getByText('Personal')).toBeInTheDocument();
     });
 
     test('renders task headings with correct styling', () => {
-      render(<TaskContainer {...defaultProps} />);
+      render(<MultipleTaskContainer {...defaultProps} />);
       
       const taskHeadings = screen.getAllByRole('heading', { level: 3 });
       
@@ -149,7 +149,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('renders coin emoji and completion text', () => {
-        render(<TaskContainer {...defaultProps} />);
+        render(<MultipleTaskContainer {...defaultProps} />);
         
         const firstTask = screen.getByText('Complete assignment 1').closest('li');
         
@@ -162,7 +162,7 @@ describe('TaskContainer Component', () => {
 
   describe('Hover Interactions', () => {
     test('shows complete button on hover', () => {
-        render(<TaskContainer {...defaultProps} />);
+        render(<MultipleTaskContainer {...defaultProps} />);
         
         const firstTask = screen.getByText('Complete assignment 1').closest('li');
         
@@ -180,7 +180,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('hides complete button when mouse leaves', () => {
-        render(<TaskContainer {...defaultProps} />);
+        render(<MultipleTaskContainer {...defaultProps} />);
         
         const firstTask = screen.getByText('Complete assignment 1').closest('li');
         
@@ -199,7 +199,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('applies hover styles to task cards with correct course colors', () => {
-        render(<TaskContainer {...defaultProps} />);
+        render(<MultipleTaskContainer {...defaultProps} />);
         
         // Test Math 101 task (blue)
         const mathTask = screen.getByText('Complete assignment 1').closest('li');
@@ -223,7 +223,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('can hover different tasks independently', () => {
-        render(<TaskContainer {...defaultProps} />);
+        render(<MultipleTaskContainer {...defaultProps} />);
         
         const firstTask = screen.getByText('Complete assignment 1').closest('li');
         const secondTask = screen.getByText('Study for exam').closest('li');
@@ -246,7 +246,7 @@ describe('TaskContainer Component', () => {
       const mockOnTasksUpdate = jest.fn();
       
       render(
-        <TaskContainer 
+        <MultipleTaskContainer 
           {...defaultProps} 
           onTaskCompleted={mockOnTaskCompleted}
           onTasksUpdate={mockOnTasksUpdate}
@@ -273,7 +273,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('shows completion overlay after task completion', async () => {
-      render(<TaskContainer {...defaultProps} />);
+      render(<MultipleTaskContainer {...defaultProps} />);
       
       const firstTask = screen.getByText('Complete assignment 1').closest('li');
       fireEvent.mouseEnter(firstTask!);
@@ -296,7 +296,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('removes completed task from list', async () => {
-      render(<TaskContainer {...defaultProps} />);
+      render(<MultipleTaskContainer {...defaultProps} />);
       
       expect(screen.getByText('Complete assignment 1')).toBeInTheDocument();
       expect(screen.getByText('Study for exam')).toBeInTheDocument();
@@ -332,7 +332,7 @@ describe('TaskContainer Component', () => {
             }), 100))
         );
 
-        render(<TaskContainer {...defaultProps} />);
+        render(<MultipleTaskContainer {...defaultProps} />);
         
         const firstTask = screen.getByText('Complete assignment 1').closest('li');
         fireEvent.mouseEnter(firstTask!);
@@ -360,7 +360,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('prevents multiple completion attempts', async () => {
-        render(<TaskContainer {...defaultProps} />);
+        render(<MultipleTaskContainer {...defaultProps} />);
         
         const firstTask = screen.getByText('Complete assignment 1').closest('li');
         fireEvent.mouseEnter(firstTask!);
@@ -390,7 +390,7 @@ describe('TaskContainer Component', () => {
       const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       
-      render(<TaskContainer {...defaultProps} />);
+      render(<MultipleTaskContainer {...defaultProps} />);
       
       const firstTask = screen.getByText('Complete assignment 1').closest('li');
       fireEvent.mouseEnter(firstTask!);
@@ -425,7 +425,7 @@ describe('TaskContainer Component', () => {
       
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
       
-      render(<TaskContainer {...defaultProps} />);
+      render(<MultipleTaskContainer {...defaultProps} />);
       
       const firstTask = screen.getByText('Complete assignment 1').closest('li');
       fireEvent.mouseEnter(firstTask!);
@@ -450,7 +450,7 @@ describe('TaskContainer Component', () => {
     test('calls onTasksUpdate with correct remaining tasks', async () => {
       const mockOnTasksUpdate = jest.fn();
       
-      render(<TaskContainer {...defaultProps} onTasksUpdate={mockOnTasksUpdate} />);
+      render(<MultipleTaskContainer {...defaultProps} onTasksUpdate={mockOnTasksUpdate} />);
       
       const firstTask = screen.getByText('Complete assignment 1').closest('li');
       fireEvent.mouseEnter(firstTask!);
@@ -472,7 +472,7 @@ describe('TaskContainer Component', () => {
 
   describe('Task Completion Overlay', () => {
     test('closes overlay when close button is clicked', async () => {
-      render(<TaskContainer {...defaultProps} />);
+      render(<MultipleTaskContainer {...defaultProps} />);
       
       const firstTask = screen.getByText('Complete assignment 1').closest('li');
       fireEvent.mouseEnter(firstTask!);
@@ -497,7 +497,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('resets completion state when overlay is closed', async () => {
-      render(<TaskContainer {...defaultProps} />);
+      render(<MultipleTaskContainer {...defaultProps} />);
       
       const firstTask = screen.getByText('Complete assignment 1').closest('li');
       fireEvent.mouseEnter(firstTask!);
@@ -527,7 +527,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('passes correct data to TaskComplete component', async () => {
-      render(<TaskContainer {...defaultProps} />);
+      render(<MultipleTaskContainer {...defaultProps} />);
       
       const firstTask = screen.getByText('Complete assignment 1').closest('li');
       fireEvent.mouseEnter(firstTask!);
@@ -555,7 +555,7 @@ describe('TaskContainer Component', () => {
 
   describe('Props and State Management', () => {
     test('updates task list when tasks prop changes', () => {
-      const { rerender } = render(<TaskContainer {...defaultProps} />);
+      const { rerender } = render(<MultipleTaskContainer {...defaultProps} />);
       
       expect(screen.getByText('Complete assignment 1')).toBeInTheDocument();
       expect(screen.getByText('Study for exam')).toBeInTheDocument();
@@ -571,7 +571,7 @@ describe('TaskContainer Component', () => {
         }
       ];
       
-      rerender(<TaskContainer {...defaultProps} tasks={newTasks} />);
+      rerender(<MultipleTaskContainer {...defaultProps} tasks={newTasks} />);
       
       expect(screen.queryByText('Complete assignment 1')).not.toBeInTheDocument();
       expect(screen.queryByText('Study for exam')).not.toBeInTheDocument();
@@ -579,7 +579,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('works without optional callback props', async () => {
-      render(<TaskContainer tasks={mockTasks} userId="user-123" />);
+      render(<MultipleTaskContainer tasks={mockTasks} userId="user-123" />);
       
       const firstTask = screen.getByText('Complete assignment 1').closest('li');
       fireEvent.mouseEnter(firstTask!);
@@ -600,7 +600,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('maintains internal state correctly after task completion', async () => {
-      render(<TaskContainer {...defaultProps} />);
+      render(<MultipleTaskContainer {...defaultProps} />);
       
       expect(screen.getAllByRole('listitem')).toHaveLength(2);
       
@@ -622,28 +622,28 @@ describe('TaskContainer Component', () => {
 
   describe('Styling and CSS Classes', () => {
     test('applies correct border colors based on course color', () => {
-      const { container } = render(<TaskContainer {...defaultProps} />);
+      const { container } = render(<MultipleTaskContainer {...defaultProps} />);
       
       const taskCards = container.querySelectorAll('.border-blue-200, .border-green-200');
       expect(taskCards).toHaveLength(2);
     });
 
     test('applies transition classes correctly', () => {
-      const { container } = render(<TaskContainer {...defaultProps} />);
+      const { container } = render(<MultipleTaskContainer {...defaultProps} />);
       
       const taskCards = container.querySelectorAll('.transition-all.duration-300');
       expect(taskCards.length).toBeGreaterThan(0);
     });
 
     test('empty state has correct styling classes', () => {
-      const { container } = render(<TaskContainer {...defaultProps} tasks={[]} />);
+      const { container } = render(<MultipleTaskContainer {...defaultProps} tasks={[]} />);
       
       const emptyState = container.querySelector('.bg-orange-50.rounded-xl.border-2.border-dashed.border-orange-200');
       expect(emptyState).toBeInTheDocument();
     });
 
     test('complete button has correct gradient styling', () => {
-        render(<TaskContainer {...defaultProps} />);
+        render(<MultipleTaskContainer {...defaultProps} />);
         
         const firstTask = screen.getByText('Complete assignment 1').closest('li');
         fireEvent.mouseEnter(firstTask!);
@@ -670,7 +670,7 @@ describe('TaskContainer Component', () => {
         // Missing course_name, course_color, course_id
       }];
       
-      render(<TaskContainer {...defaultProps} tasks={incompleteTask} />);
+      render(<MultipleTaskContainer {...defaultProps} tasks={incompleteTask} />);
       
       expect(screen.getByText('Incomplete task')).toBeInTheDocument();
       expect(screen.getByText('Personal')).toBeInTheDocument(); // Fallback course name
@@ -686,7 +686,7 @@ describe('TaskContainer Component', () => {
       }];
       
       expect(() => {
-        render(<TaskContainer {...defaultProps} tasks={taskWithInvalidDate} />);
+        render(<MultipleTaskContainer {...defaultProps} tasks={taskWithInvalidDate} />);
       }).not.toThrow();
     });
 
@@ -697,7 +697,7 @@ describe('TaskContainer Component', () => {
         description: 'This is a very long task description that might overflow the container and cause layout issues if not handled properly in the component design and styling'
       }];
       
-      render(<TaskContainer {...defaultProps} tasks={taskWithLongDescription} />);
+      render(<MultipleTaskContainer {...defaultProps} tasks={taskWithLongDescription} />);
       
       expect(screen.getByText(/This is a very long task description/)).toBeInTheDocument();
     });
@@ -708,13 +708,13 @@ describe('TaskContainer Component', () => {
         description: 'Task with special chars: @#$%^&*()[]{}|;:,.<>?'
       }];
       
-      render(<TaskContainer {...defaultProps} tasks={taskWithSpecialChars} />);
+      render(<MultipleTaskContainer {...defaultProps} tasks={taskWithSpecialChars} />);
       
       expect(screen.getByText('Task with special chars: @#$%^&*()[]{}|;:,.<>?')).toBeInTheDocument();
     });
 
     test('handles rapid hover interactions without errors', () => {
-      render(<TaskContainer {...defaultProps} />);
+      render(<MultipleTaskContainer {...defaultProps} />);
       
       const firstTask = screen.getByText('Complete assignment 1').closest('li');
       const secondTask = screen.getByText('Study for exam').closest('li');
@@ -732,7 +732,7 @@ describe('TaskContainer Component', () => {
     });
 
     test('handles completing all tasks showing empty state', async () => {
-      const { rerender } = render(<TaskContainer {...defaultProps} tasks={[mockTasks[0]]} />);
+      const { rerender } = render(<MultipleTaskContainer {...defaultProps} tasks={[mockTasks[0]]} />);
       
       expect(screen.getByText('Complete assignment 1')).toBeInTheDocument();
       

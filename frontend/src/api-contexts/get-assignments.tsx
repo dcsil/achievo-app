@@ -24,6 +24,27 @@ export interface Assignment {
   completed_task_count?: number; // Number of completed tasks
 }
 
+export async function getAssignment(assignmentId: string): Promise<Assignment> {
+  try {
+    const response = await fetch(`http://127.0.0.1:5000/db/assignments/${assignmentId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const assignment: Assignment = await response.json();
+    return assignment;
+  } catch (error) {
+    console.error('Error fetching assignment:', error);
+    throw error;
+  }
+}
+
 // Helper function to get tasks for a specific assignment
 async function getTasksForAssignment(assignmentId: string, userId: string = "paul_paw_test"): Promise<Task[]> {
   try {
@@ -49,6 +70,53 @@ async function getTasksForAssignment(assignmentId: string, userId: string = "pau
 export async function getAssignments(courseId: string, userId: string = "paul_paw_test"): Promise<Assignment[]> {
   try {
     const response = await fetch(`http://127.0.0.1:5000/db/assignments?course_id=${courseId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const assignments: Assignment[] = await response.json();
+    
+    // For each assignment, fetch the associated tasks to get task count
+    const assignmentsWithTaskCounts = await Promise.all(
+      assignments.map(async (assignment) => {
+        try {
+          const tasks = await getTasksForAssignment(assignment.assignment_id, userId);
+          const completedTasks = tasks.filter(task => task.is_completed);
+          
+          return {
+            ...assignment,
+            task_count: tasks.length,
+            completed_task_count: completedTasks.length
+          };
+        } catch (error) {
+          console.error(`Error fetching tasks for assignment ${assignment.assignment_id}:`, error);
+          // Return assignment with default task counts on error
+          return {
+            ...assignment,
+            task_count: 0,
+            completed_task_count: 0
+          };
+        }
+      })
+    );
+
+    return assignmentsWithTaskCounts;
+  } catch (error) {
+    console.error('Error fetching assignments:', error);
+    throw error;
+  }
+}
+
+// New function to get all assignments (not filtered by course)
+export async function getAllAssignments(userId: string = "paul_paw_test"): Promise<Assignment[]> {
+  try {
+    const response = await fetch(`http://127.0.0.1:5000/db/assignments`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
