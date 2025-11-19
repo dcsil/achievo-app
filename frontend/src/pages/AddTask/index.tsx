@@ -11,7 +11,7 @@ interface AddTaskProps {
 }
 
 const TASK_TYPES = [
-  { value: 'assignment', label: '📝 Assignment Task', description: 'Academic assignment or homework', defaultPoints: 20 },
+  { value: 'assignment', label: '📝 Assignment/Tutorial/Quiz', description: 'Academic assignment or homework', defaultPoints: 20 },
   { value: 'study', label: '📚 Study/Review Session', description: 'Study time for exams or review', defaultPoints: 15 },
   { value: 'reading', label: '📖 Required Reading', description: 'Required or supplemental reading', defaultPoints: 10 },
   { value: 'exercise', label: '💪 Exercise', description: 'Physical activity or workout', defaultPoints: 10 },

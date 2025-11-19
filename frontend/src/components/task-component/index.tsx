@@ -8,6 +8,16 @@ interface TaskComponentProps {
   timeAdjustment?: boolean;
 }
 
+const TASK_TYPES = [
+  { value: 'assignment', label: '📝 Assignment/Tutorial/Quiz', description: 'Academic assignment or homework', defaultPoints: 20 },
+  { value: 'study', label: '📚 Study/Review Session', description: 'Study time for exams or review', defaultPoints: 15 },
+  { value: 'reading', label: '📖 Required Reading', description: 'Required or supplemental reading', defaultPoints: 10 },
+  { value: 'exercise', label: '💪 Exercise', description: 'Physical activity or workout', defaultPoints: 10 },
+  { value: 'break', label: '⏸️ Break', description: 'Short break or relaxation time', defaultPoints: 5 },
+  { value: 'personal', label: '🏠 Personal', description: 'Personal or household task', defaultPoints: 5 },
+  { value: 'other', label: '📌 Other', description: 'Any other type of task', defaultPoints: 5 },
+];
+
 function TaskComponent({ task, onCompleteTask, showCompleteButton = true, isCompleting = false, timeAdjustment = true }: TaskComponentProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -35,11 +45,16 @@ function TaskComponent({ task, onCompleteTask, showCompleteButton = true, isComp
             <h3 className="font-semibold text-lg text-gray-900 mb-1 leading-tight">
               {task.description}
             </h3>
-            <span className={`inline-block rounded-full text-sm mt-1 font-medium text-white py-1 px-3 truncate max-w-full ${
-              task.course_color ? `bg-${task.course_color}-400` : 'bg-gray-400'
-            }`}>
-              {task.course_name || 'Personal'}
-            </span>
+            <div className="flex items-center gap-2 mt-1">
+              {task.course_name && (
+                <span className={`inline-block rounded-full text-sm font-medium text-white py-1 px-3 truncate ${
+                  task.course_color ? `bg-${task.course_color}-400` : 'bg-gray-400'
+                  }`}>
+                  {task.course_name}
+                </span>
+              )}
+              <div className="text-sm text-gray-600">{task.type && TASK_TYPES.find(type => type.value === task.type)?.label || 'Task'}</div>
+            </div>
           </div>
           
           <div className="text-right flex-shrink-0">
