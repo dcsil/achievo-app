@@ -16,13 +16,9 @@ if backend_dir not in sys.path:
 def setup_test_env():
     """Load test environment variables before any tests run."""
     from dotenv import load_dotenv
-    import os
     
     # Load .env.test file
     load_dotenv(".env.test")
-    
-    # Set TESTING flag so repositories know to skip pgsodium decryption
-    os.environ["TESTING"] = "true"
 
 
 @pytest.fixture

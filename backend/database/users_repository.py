@@ -1,5 +1,4 @@
 from typing import List, Dict, Optional
-import os
 
 from .db_client import DBClient
 
@@ -7,22 +6,16 @@ from .db_client import DBClient
 class UsersRepository:
     table = "users"
 
-    def _get_select_fields(self) -> str:
-        """Get select fields, with or without decryption based on environment."""
-        # In test environment, skip pgsodium decryption if not available
-        if os.getenv("TESTING") == "true":
-            return "user_id,canvas_username,canvas_domain,profile_picture,total_points,current_level,last_activity_at"
-        else:
-            # Decrypt canvas_api_key using pgsodium before returning
-            return "user_id,canvas_username,canvas_domain,profile_picture,canvas_api_key:pgsodium.decrypt(canvas_api_key,'user_key'),total_points,current_level,last_activity_at"
-
     def fetch_all(self) -> List[Dict]:
         """Fetch all users via Supabase."""
         client = DBClient.connect()
         res = (
             client
             .table(self.table)
-            .select(self._get_select_fields())
+            .select(
+                # Skip pgsodium decryption for now - can be added back later when needed
+                "user_id,canvas_username,canvas_domain,profile_picture,total_points,current_level,last_activity_at"
+            )
             .execute()
         )
         return res.data or []
@@ -63,7 +56,10 @@ class UsersRepository:
         res = (
             client
             .table(self.table)
-            .select(self._get_select_fields())
+            .select(
+                # Skip pgsodium decryption for now - can be added back later when needed
+                "user_id,canvas_username,canvas_domain,profile_picture,total_points,current_level,last_activity_at"
+            )
             .eq("user_id", user_id)
             .execute()
         )
