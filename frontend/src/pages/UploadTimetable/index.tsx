@@ -235,7 +235,7 @@ const UploadTimetable: React.FC<UploadTimetableProps> = ({ user, userId = 'paul_
                     {/* Course Tasks by Date */}
                     <div>
                       <h4 className="text-md font-semibold text-gray-700 mb-3 text-center">
-                        New Generated Tasks ({courseTasks.length} total)
+                        Generated Tasks ({courseTasks.length} total)
                       </h4>
                       
                       {groupedTasks.length > 0 ? (
