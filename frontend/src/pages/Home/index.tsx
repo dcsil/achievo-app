@@ -166,20 +166,6 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
   };
 
   const handleTaskCompleted = async (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => {
-  // Remove the completed task from both lists immediately for better UX
-  setTodayTasks(prev => prev.filter(task => task.task_id !== taskId));
-  setUpcomingTasks(prev => {
-    const updated = { ...prev };
-    Object.keys(updated).forEach(dateKey => {
-      updated[dateKey] = updated[dateKey].filter(task => task.task_id !== taskId);
-      // Remove empty date groups
-      if (updated[dateKey].length === 0) {
-        delete updated[dateKey];
-      }
-    });
-    return updated;
-  });
-  
   // Clear any scheduled notifications for this completed task
     try {
 
