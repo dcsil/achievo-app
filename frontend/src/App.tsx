@@ -8,6 +8,8 @@ import Rewards from './pages/Rewards';
 import Settings from './pages/Settings';
 import ToDo from './pages/ToDo';
 import AddTask from './pages/AddTask';
+import UploadTimetable from './pages/UploadTimetable';
+import UploadSyllabi from './pages/UploadSyllabi';
 import Layout from './components/layout';
 import { BlindBoxSeriesProvider } from './api-contexts/blindbox/get-blindbox-series';
 import { BlindBoxFiguresProvider } from './api-contexts/blindbox/get-blindbox-figures';
@@ -69,6 +71,8 @@ function AppContent() {
         <Route path="/todo" element={<Layout><ToDo /></Layout>} />
         <Route path="/settings" element={<Layout><Settings /></Layout>} />
         <Route path="/add-task" element={<Layout><AddTask /></Layout>} />
+        <Route path="/upload-timetable" element={<Layout><UploadTimetable /></Layout>} />
+        <Route path="/upload-syllabi" element={<Layout><UploadSyllabi /></Layout>} /> 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 import json
+import uuid
 from datetime import datetime
 
 load_dotenv()
@@ -14,6 +15,9 @@ if not API_KEY or API_KEY == "GEMINI_API_KEY":
     raise ValueError("GEMINI_API_KEY not provided. Please set it in your .env file.")
 
 client = genai.Client(api_key=API_KEY)
+
+# Fixed user_id for testing
+FIXED_USER_ID = "paul_paw_test"
 
 pdf_path = "backend/app/storage/uploads/dummy.pdf"
 busy = [
@@ -129,6 +133,47 @@ Output Format:
     else:
         return response.text
 
+def add_ids_to_extracted_data(extracted_data: dict, user_id: str = FIXED_USER_ID, course_id: str = None) -> dict:
+    """Add unique IDs to assignments and tasks extracted from PDF."""
+    
+    # Process assignments - add assignment_id and user_id
+    assignments_with_ids = []
+    for assignment in extracted_data.get("assignments", []):
+        assignment_with_id = {
+            "assignment_id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "course_id": course_id,  # Use provided course_id
+            "title": assignment.get("title"),
+            "due_date": assignment.get("due_date"),
+            "completion_points": assignment.get("weight", 0) * 10 if assignment.get("weight") else 10,  # Convert weight to points
+            "is_complete": False,
+            **assignment  # Include original fields
+        }
+        assignments_with_ids.append(assignment_with_id)
+    
+    # Process tasks - add task_id, user_id, and type
+    tasks_with_ids = []
+    for task in extracted_data.get("tasks", []):
+        task_with_id = {
+            "task_id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "description": task.get("title"),
+            "type": "exam",  # Since these are exam/quiz tasks
+            "assignment_id": None,  # Standalone tasks
+            "course_id": course_id,  # Use provided course_id
+            "scheduled_start_at": task.get("scheduled_start_at"),
+            "scheduled_end_at": task.get("scheduled_end_at"),
+            "is_completed": False,
+            "reward_points": task.get("weight", 0) if task.get("weight") else 10,  # Convert weight to points
+            **task  # Include original fields
+        }
+        tasks_with_ids.append(task_with_id)
+    
+    return {
+        "assignments": assignments_with_ids,
+        "tasks": tasks_with_ids
+    }
+
 def generate_assignment_microtasks(
     assignments: list,
     busy_intervals: list,
@@ -176,6 +221,83 @@ All micro-tasks must fit between "{prev_due_date}" and "{curr_due_date}", never 
 
         micro_tasks = json.loads(response.text)
         assignment_with_micro = {**assignment, "micro_tasks": micro_tasks}
+        assignments_with_micro.append(assignment_with_micro)
+
+    return {"assignments": assignments_with_micro}
+
+def generate_assignment_microtasks_with_ids(
+    assignments: list,
+    busy_intervals: list,
+    default_micro_task_count: int = 3,
+    user_id: str = FIXED_USER_ID
+) -> dict:
+    """
+    Enhanced version that generates micro-tasks with proper IDs for database insertion.
+    assignments: list of assignment dicts (should have assignment_id)
+    busy_intervals: list of {"start": ..., "end": ...}
+    Returns: dict with "assignments" array, each with nested "micro_tasks" that have proper IDs
+    """
+    assignments_with_micro = []
+
+    for idx, assignment in enumerate(assignments):
+        assignment_id = assignment.get("assignment_id")
+        if not assignment_id:
+            assignment_id = str(uuid.uuid4())
+            assignment["assignment_id"] = assignment_id
+        
+        prev_due_date = assignments[idx-1]['due_date'] if idx > 0 else datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+        curr_due_date = assignment['due_date']
+
+        prompt = f"""
+You are a productivity assistant. For this assignment:
+
+- Title: {assignment['title']}
+- Due date: {curr_due_date}
+- Assignment window: from "{prev_due_date}" to "{curr_due_date}"
+- The user is unavailable at: {json.dumps(busy_intervals, indent=2)}
+
+Propose {default_micro_task_count} micro-tasks to help complete this assignment, following this format:
+[
+  {{
+    "title": "",
+    "scheduled_start_at": "YYYY-MM-DDTHH:MM:SS",
+    "scheduled_end_at": "YYYY-MM-DDTHH:MM:SS",
+    "completion_date_at": null,
+    "weight": null
+  }}
+  // ...repeat for each micro-task
+]
+Each assignment must have at least one task for submission before the due.
+All micro-tasks must fit between "{prev_due_date}" and "{curr_due_date}", never overlap any busy interval, and time fields must be provided as 'YYYY-MM-DDTHH:MM:SS'. If a task lands in a busy interval, move it to the closest available slot. Return only the JSON array, no extra text.
+"""
+
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[prompt],
+            config=types.GenerateContentConfig(response_mime_type="application/json")
+        )
+
+        micro_tasks_raw = json.loads(response.text)
+        
+        # Add IDs and metadata to micro-tasks
+        micro_tasks_with_ids = []
+        for micro_task in micro_tasks_raw:
+            micro_task_with_id = {
+                "task_id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "description": micro_task.get("title"),
+                "type": "assignment",
+                "assignment_id": assignment_id,
+                "course_id": assignment.get("course_id"),  # Inherit from assignment
+                "scheduled_start_at": micro_task.get("scheduled_start_at"),
+                "scheduled_end_at": micro_task.get("scheduled_end_at"),
+                "is_completed": False,
+                "reward_points": 10,  # Default micro-task points
+                **micro_task  # Include original fields
+            }
+            micro_tasks_with_ids.append(micro_task_with_id)
+        
+        assignment_with_micro = {**assignment, "micro_tasks": micro_tasks_with_ids}
         assignments_with_micro.append(assignment_with_micro)
 
     return {"assignments": assignments_with_micro}
