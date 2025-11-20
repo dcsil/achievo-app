@@ -420,7 +420,7 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
         </div>
 
         {/* Quick Actions Section */}
-        <div className="max-w-md mx-auto p-2 mb-6">
+        <div className="max-w-md mx-auto p-2 mb-6 pb-8">
           <h2 className="text-xl font-semibold text-left mb-3">Quick Actions</h2>
           <div className="flex gap-3">
             <button

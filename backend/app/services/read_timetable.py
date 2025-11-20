@@ -3,6 +3,7 @@ from dateutil.parser import parse as date_parse
 import uuid
 import sys
 import os
+import random
 
 # Allow running as a script directly
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -32,6 +33,9 @@ def extract_timetable_courses(pdf_path, user_id, term):
     """
     courses = {}
     date_imported_at = datetime.now().isoformat()
+    
+    # Define available colors
+    colors = ['blue', 'red', 'yellow', 'green', 'purple', 'pink', 'indigo', 'orange']
 
     # Use utility function to extract tables from PDF
     tables = extract_tables_from_pdf(pdf_path)
@@ -56,7 +60,7 @@ def extract_timetable_courses(pdf_path, user_id, term):
                             "canvas_course_id": "",
                             "date_imported_at": date_imported_at,
                             "term": term,
-                            "color": "",
+                            "color": random.choice(colors),
                             "meeting_days": [],
                             "meeting_times": []
                         }

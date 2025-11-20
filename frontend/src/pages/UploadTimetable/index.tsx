@@ -227,7 +227,7 @@ const UploadTimetable: React.FC<UploadTimetableProps> = ({ user, userId = 'paul_
                       <CourseContainer
                         name={course.course_name}
                         courseId={course.course_id}
-                        color="blue"
+                        color={course.color}
                         refreshKey={0}
                       />
                     </div>
