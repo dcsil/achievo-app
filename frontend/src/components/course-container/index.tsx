@@ -42,10 +42,9 @@ function CourseContainer ({ name, courseId, color, refreshKey }: { name: string,
                 // Get all tasks for the user
                 const allTasks = await apiService.getTasks(userId);
                 
-                // Filter tasks that belong to this course, have no assignment_id, and are not completed
+                // Filter tasks that belong to this course and are not completed
                 const courseSpecificTasks = allTasks.filter((task: any) => 
                     task.course_id === courseId && 
-                    !task.assignment_id && 
                     !task.is_completed
                 );
                 
