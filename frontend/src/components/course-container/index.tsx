@@ -42,9 +42,11 @@ function CourseContainer ({ name, courseId, color, refreshKey }: { name: string,
                 // Get all tasks for the user
                 const allTasks = await apiService.getTasks(userId);
                 
-                // Filter tasks that belong to this course and have no assignment_id
+                // Filter tasks that belong to this course, have no assignment_id, and are not completed
                 const courseSpecificTasks = allTasks.filter((task: any) => 
-                    task.course_id === courseId && !task.assignment_id
+                    task.course_id === courseId && 
+                    !task.assignment_id && 
+                    !task.is_completed
                 );
                 
                 setCourseTasks(courseSpecificTasks);
@@ -139,19 +141,17 @@ function CourseContainer ({ name, courseId, color, refreshKey }: { name: string,
                 
                 {!tasksLoading && courseTasks.length > 0 && (
                     <div className="w-full">
-                        <div className="flex items-center justify-between mb-2">
+                        <button
+                            onClick={() => setIsTasksCollapsed(!isTasksCollapsed)}
+                            className="flex items-center justify-between w-full mb-2 p-2 rounded-md hover:bg-white/50 transition-colors cursor-pointer"
+                        >
                             <h4 className="text-sm font-medium text-gray-700">
-                                Other Tasks ({courseTasks.length})
+                                Incomplete Tasks ({courseTasks.length})
                             </h4>
-                            <button
-                                onClick={() => setIsTasksCollapsed(!isTasksCollapsed)}
-                                className="text-gray-500 hover:text-gray-700 transition-colors"
-                            >
-                                <span className="text-xs">
-                                    {isTasksCollapsed ? '▼' : '▲'}
-                                </span>
-                            </button>
-                        </div>
+                            <span className="text-gray-500 text-sm">
+                                {isTasksCollapsed ? '▼' : '▲'}
+                            </span>
+                        </button>
                         
                         {!isTasksCollapsed && (
                             <div>
