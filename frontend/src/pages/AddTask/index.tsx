@@ -17,6 +17,7 @@ const TASK_TYPES = [
   { value: 'exercise', label: '💪 Exercise', description: 'Physical activity or workout', defaultPoints: 10 },
   { value: 'break', label: '⏸️ Break', description: 'Short break or relaxation time', defaultPoints: 5 },
   { value: 'personal', label: '🏠 Personal', description: 'Personal or household task', defaultPoints: 5 },
+  { value: 'class', label: '🏫 Class', description: 'Class-related task', defaultPoints: 10 },
   { value: 'other', label: '📌 Other', description: 'Any other type of task', defaultPoints: 5 },
 ];
 

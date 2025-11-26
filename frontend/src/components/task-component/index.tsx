@@ -57,7 +57,18 @@ function TaskComponent({ task, onCompleteTask, showCompleteButton = true, isComp
               <div className="text-sm text-gray-600 truncate">{task.type && TASK_TYPES.find(type => type.value === task.type)?.label || 'Task'}</div>
             </div>
           </div>
-          
+
+          {showCompleteButton !== true && (
+            <div className="text-sm text-green-600 font-medium flex flex-col items-end px-4">
+              <p>Completed on: </p>
+              <p> {new Date(task.completion_date_at).toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                month: 'short',
+                day: 'numeric'
+              })}</p>
+            </div>
+          )}
+
           <div className="text-right flex-shrink-0">
             <p className="text-lg text-gray-900">{new Date(new Date(task.scheduled_start_at).getTime() + (timeAdjustment ? 5 : 0) * 60 * 60 * 1000).toLocaleTimeString('en-US', { hour: "numeric", minute: "numeric", hour12: true })}</p>
             <p className="text-lg text-gray-500">{new Date(new Date(task.scheduled_end_at).getTime() + (timeAdjustment ? 5 : 0) * 60 * 60 * 1000).toLocaleTimeString('en-US', { hour: "numeric", minute: "numeric", hour12: true })}</p>
