@@ -435,10 +435,10 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
 
   if (loading) {
     return (
-      <div className="px-6 py-6 max-w-4xl mx-auto pb-20">
-        <div className="text-center py-8">
-          <div className="text-4xl mb-4">⏳</div>
-          <p className="text-gray-600">Loading your tasks...</p>
+      <div className="px-6 py-6 max-w-4xl mx-auto pb-20 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-spin">⏳</div>
+          <p className="text-gray-600">Loading tasks...</p>
         </div>
       </div>
     );

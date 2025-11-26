@@ -230,10 +230,10 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
 
   if (loading) {
     return (
-      <div className="px-2 py-4 flex items-center justify-center h-full">
+      <div className="px-6 py-6 max-w-4xl mx-auto pb-20 flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="text-4xl mb-4">⏳</div>
-          <p className="text-gray-600">Loading your tasks...</p>
+          <div className="text-6xl mb-4 animate-spin">⏳</div>
+          <p className="text-gray-600">Loading dashboard...</p>
         </div>
       </div>
     );
