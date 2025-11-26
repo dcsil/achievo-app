@@ -340,4 +340,3 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
 };
 
 export default UploadSyllabi;
-                     

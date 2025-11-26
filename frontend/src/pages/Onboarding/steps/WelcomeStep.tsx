@@ -6,6 +6,7 @@ import { addCoursesApiService } from '../../../api-contexts/add-courses';
 import PdfUploadForm from '../../../components/pdf-upload';
 import MultipleTaskContainer from '../../../components/multiple-task-container';
 import CourseContainer from '../../../components/course-container';
+import Button from '../../../components/skip-button';
 
 const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
   const [file, setFile] = useState<File | null>(null);
@@ -172,11 +173,11 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
               >
                 {isSaving ? (
                   <>
-                    <span className="inline-block animate-spin mr-2">⏳</span>
+                    <span className="inline-block animate-spin mr-2 center">⏳</span>
                     Saving to Dashboard...
                   </>
                 ) : (
-                  '💾 Save to Dashboard'
+                  '💾 Save'
                 )}
               </button>
             </div>
@@ -249,12 +250,12 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
 
       {/* Navigation */}
       <div className="text-center mt-8">
-        <button
+        <Button
           onClick={handleNext}
-          className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+          variant="secondary"
         >
-          {result && saveSuccess ? 'Continue' : 'Skip for Now'}
-        </button>
+          {result && saveSuccess ? 'Continue' : 'Skip'}
+        </Button>
       </div>
     </div>
   );

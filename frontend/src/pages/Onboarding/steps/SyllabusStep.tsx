@@ -5,6 +5,7 @@ import { getCourses, CourseForUI } from '../../../api-contexts/get-courses';
 import PdfUploadForm from '../../../components/pdf-upload';
 import MultipleTaskContainer from '../../../components/multiple-task-container';
 import AssignmentProgressContainer from '../../../components/assignment-progress-container';
+import Button from '../../../components/skip-button';
 
 const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
   const [courses, setCourses] = useState<CourseForUI[]>([]);
@@ -302,22 +303,14 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
         </div>
       )}
 
-      {/* Navigation */}
-      <div className="flex gap-4 justify-center mt-8">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium"
-          >
-            Back
-          </button>
-        )}
-        <button
+    {/* Navigation */}
+      <div className="text-center mt-8">
+        <Button
           onClick={handleNext}
-          className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
+          variant="secondary"
         >
-          {result && saveSuccess ? 'Complete Setup' : 'Skip for Now'}
-        </button>
+          {result && saveSuccess ? 'Continue' : 'Skip'}
+        </Button>
       </div>
     </div>
   );

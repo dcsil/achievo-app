@@ -14,10 +14,10 @@ export interface OnboardingStepProps {
 }
 
 const ONBOARDING_STEPS = [
-  { component: WelcomeStep, title: 'Welcome', skippable: false },
-  { component: InterestsStep, title: 'Interests', skippable: false },
-  { component: CanvasStep, title: 'Canvas', skippable: false },
-  { component: SyllabusStep, title: 'Syllabi', skippable: false }
+  { component: WelcomeStep, title: 'Welcome', skippable: true },
+  { component: InterestsStep, title: 'Interests', skippable: true },
+  { component: CanvasStep, title: 'Canvas', skippable: true },
+  { component: SyllabusStep, title: 'Syllabi', skippable: true }
 ];
 
 interface OnboardingProps {
@@ -54,9 +54,11 @@ const Onboarding: React.FC<OnboardingProps> = ({
     }
   };
 
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+  const handleSkip = () => {
+    if (currentStep < ONBOARDING_STEPS.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      completeOnboarding();
     }
   };
 
@@ -104,7 +106,8 @@ const Onboarding: React.FC<OnboardingProps> = ({
       <div className="px-6 pb-6">
         <CurrentStepComponent
           onNext={handleNext}
-          onBack={currentStep > 0 ? handleBack : undefined}
+          onSkip={currentStepInfo.skippable ? handleSkip : undefined}
+          onBack={undefined}
           isFirstStep={currentStep === 0}
           isLastStep={currentStep === ONBOARDING_STEPS.length - 1}
         />

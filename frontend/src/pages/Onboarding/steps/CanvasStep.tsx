@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { OnboardingStepProps } from '../index';
+import Button from '../../../components/skip-button';
 
-const CanvasStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
+const CanvasStep: React.FC<OnboardingStepProps> = ({ onNext, onBack, onSkip }) => {
   const [token, setToken] = useState('');
   const [showCourses, setShowCourses] = useState(false);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
@@ -65,13 +66,21 @@ const CanvasStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
             />
           </div>
 
-          <button
+          <Button
             onClick={handlePermission}
             disabled={!token.trim()}
-            className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            variant="primary"
           >
             Connect Canvas
-          </button>
+          </Button>
+          
+          {onSkip && (
+            <div className="mt-4">
+              <Button onClick={onSkip} variant="secondary">
+                Skip
+              </Button>
+            </div>
+          )}
         </>
       ) : (
         <>
@@ -112,20 +121,14 @@ const CanvasStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
           </div>
 
           <div className="flex gap-4 justify-center">
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium"
-              >
-                Back
-              </button>
-            )}
-            <button
-              onClick={handleNext}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
-            >
+            <Button onClick={handleNext} variant="primary">
               Confirm Courses
-            </button>
+            </Button>
+            {onSkip && (
+              <Button onClick={onSkip} variant="secondary">
+                Skip
+              </Button>
+            )}
           </div>
         </>
       )}

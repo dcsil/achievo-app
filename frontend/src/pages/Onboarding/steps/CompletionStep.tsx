@@ -1,5 +1,6 @@
 import React from 'react';
 import { OnboardingStepProps } from '../index';
+import Button from '../../../components/skip-button';
 
 const CompletionStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
   const handleQuickAction = (action: string) => {
@@ -117,32 +118,22 @@ const CompletionStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
 
         {/* Main Action */}
         <div className="text-center">
-          <button
+          <Button
             onClick={onNext}
-            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 font-semibold transition-all text-lg flex items-center justify-center gap-2 mx-auto mb-4"
+            variant="primary"
+            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 text-lg flex items-center justify-center gap-2 mx-auto mb-4"
           >
             Go to Dashboard <span>🏠</span>
-          </button>
+          </Button>
           
           <p className="text-sm text-gray-500">
             You can always revisit this onboarding from your settings page.
           </p>
         </div>
       </div>
-
-      {/* Navigation */}
-      <div className="flex justify-start">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium flex items-center gap-1"
-          >
-            <span>←</span> Back
-          </button>
-        )}
-      </div>
     </div>
   );
 };
 
 export default CompletionStep;
+
