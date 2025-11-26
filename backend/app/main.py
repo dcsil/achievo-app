@@ -16,7 +16,7 @@ from werkzeug.utils import secure_filename
 from app.utils.file_utils import handle_file_upload, extract_tables_from_pdf
 from dateutil.parser import parse as date_parse
 from app.services.read_timetable import extract_timetable_courses, generate_tasks_for_courses
-from app.services.read_syllabi import extract_tasks_assignments_from_pdf, generate_assignment_microtasks
+# from app.services.read_syllabi import extract_tasks_assignments_from_pdf, generate_assignment_microtasks
 
 from database.users_repository import UsersRepository
 from database.tasks_repository import TasksRepository
@@ -143,6 +143,95 @@ CORS(app)
 
 UPLOAD_FOLDER = "backend/app/storage/uploads"
 
+# ---------- AUTH ROUTES ----------
+@app.route("/auth/signup", methods=["POST"])
+def signup():
+    """Create a new user account."""
+    payload = request.get_json() or {}
+    email = payload.get("email")
+    password = payload.get("password")
+    
+    if not email:
+        return jsonify({"error": "email is required"}), 400
+    
+    if not password:
+        return jsonify({"error": "password is required"}), 400
+    
+    try:
+        repo = UsersRepository()
+        
+        # Check if user already exists
+        existing_user = repo.fetch_by_email(email)
+        if existing_user:
+            return jsonify({"error": "User with this email already exists"}), 409
+        
+        # Generate user_id from email (you can modify this logic)
+        user_id = email.split("@")[0] + "_" + str(uuid.uuid4())[:8]
+        
+        # Create user
+        repo.create(
+            user_id=user_id,
+            email=email,
+            password=password,
+            total_points=0,
+            current_level=0,
+        )
+        
+        return jsonify({
+            "status": "success",
+            "message": "User created successfully",
+            "user_id": user_id,
+            "email": email
+        }), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/auth/login", methods=["POST"])
+def login():
+    """Authenticate user and return user info."""
+    payload = request.get_json() or {}
+    email = payload.get("email")
+    password = payload.get("password")
+    
+    if not email:
+        return jsonify({"error": "email is required"}), 400
+    
+    if not password:
+        return jsonify({"error": "password is required"}), 400
+    
+    try:
+        repo = UsersRepository()
+        user = repo.fetch_by_email(email)
+        
+        if not user:
+            return jsonify({"error": "Invalid email or password"}), 401
+        
+        # Check password
+        if user.get("password") != password:
+            return jsonify({"error": "Invalid email or password"}), 401
+        
+        # Don't return password in response
+        user_response = {
+            "user_id": user.get("user_id"),
+            "email": user.get("email"),
+            "canvas_username": user.get("canvas_username"),
+            "canvas_domain": user.get("canvas_domain"),
+            "profile_picture": user.get("profile_picture"),
+            "total_points": user.get("total_points"),
+            "current_level": user.get("current_level"),
+            "last_activity_at": user.get("last_activity_at")
+        }
+        
+        return jsonify({
+            "status": "success",
+            "message": "Login successful",
+            "user": user_response
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 # ---------- DB ROUTES ----------
 @app.route("/db/users", methods=["GET"])
 def get_db_users():
@@ -165,6 +254,8 @@ def get_db_users():
 def post_db_user():
     payload = request.get_json() or {}
     user_id = payload.get("user_id")
+    email = payload.get("email")
+    password = payload.get("password")
     canvas_username = payload.get("canvas_username")
     canvas_domain = payload.get("canvas_domain")
     canvas_api_key = payload.get("canvas_api_key")
@@ -174,10 +265,18 @@ def post_db_user():
 
     if not user_id:
         return jsonify({"error": "user_id is required"}), 400
+    
+    if not email:
+        return jsonify({"error": "email is required"}), 400
+    
+    if not password:
+        return jsonify({"error": "password is required"}), 400
 
     try:
         UsersRepository().create(
             user_id=user_id,
+            email=email,
+            password=password,
             canvas_username=canvas_username,
             canvas_domain=canvas_domain,
             canvas_api_key=canvas_api_key,
@@ -945,66 +1044,66 @@ def process_timetable():
         return jsonify({"error": str(e)}), 500
 
 # ---------- SYLLABI ROUTES ----------
-@app.route("/api/syllabi/process", methods=["POST"])
-def process_syllabi():
-    """
-    Process uploaded syllabi PDF and return assignments with micro-tasks and exam/quiz tasks.
-    Requires PDF file upload and optional course_id parameter.
+# @app.route("/api/syllabi/process", methods=["POST"])
+# def process_syllabi():
+#     """
+#     Process uploaded syllabi PDF and return assignments with micro-tasks and exam/quiz tasks.
+#     Requires PDF file upload and optional course_id parameter.
 
-    testing:
-    curl -X POST http://127.0.0.1:5000/api/syllabi/process \
-        -F "file=@backend/app/storage/uploads/dummy.pdf" \
-        -F "course_id=course_123" \
-        -F 'busy_intervals=[{"start": "2025-11-13T09:00:00", "end": "2025-11-13T14:00:00"}]'
-    """
-    try:
-        # Handle file upload
-        filepath, error_response = handle_file_upload(request, UPLOAD_FOLDER)
-        if error_response:
-            return error_response
+#     testing:
+#     curl -X POST http://127.0.0.1:5000/api/syllabi/process \
+#         -F "file=@backend/app/storage/uploads/dummy.pdf" \
+#         -F "course_id=course_123" \
+#         -F 'busy_intervals=[{"start": "2025-11-13T09:00:00", "end": "2025-11-13T14:00:00"}]'
+#     """
+#     try:
+#         # Handle file upload
+#         filepath, error_response = handle_file_upload(request, UPLOAD_FOLDER)
+#         if error_response:
+#             return error_response
         
-        # Get course_id from form data (optional)
-        course_id = request.form.get("course_id")
+#         # Get course_id from form data (optional)
+#         course_id = request.form.get("course_id")
         
-        # Extract assignments and tasks from PDF using AI
-        extracted_data = extract_tasks_assignments_from_pdf(filepath)
+#         # Extract assignments and tasks from PDF using AI
+#         extracted_data = extract_tasks_assignments_from_pdf(filepath)
         
-        # Add IDs to the extracted data
-        from app.services.read_syllabi import add_ids_to_extracted_data, generate_assignment_microtasks_with_ids
-        data_with_ids = add_ids_to_extracted_data(extracted_data, course_id=course_id)
+#         # Add IDs to the extracted data
+#         from app.services.read_syllabi import add_ids_to_extracted_data, generate_assignment_microtasks_with_ids
+#         data_with_ids = add_ids_to_extracted_data(extracted_data, course_id=course_id)
         
-        # Get busy intervals from form data (optional)
-        busy_intervals_json = request.form.get("busy_intervals", "[]")
-        try:
-            busy_intervals = json.loads(busy_intervals_json)
-        except json.JSONDecodeError:
-            busy_intervals = []
+#         # Get busy intervals from form data (optional)
+#         busy_intervals_json = request.form.get("busy_intervals", "[]")
+#         try:
+#             busy_intervals = json.loads(busy_intervals_json)
+#         except json.JSONDecodeError:
+#             busy_intervals = []
         
-        # Generate micro-tasks for assignments with proper IDs
-        assignments_with_micro = generate_assignment_microtasks_with_ids(
-            data_with_ids["assignments"], 
-            busy_intervals,
-            default_micro_task_count=3
-        )
+#         # Generate micro-tasks for assignments with proper IDs
+#         assignments_with_micro = generate_assignment_microtasks_with_ids(
+#             data_with_ids["assignments"], 
+#             busy_intervals,
+#             default_micro_task_count=3
+#         )
         
-        try:
-            os.remove(filepath)
-        except:
-            pass
+#         try:
+#             os.remove(filepath)
+#         except:
+#             pass
         
-        return jsonify({
-            "status": "success",
-            "course_id": course_id,
-            "assignments_found": len(assignments_with_micro["assignments"]),
-            "tasks_found": len(data_with_ids["tasks"]),
-            "total_micro_tasks": sum(len(a["micro_tasks"]) for a in assignments_with_micro["assignments"]),
-            "assignments": assignments_with_micro["assignments"],
-            "tasks": data_with_ids["tasks"]
-        }), 200
+#         return jsonify({
+#             "status": "success",
+#             "course_id": course_id,
+#             "assignments_found": len(assignments_with_micro["assignments"]),
+#             "tasks_found": len(data_with_ids["tasks"]),
+#             "total_micro_tasks": sum(len(a["micro_tasks"]) for a in assignments_with_micro["assignments"]),
+#             "assignments": assignments_with_micro["assignments"],
+#             "tasks": data_with_ids["tasks"]
+#         }), 200
         
-    except Exception as e:
-        print(f"Error processing syllabi: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+#     except Exception as e:
+#         print(f"Error processing syllabi: {str(e)}")
+#         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
