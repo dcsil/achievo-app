@@ -76,6 +76,8 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
       }
 
       setSaveSuccess(true);
+      // Mark this step as completed in localStorage since data was actually saved
+      localStorage.setItem('onboarding-welcome-completed', 'true');
     } catch (saveError) {
       setError(`Failed to save to dashboard: ${saveError instanceof Error ? saveError.message : 'Unknown error'}`);
     } finally {
@@ -106,7 +108,10 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
   };
 
   const handleNext = () => {
-    localStorage.setItem('onboarding-timetable', 'uploaded');
+    // Only mark as completed if user actually saved data, otherwise just continue
+    if (saveSuccess) {
+      localStorage.setItem('onboarding-timetable', 'uploaded');
+    }
     onNext();
   };
 
@@ -217,33 +222,40 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
       {/* Navigation */}
       <div className="text-center mt-8">
         <div className="flex gap-4 justify-center">
-            {result && !saveSuccess && (
-                <Button
-                onClick={handleSaveToDashboard}
-                disabled={isSaving}
-                variant="primary"
-                className="px-8 py-3"
-                >
-                {isSaving ? (
-                    <>
-                    <span className="inline-block animate-spin mr-2">⏳</span>
-                    Saving to Dashboard...
-                    </>
-                ) : (
-                    '💾 Save to Dashboard'
-                )}
-                </Button>
-            )}
-        
+          {result && !saveSuccess && (
             <Button
-                onClick={handleNext}
-                variant={result && saveSuccess ? "primary" : "secondary"}
-                className="px-8 py-3"
+              onClick={handleSaveToDashboard}
+              disabled={isSaving}
+              variant="primary"
+              className="px-8 py-3"
             >
-                {result && saveSuccess ? 'Continue' : 'Skip'}
+              {isSaving ? (
+                <>
+                  <span className="inline-block animate-spin mr-2">⏳</span>
+                  Saving to Dashboard...
+                </>
+              ) : (
+                '💾 Save to Dashboard'
+              )}
             </Button>
+          )}
+
+          {saveSuccess && (
+            <div className="bg-green-100 p-3 rounded-lg mb-4">
+              <p className="text-green-800 font-medium">✅ Timetable saved successfully!</p>
+              <p className="text-green-600 text-sm">Your courses and tasks are now available in your dashboard</p>
             </div>
+          )}
+
+          <Button
+            onClick={handleNext}
+            variant={saveSuccess ? "primary" : "secondary"}
+            className="px-8 py-3"
+          >
+            {result && saveSuccess ? 'Continue' : saveSuccess ? 'Continue' : 'Skip'}
+          </Button>
         </div>
+      </div>
     </div>
   );
 };

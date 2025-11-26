@@ -18,6 +18,7 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showUploadAnother, setShowUploadAnother] = useState(false);
+  const [hasEverSaved, setHasEverSaved] = useState(false);
   const userId = 'paul_paw_test';
 
   useEffect(() => {
@@ -129,6 +130,9 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       setSaveSuccess(true);
+      setHasEverSaved(true);
+      // Mark this step as completed since data was actually saved
+      localStorage.setItem('onboarding-syllabi-completed', 'true');
       console.log('Syllabi data saved:', result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save syllabi data');
@@ -157,7 +161,8 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
   };
 
   const handleNext = () => {
-    if (result) {
+    // Only mark as completed if user actually saved data at least once
+    if (hasEverSaved) {
       localStorage.setItem('onboarding-syllabi', 'uploaded');
     }
     onNext();
@@ -309,6 +314,13 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
               )}
             </Button>
           )}
+
+          {saveSuccess && (
+            <div className="bg-green-100 p-3 rounded-lg mb-4">
+              <p className="text-green-800 font-medium">✅ Syllabus saved successfully!</p>
+              <p className="text-green-600 text-sm">Assignments and tasks are now available in your dashboard</p>
+            </div>
+          )}
           
           {result && saveSuccess && (
             <Button
@@ -322,10 +334,10 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
           
           <Button
             onClick={handleNext}
-            variant={result && saveSuccess ? "primary" : "secondary"}
+            variant={hasEverSaved ? "primary" : "secondary"}
             className="px-8 py-3"
           >
-            {result && saveSuccess ? 'Continue' : 'Skip'}
+            {hasEverSaved ? 'Continue' : 'Skip'}
           </Button>
         </div>
       </div>
