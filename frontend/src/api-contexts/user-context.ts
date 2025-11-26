@@ -3,9 +3,12 @@ const API_BASE_URL = 'http://127.0.0.1:5000';
 
 export interface User {
   user_id: string;
-  canvas_username: string;
+  canvas_username?: string;
+  canvas_domain?: string;
+  profile_picture?: string;
   total_points: number;
   current_level: number;
+  last_activity_at?: string;
 }
 
 class ApiService {
@@ -39,6 +42,25 @@ class ApiService {
   async getUser(userId: string): Promise<User> {
     const url = `${this.baseUrl}/db/users?user_id=${encodeURIComponent(userId)}`;
     return this.fetchWithErrorHandling<User>(url);
+  }
+
+  async updateUser(
+    userId: string, 
+    updates: {
+      canvas_username?: string;
+      canvas_domain?: string;
+      canvas_api_key?: string;
+      profile_picture?: string;
+    }
+  ): Promise<{ status: string; user_id: string; user: User }> {
+    const url = `${this.baseUrl}/db/users/${encodeURIComponent(userId)}`;
+    return this.fetchWithErrorHandling(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
+    });
   }
 
   // Task endpoints

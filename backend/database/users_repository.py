@@ -83,6 +83,41 @@ class UsersRepository:
         )
         return bool(res.data)
 
+    def update_user_info(
+        self,
+        user_id: str,
+        canvas_username: Optional[str] = None,
+        canvas_domain: Optional[str] = None,
+        canvas_api_key: Optional[str] = None,
+        profile_picture: Optional[str] = None,
+    ) -> bool:
+        """Update user information. Only updates provided fields."""
+        client = DBClient.connect()
+        
+        # Build update payload with only provided fields
+        update_payload = {}
+        if canvas_username is not None:
+            update_payload["canvas_username"] = canvas_username
+        if canvas_domain is not None:
+            update_payload["canvas_domain"] = canvas_domain
+        if canvas_api_key is not None:
+            update_payload["canvas_api_key"] = canvas_api_key
+        if profile_picture is not None:
+            update_payload["profile_picture"] = profile_picture
+            
+        # Return False if no fields to update
+        if not update_payload:
+            return False
+            
+        res = (
+            client
+            .table(self.table)
+            .update(update_payload)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        return bool(res.data)
+
     def delete(self, user_id: str) -> bool:
         """Delete a user by user_id."""
         client = DBClient.connect()

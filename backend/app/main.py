@@ -190,6 +190,43 @@ def post_db_user():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/db/users/<user_id>", methods=["PUT"])
+def put_db_user(user_id):
+    """Update user information."""
+    try:
+        payload = request.get_json() or {}
+        canvas_username = payload.get("canvas_username")
+        canvas_domain = payload.get("canvas_domain")
+        canvas_api_key = payload.get("canvas_api_key")
+        profile_picture = payload.get("profile_picture")
+        
+        # Check if at least one field is provided
+        if all(field is None for field in [canvas_username, canvas_domain, canvas_api_key, profile_picture]):
+            return jsonify({"error": "At least one field must be provided"}), 400
+        
+        repo = UsersRepository()
+        updated = repo.update_user_info(
+            user_id=user_id,
+            canvas_username=canvas_username,
+            canvas_domain=canvas_domain,
+            canvas_api_key=canvas_api_key,
+            profile_picture=profile_picture
+        )
+        
+        if updated:
+            # Return updated user data
+            user = repo.fetch_by_id(user_id)
+            return jsonify({
+                "status": "updated", 
+                "user_id": user_id,
+                "user": user
+            }), 200
+        else:
+            return jsonify({"error": "User not found or no changes made"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/db/users/<user_id>", methods=["DELETE"])
 def delete_db_user(user_id):
     try:

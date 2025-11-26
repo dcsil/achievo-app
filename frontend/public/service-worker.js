@@ -224,9 +224,39 @@ activeHours.forEach(hour => {
   });
 });
 
+// Function to check if notifications are enabled in settings
+async function areNotificationsEnabled() {
+  try {
+    const result = await chrome.storage.local.get(['notificationSettings']);
+    const notificationSettings = result.notificationSettings;
+    
+    // Check if notifications are enabled in app settings and Chrome has permission
+    if (!notificationSettings || !notificationSettings.enabled) {
+      return false;
+    }
+    
+    // Double-check Chrome permissions
+    const hasPermission = await chrome.permissions.contains({
+      permissions: ['notifications']
+    });
+    
+    return hasPermission && notificationSettings.enabled;
+  } catch (error) {
+    console.error('Error checking notification settings:', error);
+    return false;
+  }
+}
+
 // Handle all alarms (both task reminders and daily reminders)
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   console.log('Alarm triggered:', alarm.name);
+  
+  // Check if notifications are enabled before showing any notifications
+  const notificationsEnabled = await areNotificationsEnabled();
+  if (!notificationsEnabled) {
+    console.log('Notifications disabled in settings, skipping notification for alarm:', alarm.name);
+    return;
+  }
   
   // Handle task-specific reminders
   if (alarm.name.startsWith('exercise-')) {
