@@ -1,0 +1,326 @@
+import React, { useState, useEffect } from 'react';
+import { OnboardingStepProps } from '../index';
+import { processSyllabus, validatePdfFile, SyllabiResult } from '../../../api-contexts/syllabi-api';
+import { getCourses, CourseForUI } from '../../../api-contexts/get-courses';
+import PdfUploadForm from '../../../components/pdf-upload';
+import MultipleTaskContainer from '../../../components/multiple-task-container';
+import AssignmentProgressContainer from '../../../components/assignment-progress-container';
+
+const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
+  const [courses, setCourses] = useState<CourseForUI[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [result, setResult] = useState<SyllabiResult | null>(null);
+  const [error, setError] = useState<string>('');
+  const [busyIntervals, setBusyIntervals] = useState<Array<{start: string, end: string}>>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const userId = 'paul_paw_test';
+
+  useEffect(() => {
+    loadCourses();
+  }, []);
+
+  const loadCourses = async () => {
+    try {
+      const coursesData = await getCourses(userId);
+      setCourses(coursesData);
+    } catch (err) {
+      setError('Failed to load courses');
+      console.error('Error loading courses:', err);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const validation = validatePdfFile(file);
+      if (validation.valid) {
+        setSelectedFile(file);
+        setError('');
+      } else {
+        setError(validation.error || 'Invalid file');
+      }
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile || !selectedCourseId) {
+      setError('Please select both a course and a PDF file');
+      return;
+    }
+
+    setIsUploading(true);
+    setError('');
+    setResult(null);
+
+    try {
+      // Mock result for testing instead of actual API call
+      const mockResult = {
+        "assignments": [
+          {
+            "assignment_id": "5ae91363-a9cc-4d67-a3d2-52def8772ade",
+            "completion_points": 200,
+            "course_id": selectedCourseId,
+            "due_date": "2025-09-30T23:59:00",
+            "is_complete": false,
+            "title": "Assignment 1",
+            "micro_tasks": [
+              {
+                "assignment_id": "5ae91363-a9cc-4d67-a3d2-52def8772ade",
+                "course_id": selectedCourseId,
+                "description": "Research and outline Assignment 1",
+                "is_completed": false,
+                "reward_points": 10,
+                "scheduled_end_at": "2025-09-05T12:00:00",
+                "scheduled_start_at": "2025-09-05T09:00:00",
+                "task_id": "27b4aff0-2003-4620-a202-f12e2dfa7e9b",
+                "type": "assignment",
+                "user_id": userId
+              }
+            ]
+          }
+        ],
+        "assignments_found": 1,
+        "course_id": selectedCourseId,
+        "status": "success",
+        "tasks": [
+          {
+            "course_id": selectedCourseId,
+            "description": "Midterm Exam",
+            "is_completed": false,
+            "reward_points": 25,
+            "scheduled_end_at": "2025-10-17T20:00:00",
+            "scheduled_start_at": "2025-10-17T18:00:00",
+            "task_id": "46645429-8a28-4d2c-bfa1-32390b220c5e",
+            "type": "exam",
+            "user_id": userId
+          }
+        ],
+        "tasks_found": 1,
+        "total_micro_tasks": 1
+      } as SyllabiResult;
+
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setResult(mockResult);
+
+      // Original API call (commented out for testing)
+      // const result = await processSyllabus(selectedFile, selectedCourseId, busyIntervals);
+      // setResult(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to process syllabus');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSaveToDashboard = async () => {
+    if (!result) return;
+
+    setIsSaving(true);
+    setError('');
+
+    try {
+      // Here you would normally call the syllabi API to save the data
+      // For now, we'll simulate the save process
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setSaveSuccess(true);
+      console.log('Syllabi data saved:', result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save syllabi data');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleNext = () => {
+    if (result) {
+      localStorage.setItem('onboarding-syllabi', 'uploaded');
+    }
+    onNext();
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 mb-6">
+          Great! Now let's upload your syllabi
+        </h2>
+      </div>
+
+      {/* Upload Form */}
+      <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <PdfUploadForm
+          courses={courses}
+          selectedCourseId={selectedCourseId}
+          onCourseChange={setSelectedCourseId}
+          selectedFile={selectedFile}
+          onFileSelect={handleFileSelect}
+          onUpload={handleUpload}
+          isUploading={isUploading}
+          error={error}
+          uploadButtonText="📄 Process Syllabus"
+          title="Select Course & Upload Syllabus"
+          subtitle="Choose your course and upload the syllabus PDF to extract assignments and tasks"
+        />
+      </div>
+
+      {/* Results */}
+      {result && (
+        <div className="space-y-6">
+          {/* Summary */}
+          <div className="bg-green-50 border border-green-200 text-green-700 p-6 rounded-2xl">
+            <h3 className="text-lg font-bold mb-2">✅ Processing Complete!</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-600">{result.assignments_found}</p>
+                <p className="text-sm text-blue-700">Assignments</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-600">{result.tasks_found}</p>
+                <p className="text-sm text-green-700">Exams/Quizzes</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-purple-600">{result.total_micro_tasks}</p>
+                <p className="text-sm text-purple-700">Micro-tasks</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-orange-600">
+                  {result.assignments_found + result.tasks_found + result.total_micro_tasks}
+                </p>
+                <p className="text-sm text-orange-700">Total Items</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Save Confirmation */}
+          {!saveSuccess && (
+            <div className="bg-blue-50 border border-blue-200 p-6 rounded-2xl">
+              <h3 className="text-lg font-bold text-blue-800 mb-3">📋 Review & Confirm</h3>
+              <p className="text-blue-700 mb-4">
+                Please review the extracted assignments and tasks below. When you're ready, click "Save to Dashboard" to add them to your account.
+              </p>
+              <button
+                onClick={handleSaveToDashboard}
+                disabled={isSaving}
+                className={`px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold transition-colors ${
+                  isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+                }`}
+              >
+                {isSaving ? (
+                  <>
+                    <span className="inline-block animate-spin mr-2">⏳</span>
+                    Saving to Dashboard...
+                  </>
+                ) : (
+                  '💾 Save to Dashboard'
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* Save Success */}
+          {saveSuccess && (
+            <div className="bg-green-50 border border-green-200 text-green-700 p-6 rounded-2xl">
+              <h3 className="text-lg font-bold mb-2">🎉 Successfully Saved!</h3>
+              <p>All assignments and tasks have been saved to your dashboard. You can now view them in your home page.</p>
+            </div>
+          )}
+
+          {/* Extracted Tasks Section */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              📝 Extracted Tasks
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Review the tasks extracted from your syllabus. These will be saved to your dashboard.
+            </p>
+
+            {/* Standalone Tasks Section */}
+            {result.tasks.length > 0 && (
+              <div className="mb-8">
+                <h4 className="text-lg font-bold text-gray-800 mb-4">🕐 tests ({result.tasks.length} total)</h4>
+                <MultipleTaskContainer 
+                  tasks={result.tasks}
+                  userId={userId}
+                  onTaskCompleted={() => {}}
+                  onRefreshData={() => {}}
+                  timeAdjustment={false}
+                  showCompleteButton={false}
+                />
+              </div>
+            )}
+
+            {/* Assignments Section */}
+            {result.assignments.length > 0 && (
+              <div className="mb-8">
+                <h4 className="text-lg font-bold text-gray-800 mb-4">📚 Assignments</h4>
+                <div className="space-y-6">
+                  {result.assignments.map((assignment) => {
+                    const assignmentTasks = assignment.micro_tasks || [];
+                    
+                    return (
+                      <div key={assignment.assignment_id} className="border border-gray-200 rounded-lg p-4">
+                        {/* Assignment Header - Use proper AssignmentProgressContainer */}
+                        <div className="mb-4">
+                          <AssignmentProgressContainer
+                            assignments={[assignment]}
+                            color="blue"
+                          />
+                        </div>
+                        
+                        {/* Assignment Micro-tasks - Use proper MultipleTaskContainer */}
+                        <div>
+                          <h5 className="text-md font-semibold text-gray-700 mb-3 text-center">
+                            Micro-tasks ({assignmentTasks.length} total)
+                          </h5>
+                          
+                          {assignmentTasks.length > 0 ? (
+                            <div className="space-y-2">
+                              <MultipleTaskContainer 
+                                tasks={assignmentTasks}
+                                userId={userId}
+                                onTaskCompleted={() => {}}
+                                onRefreshData={() => {}}
+                                timeAdjustment={false}
+                                showCompleteButton={false}
+                              />
+                            </div>
+                          ) : (
+                            <p className="text-gray-500 text-sm text-center">No micro-tasks generated for this assignment</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Navigation */}
+      <div className="flex gap-4 justify-center mt-8">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium"
+          >
+            Back
+          </button>
+        )}
+        <button
+          onClick={handleNext}
+          className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
+        >
+          {result && saveSuccess ? 'Complete Setup' : 'Skip for Now'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default SyllabusStep;

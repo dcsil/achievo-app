@@ -57,9 +57,10 @@ const SignupPage: React.FC = () => {
 
     // Simulate API call delay
     setTimeout(() => {
-      // Success - navigate to login or home page
+      // Success - clear any existing onboarding progress and navigate to onboarding
+      localStorage.removeItem('onboarding-progress');
       console.log('Signup successful', { email });
-      navigate('/login');
+      navigate('/onboarding');
     }, 1000);
   };
 
