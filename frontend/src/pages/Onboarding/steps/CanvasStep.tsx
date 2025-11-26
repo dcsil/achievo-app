@@ -66,21 +66,26 @@ const CanvasStep: React.FC<OnboardingStepProps> = ({ onNext, onBack, onSkip }) =
             />
           </div>
 
-          <Button
-            onClick={handlePermission}
-            disabled={!token.trim()}
-            variant="primary"
-          >
-            Connect Canvas
-          </Button>
-          
-          {onSkip && (
-            <div className="mt-4">
-              <Button onClick={onSkip} variant="secondary">
+          <div className="flex gap-4 justify-center">
+            <Button
+              onClick={handlePermission}
+              disabled={!token.trim()}
+              variant="primary"
+              className="px-8 py-3"
+            >
+              Connect Canvas
+            </Button>
+            
+            {onSkip && (
+              <Button 
+                onClick={onSkip} 
+                variant="secondary"
+                className="px-8 py-3"
+              >
                 Skip
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </>
       ) : (
         <>
@@ -121,11 +126,19 @@ const CanvasStep: React.FC<OnboardingStepProps> = ({ onNext, onBack, onSkip }) =
           </div>
 
           <div className="flex gap-4 justify-center">
-            <Button onClick={handleNext} variant="primary">
+            <Button 
+              onClick={handleNext} 
+              variant="primary"
+              className="px-8 py-3"
+            >
               Confirm Courses
             </Button>
             {onSkip && (
-              <Button onClick={onSkip} variant="secondary">
+              <Button 
+                onClick={onSkip} 
+                variant="secondary"
+                className="px-8 py-3"
+              >
                 Skip
               </Button>
             )}

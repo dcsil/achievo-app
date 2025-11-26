@@ -157,40 +157,6 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
             </div>
           </div>
 
-          {/* Save Confirmation */}
-          {!saveSuccess && (
-            <div className="bg-blue-50 border border-blue-200 p-6 rounded-2xl">
-              <h3 className="text-lg font-bold text-blue-800 mb-3">📋 Review & Confirm</h3>
-              <p className="text-blue-700 mb-4">
-                Please review the extracted courses and generated tasks below. When you're ready, click "Save to Dashboard" to add them to your account.
-              </p>
-              <button
-                onClick={handleSaveToDashboard}
-                disabled={isSaving}
-                className={`px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold transition-colors ${
-                  isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
-                }`}
-              >
-                {isSaving ? (
-                  <>
-                    <span className="inline-block animate-spin mr-2 center">⏳</span>
-                    Saving to Dashboard...
-                  </>
-                ) : (
-                  '💾 Save'
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Save Success */}
-          {saveSuccess && (
-            <div className="bg-green-50 border border-green-200 text-green-700 p-6 rounded-2xl">
-              <h3 className="text-lg font-bold mb-2">🎉 Successfully Saved!</h3>
-              <p>All courses and tasks have been saved to your dashboard. You can now view them in your home page.</p>
-            </div>
-          )}
-
           {/* Courses with Tasks Section */}
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-4">📚 Courses & Generated Tasks</h3>
@@ -250,12 +216,35 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
 
       {/* Navigation */}
       <div className="text-center mt-8">
-        <Button
-          onClick={handleNext}
-          variant="secondary"
-        >
-          {result && saveSuccess ? 'Continue' : 'Skip'}
-        </Button>
+        {result && !saveSuccess && (
+          <div className="mb-4">
+            <Button
+              onClick={handleSaveToDashboard}
+              disabled={isSaving}
+              variant="primary"
+              className="px-8 py-3"
+            >
+              {isSaving ? (
+                <>
+                  <span className="inline-block animate-spin mr-2">⏳</span>
+                  Saving to Dashboard...
+                </>
+              ) : (
+                '💾 Save to Dashboard'
+              )}
+            </Button>
+          </div>
+        )}
+        
+        <div className="flex gap-4 justify-center">
+          <Button
+            onClick={handleNext}
+            variant={result && saveSuccess ? "primary" : "secondary"}
+            className="px-8 py-3"
+          >
+            {result && saveSuccess ? 'Continue' : 'Skip'}
+          </Button>
+        </div>
       </div>
     </div>
   );

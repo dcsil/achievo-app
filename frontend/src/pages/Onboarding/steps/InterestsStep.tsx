@@ -61,11 +61,16 @@ const InterestsStep: React.FC<OnboardingStepProps> = ({ onNext, onBack, onSkip }
           onClick={handleNext}
           disabled={selectedActivities.length === 0}
           variant="primary"
+          className="px-8 py-3"
         >
           Continue
         </Button>
         {onSkip && (
-          <Button onClick={onSkip} variant="secondary">
+          <Button 
+            onClick={onSkip} 
+            variant="secondary"
+            className="px-8 py-3"
+          >
             Skip
           </Button>
         )}

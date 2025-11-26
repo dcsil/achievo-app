@@ -17,6 +17,7 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
   const [busyIntervals, setBusyIntervals] = useState<Array<{start: string, end: string}>>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showUploadAnother, setShowUploadAnother] = useState(false);
   const userId = 'paul_paw_test';
 
   useEffect(() => {
@@ -136,6 +137,25 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
     }
   };
 
+  const resetForNewUpload = () => {
+    setSelectedFile(null);
+    setSelectedCourseId(''); // Reset course selection
+    setResult(null);
+    setSaveSuccess(false);
+    setShowUploadAnother(false);
+    setError('');
+    // Reset file input
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+
+  const handleUploadAnother = () => {
+    setShowUploadAnother(true);
+    resetForNewUpload();
+  };
+
   const handleNext = () => {
     if (result) {
       localStorage.setItem('onboarding-syllabi', 'uploaded');
@@ -195,40 +215,6 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
               </div>
             </div>
           </div>
-
-          {/* Save Confirmation */}
-          {!saveSuccess && (
-            <div className="bg-blue-50 border border-blue-200 p-6 rounded-2xl">
-              <h3 className="text-lg font-bold text-blue-800 mb-3">📋 Review & Confirm</h3>
-              <p className="text-blue-700 mb-4">
-                Please review the extracted assignments and tasks below. When you're ready, click "Save to Dashboard" to add them to your account.
-              </p>
-              <button
-                onClick={handleSaveToDashboard}
-                disabled={isSaving}
-                className={`px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold transition-colors ${
-                  isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
-                }`}
-              >
-                {isSaving ? (
-                  <>
-                    <span className="inline-block animate-spin mr-2">⏳</span>
-                    Saving to Dashboard...
-                  </>
-                ) : (
-                  '💾 Save to Dashboard'
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Save Success */}
-          {saveSuccess && (
-            <div className="bg-green-50 border border-green-200 text-green-700 p-6 rounded-2xl">
-              <h3 className="text-lg font-bold mb-2">🎉 Successfully Saved!</h3>
-              <p>All assignments and tasks have been saved to your dashboard. You can now view them in your home page.</p>
-            </div>
-          )}
 
           {/* Extracted Tasks Section */}
           <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -303,14 +289,45 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
         </div>
       )}
 
-    {/* Navigation */}
+      {/* Navigation */}
       <div className="text-center mt-8">
-        <Button
-          onClick={handleNext}
-          variant="secondary"
-        >
-          {result && saveSuccess ? 'Continue' : 'Skip'}
-        </Button>
+        <div className="flex gap-4 justify-center">
+          {result && !saveSuccess && (
+            <Button
+              onClick={handleSaveToDashboard}
+              disabled={isSaving}
+              variant="primary"
+              className="px-8 py-3"
+            >
+              {isSaving ? (
+                <>
+                  <span className="inline-block animate-spin mr-2">⏳</span>
+                  Saving to Dashboard...
+                </>
+              ) : (
+                '💾 Save to Dashboard'
+              )}
+            </Button>
+          )}
+          
+          {result && saveSuccess && (
+            <Button
+              onClick={handleUploadAnother}
+              variant="primary"
+              className="px-8 py-3"
+            >
+              📤 Upload Another Syllabus
+            </Button>
+          )}
+          
+          <Button
+            onClick={handleNext}
+            variant={result && saveSuccess ? "primary" : "secondary"}
+            className="px-8 py-3"
+          >
+            {result && saveSuccess ? 'Continue' : 'Skip'}
+          </Button>
+        </div>
       </div>
     </div>
   );
