@@ -216,36 +216,34 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
 
       {/* Navigation */}
       <div className="text-center mt-8">
-        {result && !saveSuccess && (
-          <div className="mb-4">
-            <Button
-              onClick={handleSaveToDashboard}
-              disabled={isSaving}
-              variant="primary"
-              className="px-8 py-3"
-            >
-              {isSaving ? (
-                <>
-                  <span className="inline-block animate-spin mr-2">⏳</span>
-                  Saving to Dashboard...
-                </>
-              ) : (
-                '💾 Save to Dashboard'
-              )}
-            </Button>
-          </div>
-        )}
-        
         <div className="flex gap-4 justify-center">
-          <Button
-            onClick={handleNext}
-            variant={result && saveSuccess ? "primary" : "secondary"}
-            className="px-8 py-3"
-          >
-            {result && saveSuccess ? 'Continue' : 'Skip'}
-          </Button>
+            {result && !saveSuccess && (
+                <Button
+                onClick={handleSaveToDashboard}
+                disabled={isSaving}
+                variant="primary"
+                className="px-8 py-3"
+                >
+                {isSaving ? (
+                    <>
+                    <span className="inline-block animate-spin mr-2">⏳</span>
+                    Saving to Dashboard...
+                    </>
+                ) : (
+                    '💾 Save to Dashboard'
+                )}
+                </Button>
+            )}
+        
+            <Button
+                onClick={handleNext}
+                variant={result && saveSuccess ? "primary" : "secondary"}
+                className="px-8 py-3"
+            >
+                {result && saveSuccess ? 'Continue' : 'Skip'}
+            </Button>
+            </div>
         </div>
-      </div>
     </div>
   );
 };

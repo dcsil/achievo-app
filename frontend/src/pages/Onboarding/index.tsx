@@ -4,6 +4,7 @@ import WelcomeStep from './steps/WelcomeStep';
 import InterestsStep from './steps/InterestsStep';
 import CanvasStep from './steps/CanvasStep';
 import SyllabusStep from './steps/SyllabusStep';
+import NotificationStep from './steps/NotificationStep';
 import CompletionStep from './steps/CompletionStep';
 
 export interface OnboardingStepProps {
@@ -19,6 +20,7 @@ const ONBOARDING_STEPS = [
   { component: InterestsStep, title: 'Interests', skippable: true },
   { component: CanvasStep, title: 'Canvas', skippable: true },
   { component: SyllabusStep, title: 'Syllabi', skippable: true },
+  { component: NotificationStep, title: 'Notifications', skippable: true },
   { component: CompletionStep, title: 'Complete', skippable: false }
 ];
 
