@@ -20,6 +20,7 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
   const [courses, setCourses] = useState<CourseForUI[]>([]);
   const [courseRefreshKey, setCourseRefreshKey] = useState<{ [key: string]: number }>({});
   const [daysToShow, setDaysToShow] = useState(3);
+  
   const initialDaysToShow = 3;
   const daysPerIncrement = 3;
 
@@ -165,16 +166,29 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
     }
   };
 
+  // Simplified handleTaskCompleted - let MultipleTaskContainer handle task removal
   const handleTaskCompleted = async (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => {
-  // Clear any scheduled notifications for this completed task
+    console.log('🎯 Home handleTaskCompleted called:', { taskId, taskType, pointsEarned });
+    
+    // Update user points
+    if (user && updateUserPoints) {
+      updateUserPoints(user.total_points + pointsEarned);
+    }
+    
+    // Refresh user data from backend
     try {
+      const updatedUser = await apiService.getUser(userId);
+      if (updateUserPoints) {
+        updateUserPoints(updatedUser.total_points);
+      }
+    } catch (err) {
+      console.error('Failed to refresh user data:', err);
+    }
 
-      // if exercise or break notification alarm exists, clear it
+    // Clear notifications
+    try {
       if (taskType === 'exercise' || taskType === 'break') {
-
         const alarmId = `${taskType}-${taskId}`;
-
-        // Check if alarm exists before trying to clear it
         chrome.alarms.get(alarmId, (alarm) => {
           if (alarm) {
             chrome.alarms.clear(alarmId, (wasCleared) => {
@@ -189,26 +203,11 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
           }
         });
       }
-
-  } catch (notifError) {
-    // Don't let notification errors break the completion flow
-    console.warn('Failed to clear task notification in Home component:', notifError);
-  }
-  
-  // Update Layout's user points optimistically for better UX
-  if (user && updateUserPoints) {
-    updateUserPoints(user.total_points + pointsEarned);
-  }
-  
-  // Refresh user data and courses from backend
-  try {
-    // Fetch updated user data from backend to confirm points
-    const updatedUser = await apiService.getUser(userId);
-    if (updateUserPoints) {
-      updateUserPoints(updatedUser.total_points);
+    } catch (notifError) {
+      console.warn('Failed to clear task notification in Home component:', notifError);
     }
     
-    // Update the refresh key for the specific course if courseId is provided
+    // Update course refresh keys
     if (courseId) {
       setCourseRefreshKey(prev => ({
         ...prev,
@@ -216,7 +215,6 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
       }));
       console.log(`🔄 Refreshed course ${courseId} after task completion`);
     } else {
-      // Fallback to refresh all courses if courseId is not provided
       await fetchCourses();
       const newKey = Date.now();
       setCourseRefreshKey(prev => {
@@ -227,18 +225,6 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
         return newRefreshKey;
       });
       console.log('🔄 Refreshed all courses after task completion (no courseId provided)');
-    }
-    
-  } catch (err) {
-    console.error('Failed to refresh data after task completion:', err);
-  }
-};
-
-  const handleTasksUpdate = (updatedTasks: any[], section: 'today' | 'upcoming') => {
-    if (section === 'today') {
-      setTodayTasks(updatedTasks);
-    } else {
-      setUpcomingTasks(groupTasksByDate(updatedTasks));
     }
   };
 
@@ -272,9 +258,9 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
 
   return (
     <div className="px-2 py-4">
-      <div className="max-w-6xl mx-auto pb-4">
-        {/* Today's Tasks */}
-        <div className="max-w-md mx-auto p-2">
+      <div className="max-w-4xl mx-auto pb-4">
+        {/* Today's Tasks - Set to max-w-2xl for consistent width */}
+        <div className="max-w-2xl mx-auto p-2">
           <h2 className="text-xl font-semibold text-left mb-2">
             Today's Tasks
             {todayTasks.length > 0 && (
@@ -287,14 +273,13 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
             tasks={todayTasks}
             userId={userId}
             onTaskCompleted={handleTaskCompleted}
-            onTasksUpdate={(tasks) => handleTasksUpdate(tasks, 'today')}
             onRefreshData={refreshTaskData}
             showCompleteButton={true}
           />
         </div>
 
-        {/* Upcoming Tasks */}
-        <div className="max-w-md mx-auto p-2">
+        {/* Upcoming Tasks - Set to max-w-2xl for consistent width */}
+        <div className="max-w-2xl mx-auto p-2">
           <h2 className="text-xl font-semibold text-left mb-2">
             Upcoming Tasks
             {getTotalUpcomingTasksCount(upcomingTasks) > 0 && (
@@ -308,10 +293,6 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
               tasks={[]}
               userId={userId}
               onTaskCompleted={handleTaskCompleted}
-              onTasksUpdate={(tasks) => {
-                // For empty upcoming tasks, just set empty grouped object
-                setUpcomingTasks({});
-              }}
               onRefreshData={refreshTaskData}
               showCompleteButton={true}
             />
@@ -323,20 +304,6 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
                     tasks={tasks}
                     userId={userId}
                     onTaskCompleted={handleTaskCompleted}
-                    onTasksUpdate={(updatedTasks) => {
-                      // Update only this specific date group
-                      setUpcomingTasks(prev => {
-                        const newState = { ...prev };
-                        if (updatedTasks.length === 0) {
-                          // If no tasks left for this date, remove the date group
-                          delete newState[dateString];
-                        } else {
-                          // Update the tasks for this date
-                          newState[dateString] = updatedTasks;
-                        }
-                        return newState;
-                      });
-                    }}
                     onRefreshData={refreshTaskData}
                     showCompleteButton={true}
                     dateString={dateString}
@@ -371,42 +338,42 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
           )}
         </div>
 
-        {/* Courses Section */}
-        <div className="max-w-md mx-auto p-2">
-            <h2 className="text-xl font-semibold text-left mb-2">Courses</h2>
-            
-            {loading && (
-              <div className="text-center py-4">
-                <p className="text-gray-500">Loading courses...</p>
-              </div>
-            )}
-            
-            {error && (
-              <div className="text-center py-4">
-                <p className="text-red-500">{error}</p>
-              </div>
-            )}
-            
-            {!loading && !error && courses.length === 0 && (
-              <div className="text-center py-4">
-                <p className="text-gray-500">No courses found.</p>
-              </div>
-            )}
-            
-            {!loading && !error && courses.map((course, index) => (
-              <div key={`${course.course_id}-${courseRefreshKey[course.course_id] || 0}`} className="mb-4">
-                <CourseContainer 
-                  name={course.name} 
-                  courseId={course.course_id} 
-                  color={course.color}
-                  refreshKey={courseRefreshKey[course.course_id] || 0}
-                />
-              </div>
-            ))}
+        {/* Courses Section - Set to max-w-2xl to match tasks */}
+        <div className="max-w-2xl mx-auto p-2">
+          <h2 className="text-xl font-semibold text-left mb-2">Courses</h2>
+          
+          {loading && (
+            <div className="text-center py-4">
+              <p className="text-gray-500">Loading courses...</p>
+            </div>
+          )}
+          
+          {error && (
+            <div className="text-center py-4">
+              <p className="text-red-500">{error}</p>
+            </div>
+          )}
+          
+          {!loading && !error && courses.length === 0 && (
+            <div className="text-center py-4">
+              <p className="text-gray-500">No courses found.</p>
+            </div>
+          )}
+          
+          {!loading && !error && courses.map((course, index) => (
+            <div key={`${course.course_id}-${courseRefreshKey[course.course_id] || 0}`} className="mb-4">
+              <CourseContainer 
+                name={course.name} 
+                courseId={course.course_id} 
+                color={course.color}
+                refreshKey={courseRefreshKey[course.course_id] || 0}
+              />
+            </div>
+          ))}
         </div>
 
-        {/* Quick Actions Section */}
-        <div className="max-w-md mx-auto p-2 mb-6 pb-8">
+        {/* Quick Actions Section - Set to max-w-2xl to match everything else */}
+        <div className="max-w-2xl mx-auto p-2 mb-6 pb-8">
           <h2 className="text-xl font-semibold text-left mb-3">Quick Actions</h2>
           <div className="flex gap-3">
             <button
