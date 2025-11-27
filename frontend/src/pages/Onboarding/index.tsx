@@ -64,7 +64,7 @@ const Onboarding: React.FC<OnboardingProps> = ({
     if (currentStep < ONBOARDING_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      completeOnboarding();
+    navigate('/home');
     }
   };
 

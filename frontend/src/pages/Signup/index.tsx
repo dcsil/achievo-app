@@ -72,7 +72,7 @@ const SignupPage: React.FC = () => {
         return;
       }
 
-      // Success - navigate to login page
+      // Success - navigate to onboarding page
       console.log('Signup successful', data);
       navigate('/onboarding');
     } catch (err) {

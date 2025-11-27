@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User } from '../../api-contexts/user-context';
+import { apiService, User } from '../../api-contexts/user-context';
 import Header from '../header';
 import Footer from '../footer';
 
@@ -14,6 +14,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const userId = 'paul_paw_test';
+
   useEffect(() => {
     fetchUserData();
   }, []);
@@ -22,17 +24,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Get user from localStorage
-      const storedUser = localStorage.getItem('user');
+
+      const storedUser = await apiService.getUser(userId);
+      // // Get user from localStorage
+      // const storedUser = localStorage.getItem('user');
       if (!storedUser) {
         // No user logged in, redirect to login
         navigate('/login');
         return;
       }
-      
-      const userData = JSON.parse(storedUser);
-      setUser(userData);
+
+      setUser(storedUser);
     } catch (err) {
       console.error('Failed to fetch user data:', err);
       setError('Failed to load user data. Please try again later.');
