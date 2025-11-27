@@ -15,7 +15,22 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const userId = 'paul_paw_test';
+  
+  // Get user ID from localStorage
+  const getUserId = () => {
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        return user.user_id || 'paul_paw_test'; // fallback
+      }
+    } catch (error) {
+      console.error('Error getting user from localStorage:', error);
+    }
+    return 'paul_paw_test'; // fallback
+  };
+  
+  const userId = getUserId();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -34,12 +49,12 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
     }
 
     setIsUploading(true);
-    setError(null);
+    setError('');
     setResult(null);
     setSaveSuccess(false);
 
     try {
-      const response = await timetableApiService.processTimetable(file);
+      const response = await timetableApiService.processTimetable(file, userId);
       setResult(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process timetable');

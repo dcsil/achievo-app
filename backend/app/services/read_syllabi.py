@@ -16,9 +16,6 @@ if not API_KEY or API_KEY == "GEMINI_API_KEY":
 
 client = genai.Client(api_key=API_KEY)
 
-# Fixed user_id for testing
-FIXED_USER_ID = "paul_paw_test"
-
 pdf_path = "backend/app/storage/uploads/dummy.pdf"
 busy = [
     {"start": "2025-11-13T09:00:00", "end": "2025-11-13T14:00:00"},
@@ -133,7 +130,7 @@ Output Format:
     else:
         return response.text
 
-def add_ids_to_extracted_data(extracted_data: dict, user_id: str = FIXED_USER_ID, course_id: str = None) -> dict:
+def add_ids_to_extracted_data(extracted_data: dict, user_id: str = "paul_paw_test", course_id: str = None) -> dict:
     """Add unique IDs to assignments and tasks extracted from PDF."""
     
     # Process assignments - add assignment_id and user_id
@@ -229,7 +226,7 @@ def generate_assignment_microtasks_with_ids(
     assignments: list,
     busy_intervals: list,
     default_micro_task_count: int = 3,
-    user_id: str = FIXED_USER_ID
+    user_id: str = "paul_paw_test"
 ) -> dict:
     """
     Enhanced version that generates micro-tasks with proper IDs for database insertion.
@@ -308,6 +305,9 @@ if __name__ == "__main__":
     output = extract_tasks_assignments_from_pdf(pdf_path)
     print(json.dumps(output, indent=2))
     base_assignments = output["assignments"]
+    # Step 2: For each assignment, generate micro-tasks
+    result = generate_assignment_microtasks(base_assignments, busy, default_micro_task_count=3)
+    print(json.dumps(result, indent=2))
     # Step 2: For each assignment, generate micro-tasks
     result = generate_assignment_microtasks(base_assignments, busy, default_micro_task_count=3)
     print(json.dumps(result, indent=2))

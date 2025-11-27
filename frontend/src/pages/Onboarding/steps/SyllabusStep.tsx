@@ -19,7 +19,22 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showUploadAnother, setShowUploadAnother] = useState(false);
   const [hasEverSaved, setHasEverSaved] = useState(false);
-  const userId = 'paul_paw_test';
+
+  // Get user ID from localStorage
+  const getUserId = () => {
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        return user.user_id || 'paul_paw_test'; // fallback
+      }
+    } catch (error) {
+      console.error('Error getting user from localStorage:', error);
+    }
+    return 'paul_paw_test'; // fallback
+  };
+  
+  const userId = getUserId();
 
   useEffect(() => {
     loadCourses();
