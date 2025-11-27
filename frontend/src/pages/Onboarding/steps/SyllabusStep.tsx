@@ -315,7 +315,7 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
 
       {/* Navigation */}
       <div className="text-center mt-8">
-        <div className="flex gap-4 justify-center">
+        <div className="flex gap-4 justify-center mb-12">
           {result && !saveSuccess && (
             <Button
               onClick={handleSaveToDashboard}
@@ -334,13 +334,7 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
             </Button>
           )}
 
-          {saveSuccess && (
-            <div className="bg-green-100 p-3 rounded-lg mb-4">
-              <p className="text-green-800 font-medium">✅ Syllabus saved successfully!</p>
-              <p className="text-green-600 text-sm">Assignments and tasks are now available in your dashboard</p>
-            </div>
-          )}
-          
+         
           {result && saveSuccess && (
             <Button
               onClick={handleUploadAnother}
@@ -359,6 +353,13 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
             {hasEverSaved ? 'Continue' : 'Skip'}
           </Button>
         </div>
+
+         {saveSuccess && (
+            <div className="bg-green-100 p-3 rounded-lg mb-4">
+              <p className="text-green-800 font-medium">✅ Syllabus saved successfully!</p>
+              <p className="text-green-600 text-sm">Assignments and tasks are now available in your dashboard</p>
+            </div>
+          )}
       </div>
     </div>
   );

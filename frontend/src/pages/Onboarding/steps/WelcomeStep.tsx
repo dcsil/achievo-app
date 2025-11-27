@@ -216,7 +216,8 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
 
       {/* Navigation */}
       <div className="text-center mt-8">
-        <div className="flex gap-4 justify-center">
+        
+        <div className="flex gap-4 justify-center mb-8">
           {result && !saveSuccess && (
             <Button
               onClick={handleSaveToDashboard}
@@ -235,21 +236,21 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
             </Button>
           )}
 
-          {saveSuccess && (
-            <div className="bg-green-100 p-3 rounded-lg mb-4">
-              <p className="text-green-800 font-medium">✅ Timetable saved successfully!</p>
-              <p className="text-green-600 text-sm">Your courses and tasks are now available in your dashboard</p>
-            </div>
-          )}
-
           <Button
             onClick={handleNext}
             variant={saveSuccess ? "primary" : "secondary"}
             className="px-8 py-3"
           >
-            {result && saveSuccess ? 'Continue' : saveSuccess ? 'Continue' : 'Skip'}
+            {saveSuccess ? 'Continue' : 'Skip'}
           </Button>
         </div>
+        
+        {saveSuccess && (
+          <div className="bg-green-100 p-3 rounded-lg mb-4">
+            <p className="text-green-800 font-medium">✅ Timetable saved successfully!</p>
+            <p className="text-green-600 text-sm">Your courses and tasks are now available in your dashboard</p>
+          </div>
+        )}
       </div>
     </div>
   );
