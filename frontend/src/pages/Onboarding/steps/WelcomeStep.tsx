@@ -246,10 +246,10 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
         </div>
         
         {saveSuccess && (
-          <div className="bg-green-100 p-3 rounded-lg mb-4">
-            <p className="text-green-800 font-medium">✅ Timetable saved successfully!</p>
-            <p className="text-green-600 text-sm">Your courses and tasks are now available in your dashboard</p>
-          </div>
+            <div className="bg-green-100 p-3 rounded-lg mb-4">
+                <p className="text-green-800 font-medium">✅ Timetable saved successfully!</p>
+                <p className="text-green-600 text-sm">Your courses and tasks are now available in your dashboard</p>
+            </div>
         )}
       </div>
     </div>
