@@ -165,6 +165,18 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
           if (updateUserProfile) {
             updateUserProfile(updates);
           }
+
+          // After successful save, update localStorage with new user data
+          try {
+            const response = await fetch(`http://127.0.0.1:5000/db/users?user_id=${userId}`);
+            if (response.ok) {
+              const updatedUser = await response.json();
+              localStorage.setItem('user', JSON.stringify(updatedUser));
+              console.log('Profile updated and localStorage refreshed');
+            }
+          } catch (error) {
+            console.error('Failed to refresh user data after profile update:', error);
+          }
         }
       }
           
