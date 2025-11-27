@@ -14,14 +14,7 @@ const LoginPage: React.FC = () => {
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
 
-  // Dummy credentials
-  const DUMMY_CREDENTIALS = {
-    email: 'paul.paw@example.com',
-    password: 'password123',
-    userId: 'paul_paw_test' // Dummy user ID for the extension
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setEmailError(false);
@@ -44,21 +37,42 @@ const LoginPage: React.FC = () => {
 
     setIsLoading(true);
 
-    if (email === DUMMY_CREDENTIALS.email && password === DUMMY_CREDENTIALS.password) {
+    try {
+      const response = await fetch('http://127.0.0.1:5000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Login failed. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
       // Success - set user ID in extension storage if running in extension
       if (isExtensionEnvironment()) {
-        setUserId(DUMMY_CREDENTIALS.userId).catch(err => {
+        setUserId(data.user.user_id).catch(err => {
           console.error('Failed to set user ID in extension:', err);
         });
       }
       
+      // Store user data in localStorage
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
       // Navigate to home page
-      console.log('Login successful', { email, remember });
+      console.log('Login successful', data.user);
       navigate('/home');
-    } else {
-      setError('Invalid email or password. Please try again.');
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (

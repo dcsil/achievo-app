@@ -25,6 +25,8 @@ SET timezone = 'UTC';
 -- 1) users: stores student accounts and gamification state
 CREATE TABLE IF NOT EXISTS users (
   user_id VARCHAR(50) PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
   canvas_username VARCHAR(255),
   canvas_domain TEXT,
   canvas_api_key TEXT, -- encrypted at rest via pgsodium security label in production

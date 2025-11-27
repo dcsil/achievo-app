@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { apiService, User } from '../../api-contexts/user-context';
+import { useNavigate } from 'react-router-dom';
+import { User } from '../../api-contexts/user-context';
 import Header from '../header';
 import Footer from '../footer';
 
@@ -8,11 +9,10 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const userId = 'paul_paw_test';
 
   useEffect(() => {
     fetchUserData();
@@ -22,7 +22,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      const userData = await apiService.getUser(userId);
+      
+      // Get user from localStorage
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser) {
+        // No user logged in, redirect to login
+        navigate('/login');
+        return;
+      }
+      
+      const userData = JSON.parse(storedUser);
       setUser(userData);
     } catch (err) {
       console.error('Failed to fetch user data:', err);
@@ -86,7 +95,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {React.cloneElement(children as React.ReactElement, { 
             user: user, 
             updateUserPoints: updateUserPoints,
-            userId: userId 
+            userId: user?.user_id 
         } as any)}
       </main>
       <Footer />
