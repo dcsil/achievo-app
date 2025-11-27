@@ -17,7 +17,7 @@ const SignupPage: React.FC = () => {
   const [confirmPasswordError, setConfirmPasswordError] = useState(false);
   const [termsError, setTermsError] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setEmailError(false);
@@ -55,13 +55,32 @@ const SignupPage: React.FC = () => {
 
     setIsLoading(true);
 
-    // Simulate API call delay
-    setTimeout(() => {
-      // Success - clear any existing onboarding progress and navigate to onboarding
-      localStorage.removeItem('onboarding-progress');
-      console.log('Signup successful', { email });
+    try {
+      const response = await fetch('http://127.0.0.1:5000/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Signup failed. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Success - navigate to login page
+      console.log('Signup successful', data);
       navigate('/onboarding');
-    }, 1000);
+    } catch (err) {
+      console.error('Signup error:', err);
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService, User } from '../../api-contexts/user-context';
 import MultipleTaskContainer from '../../components/multiple-task-container';
@@ -11,15 +11,16 @@ interface HomeProps {
   userId?: string;
 }
 
-const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_test' }) => {
+const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId }) => {
   const navigate = useNavigate();
   const [todayTasks, setTodayTasks] = useState<any[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<{ [key: string]: any[] }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [courses, setCourses] = useState<CourseForUI[]>([]);
-  const [courseRefreshKey, setCourseRefreshKey] = useState<{ [key: string]: number }>({});
+  const [globalRefreshKey, setGlobalRefreshKey] = useState(0);
   const [daysToShow, setDaysToShow] = useState(3);
+  const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const initialDaysToShow = 3;
   const daysPerIncrement = 3;
@@ -74,12 +75,25 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
     setDaysToShow(initialDaysToShow);
   };
 
-  // Fetch all data when component mounts
+  // Cleanup timer on unmount
   useEffect(() => {
-    fetchData();
+    return () => {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
+    };
   }, []);
 
+  // Fetch all data when component mounts
+  useEffect(() => {
+    if (userId) {
+      fetchData();
+    }
+  }, [userId]);
+
   const fetchData = async () => {
+    if (!userId) return;
+    
     try {
       setLoading(true);
       setError(null);
@@ -119,6 +133,8 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
 
   // Separate function to refresh courses data
   const fetchCourses = async () => {
+    if (!userId) return;
+    
     try {
       const fetchedCourses = await getCourses(userId);
       console.log('Fetched courses:', fetchedCourses);
@@ -130,7 +146,9 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
 
   // Function to refresh task data from backend
   const refreshTaskData = async () => {
+    if (!userId) return;
     try {
+      console.log('🔄 Home: Refreshing task data from backend');
       const tasksData = await apiService.getTasks(userId);
       
       const today = new Date();
@@ -150,16 +168,19 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
 
       setTodayTasks(todayTasksList);
       setUpcomingTasks(groupTasksByDate(upcomingTasksList));
-      setDaysToShow(initialDaysToShow);
-      console.log('✅ Refreshed task data from backend');
+      
+      // Trigger course container refresh by updating the global refresh key
+      setGlobalRefreshKey(prev => prev + 1);
+      
+      console.log('✅ Home: Refreshed task data and triggered course refresh');
     } catch (err) {
       console.error('Failed to refresh task data:', err);
     }
   };
 
-  // Simplified handleTaskCompleted - DELAY course refresh to allow overlay to show
+  // Simplified handleTaskCompleted - DELAY refresh to allow modal to show
   const handleTaskCompleted = async (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => {
-    console.log('🎯 Home handleTaskCompleted called:', { taskId, taskType, pointsEarned });
+    console.log('🎯 Home handleTaskCompleted called:', { taskId, taskType, pointsEarned, courseId });
     
     // Update user points
     if (user && updateUserPoints) {
@@ -167,6 +188,7 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
     }
     
     // Refresh user data from backend
+    if (!userId) return;
     try {
       const updatedUser = await apiService.getUser(userId);
       if (updateUserPoints) {
@@ -198,11 +220,17 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
       console.warn('Failed to clear task notification in Home component:', notifError);
     }
     
-    // DELAY course refresh to allow overlay to show and be closed by user
-    // This prevents the CourseContainer from re-rendering and destroying the overlay
-    console.log('⏳ Delaying course refresh to allow overlay to display');
-    // Don't refresh course immediately - let the user close the overlay first
-    // The course will be refreshed when they navigate or manually refresh
+    // Clear any existing refresh timer
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+    }
+    
+    // DELAY refresh to allow modal to show and user to close it
+    console.log('⏳ Home: Scheduling refresh in 3 seconds to allow modal display');
+    refreshTimerRef.current = setTimeout(() => {
+      console.log('⏰ Home: Timer fired - refreshing all data');
+      refreshTaskData();
+    }, 3000); // 3 seconds for user to see and close modal
   };
 
   if (loading) {
@@ -246,13 +274,15 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
               </span>
             )}
           </h2>
-          <MultipleTaskContainer 
-            tasks={todayTasks}
-            userId={userId}
-            onTaskCompleted={handleTaskCompleted}
-            onRefreshData={refreshTaskData}
-            showCompleteButton={true}
-          />
+          {userId && (
+            <MultipleTaskContainer 
+              tasks={todayTasks}
+              userId={userId}
+              onTaskCompleted={handleTaskCompleted}
+              onRefreshData={refreshTaskData}
+              showCompleteButton={true}
+            />
+          )}
         </div>
 
         {/* Upcoming Tasks */}
@@ -266,16 +296,18 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
             )}
           </h2>
           {Object.keys(upcomingTasks).length === 0 ? (
-            <MultipleTaskContainer 
-              tasks={[]}
-              userId={userId}
-              onTaskCompleted={handleTaskCompleted}
-              onRefreshData={refreshTaskData}
-              showCompleteButton={true}
-            />
+            userId && (
+              <MultipleTaskContainer 
+                tasks={[]}
+                userId={userId}
+                onTaskCompleted={handleTaskCompleted}
+                onRefreshData={refreshTaskData}
+                showCompleteButton={true}
+              />
+            )
           ) : (
             <>
-              {getDisplayedUpcomingDays().map(([dateString, tasks]) => (
+              {userId && getDisplayedUpcomingDays().map(([dateString, tasks]) => (
                 <div key={dateString} className="mb-6">
                   <MultipleTaskContainer 
                     tasks={tasks}
@@ -337,12 +369,12 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
           )}
           
           {!loading && !error && courses.map((course, index) => (
-            <div key={`${course.course_id}-${courseRefreshKey[course.course_id] || 0}`} className="mb-4">
+            <div key={`${course.course_id}-${globalRefreshKey}`} className="mb-4">
               <CourseContainer 
                 name={course.name} 
                 courseId={course.course_id} 
                 color={course.color}
-                refreshKey={courseRefreshKey[course.course_id] || 0}
+                refreshKey={globalRefreshKey}
                 onTaskCompleted={handleTaskCompleted}
                 onRefreshData={refreshTaskData}
                 userId={userId}

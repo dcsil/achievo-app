@@ -16,7 +16,7 @@ export interface CourseForUI {
   color: string;
 }
 
-export async function getCourses(userId: string = "paul_paw_test"): Promise<CourseForUI[]> {
+export async function getCourses(userId: string): Promise<CourseForUI[]> {
   try {
     const response = await fetch('http://127.0.0.1:5000/db/courses');
 

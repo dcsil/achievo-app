@@ -143,6 +143,95 @@ CORS(app)
 
 UPLOAD_FOLDER = "backend/app/storage/uploads"
 
+# ---------- AUTH ROUTES ----------
+@app.route("/auth/signup", methods=["POST"])
+def signup():
+    """Create a new user account."""
+    payload = request.get_json() or {}
+    email = payload.get("email")
+    password = payload.get("password")
+    
+    if not email:
+        return jsonify({"error": "email is required"}), 400
+    
+    if not password:
+        return jsonify({"error": "password is required"}), 400
+    
+    try:
+        repo = UsersRepository()
+        
+        # Check if user already exists
+        existing_user = repo.fetch_by_email(email)
+        if existing_user:
+            return jsonify({"error": "User with this email already exists"}), 409
+        
+        # Generate user_id from email (you can modify this logic)
+        user_id = email.split("@")[0] + "_" + str(uuid.uuid4())[:8]
+        
+        # Create user
+        repo.create(
+            user_id=user_id,
+            email=email,
+            password=password,
+            total_points=0,
+            current_level=0,
+        )
+        
+        return jsonify({
+            "status": "success",
+            "message": "User created successfully",
+            "user_id": user_id,
+            "email": email
+        }), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/auth/login", methods=["POST"])
+def login():
+    """Authenticate user and return user info."""
+    payload = request.get_json() or {}
+    email = payload.get("email")
+    password = payload.get("password")
+    
+    if not email:
+        return jsonify({"error": "email is required"}), 400
+    
+    if not password:
+        return jsonify({"error": "password is required"}), 400
+    
+    try:
+        repo = UsersRepository()
+        user = repo.fetch_by_email(email)
+        
+        if not user:
+            return jsonify({"error": "Invalid email or password"}), 401
+        
+        # Check password
+        if user.get("password") != password:
+            return jsonify({"error": "Invalid email or password"}), 401
+        
+        # Don't return password in response
+        user_response = {
+            "user_id": user.get("user_id"),
+            "email": user.get("email"),
+            "canvas_username": user.get("canvas_username"),
+            "canvas_domain": user.get("canvas_domain"),
+            "profile_picture": user.get("profile_picture"),
+            "total_points": user.get("total_points"),
+            "current_level": user.get("current_level"),
+            "last_activity_at": user.get("last_activity_at")
+        }
+        
+        return jsonify({
+            "status": "success",
+            "message": "Login successful",
+            "user": user_response
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 # ---------- DB ROUTES ----------
 @app.route("/db/users", methods=["GET"])
 def get_db_users():
@@ -165,6 +254,8 @@ def get_db_users():
 def post_db_user():
     payload = request.get_json() or {}
     user_id = payload.get("user_id")
+    email = payload.get("email")
+    password = payload.get("password")
     canvas_username = payload.get("canvas_username")
     canvas_domain = payload.get("canvas_domain")
     canvas_api_key = payload.get("canvas_api_key")
@@ -174,10 +265,18 @@ def post_db_user():
 
     if not user_id:
         return jsonify({"error": "user_id is required"}), 400
+    
+    if not email:
+        return jsonify({"error": "email is required"}), 400
+    
+    if not password:
+        return jsonify({"error": "password is required"}), 400
 
     try:
         UsersRepository().create(
             user_id=user_id,
+            email=email,
+            password=password,
             canvas_username=canvas_username,
             canvas_domain=canvas_domain,
             canvas_api_key=canvas_api_key,

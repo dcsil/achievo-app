@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AssignmentProgressContainer from '../assignment-progress-container';
 import MultipleTaskContainer from '../multiple-task-container';
 import { getAssignments, Assignment } from '../../api-contexts/get-assignments';
@@ -28,6 +28,9 @@ function CourseContainer ({
     const [error, setError] = useState<string | null>(null);
     const [isTasksCollapsed, setIsTasksCollapsed] = useState(true);
     const userId = propUserId || "paul_paw_test";
+    
+    // Track if a task completion is in progress
+    const isTaskCompletingRef = useRef(false);
 
     // Fetch assignments when component mounts or courseId changes
     useEffect(() => {
@@ -53,8 +56,15 @@ function CourseContainer ({
     // Fetch course tasks that are not in any assignment
     useEffect(() => {
         const fetchCourseTasks = async () => {
+            // Don't fetch if we're in the middle of a task completion FROM THIS COMPONENT
+            if (isTaskCompletingRef.current) {
+                console.log('⏸️ CourseContainer: Skipping fetch - task completion in progress');
+                return;
+            }
+            
             try {
                 setTasksLoading(true);
+                console.log('🔄 CourseContainer: Fetching course tasks for', courseId);
                 // Get all tasks for the user
                 const allTasks = await apiService.getTasks(userId);
                 
@@ -64,6 +74,7 @@ function CourseContainer ({
                     !task.is_completed
                 );
                 
+                console.log(`✅ CourseContainer: Found ${courseSpecificTasks.length} incomplete tasks for course ${courseId}`);
                 setCourseTasks(courseSpecificTasks);
             } catch (err) {
                 console.error('Error fetching course tasks:', err);
@@ -76,7 +87,8 @@ function CourseContainer ({
         if (courseId) {
             fetchCourseTasks();
         }
-    }, [courseId, refreshKey]);
+    }, [courseId, refreshKey, userId]);
+
 
     // Helper function to group tasks by date
     const groupTasksByDate = (tasks: any[]) => {
@@ -104,20 +116,20 @@ function CourseContainer ({
     const handleTaskCompleted = (taskId: string, taskType: string, pointsEarned: number, taskCourseId?: string) => {
         console.log('🎯 CourseContainer: Task completed:', taskId);
         
-        // Pass to parent component to update points
+        // Mark that task completion is in progress to prevent premature refetch
+        isTaskCompletingRef.current = true;
+        
+        // Pass to parent component - parent will handle the refresh
         if (onTaskCompleted) {
             onTaskCompleted(taskId, taskType, pointsEarned, taskCourseId || courseId);
         }
         
-        // Don't remove the task from state - let the overlay close naturally
-        // The task is already removed from the MultipleTaskContainer's local state
-        // We'll refresh the entire course data when refreshKey changes from parent
+        // Parent (Home) will refresh after modal closes, which will update refreshKey
+        // and trigger our useEffect to re-fetch tasks
     };
 
-    const handleTasksUpdate = (updatedTasks: any[]) => {
-        // Don't immediately update - let handleTaskCompleted handle it
-        console.log('📝 CourseContainer: handleTasksUpdate called, ignoring immediate update');
-    };
+    // REMOVED handleTasksUpdate - don't update local state immediately
+    // Let the modal show first, then refresh from server after modal closes
 
     return (
         <div className={`flex flex-col rounded-lg bg-gradient-to-bl from-${color}-100 to-${color}-200 p-3 pt-5`}>
@@ -185,7 +197,6 @@ function CourseContainer ({
                                             tasks={dateTasks}
                                             userId={userId}
                                             onTaskCompleted={handleTaskCompleted}
-                                            onTasksUpdate={handleTasksUpdate}
                                             onRefreshData={onRefreshData}
                                             showCompleteButton={true}
                                             timeAdjustment={true}
