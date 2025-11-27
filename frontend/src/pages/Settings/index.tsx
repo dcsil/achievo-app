@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, apiService } from '../../api-contexts/user-context';
+import NotificationEnable from '../../notification-enable';
 
 interface SettingsProps {
   user?: User | null;
@@ -15,20 +16,6 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
   const [isLoading, setSaving] = useState(false);
   
   const navigate = useNavigate();
-  
-  const [notifications, setNotifications] = useState({
-    enabled: true,
-    permission: 'default' as 'default' | 'granted' | 'denied',
-  });
-
-  const [preferences, setPreferences] = useState({
-    theme: 'light',
-    language: 'English',
-    startOfWeek: 'Monday',
-    timeFormat: '12-hour',
-    defaultView: 'dashboard',
-    breakActivity: 'Run', // Default break activity preference
-  });
 
   // Initialize profile state with user data
   const [profile, setProfile] = useState({
@@ -41,12 +28,6 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
   });
 
   const [originalProfile, setOriginalProfile] = useState(profile);
-
-  const [privacy, setPrivacy] = useState({
-    profileVisible: true,
-    progressVisible: false,
-    allowDataCollection: true,
-  });
 
   const onboardingSteps = [
     { id: 0, name: 'Timetable', description: 'Upload timetable', icon: ':calendar_spiral:' },
@@ -74,233 +55,6 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
     }
   }, [user]);
 
-  // Check Chrome notification permission and load saved settings on component mount
-  useEffect(() => {
-    const initializeSettings = async () => {
-      // Check if we're in a Chrome extension environment
-      if (typeof chrome !== 'undefined') {
-        try {
-          // First check current Chrome permission status
-          let currentPermission: 'default' | 'granted' | 'denied' = 'default';
-          if (chrome.permissions) {
-            const hasPermission = await chrome.permissions.contains({
-              permissions: ['notifications']
-            });
-            currentPermission = hasPermission ? 'granted' : 'default';
-          }
-
-          // Load saved settings from Chrome storage
-          if (chrome.storage) {
-            const result = await chrome.storage.local.get([
-              'notificationSettings',
-              'appPreferences',
-              'privacySettings'
-            ]);
-            
-            // Handle notification settings with permission synchronization
-            if (result.notificationSettings) {
-              const savedNotificationSettings = result.notificationSettings;
-              
-              // Sync with actual Chrome permission status
-              const syncedNotificationSettings = {
-                ...savedNotificationSettings,
-                permission: currentPermission,
-                // Only keep enabled if both saved as enabled AND Chrome permission is granted
-                enabled: savedNotificationSettings.enabled && (currentPermission === 'granted')
-              };
-              
-              setNotifications(syncedNotificationSettings);
-              
-              // Save the synced state back to storage if it changed
-              if (syncedNotificationSettings.enabled !== savedNotificationSettings.enabled || 
-                  syncedNotificationSettings.permission !== savedNotificationSettings.permission) {
-                await chrome.storage.local.set({
-                  notificationSettings: syncedNotificationSettings
-                });
-              }
-            } else {
-              // No saved settings, initialize with Chrome permission status
-              const initialNotificationSettings = {
-                enabled: currentPermission === 'granted',
-                permission: currentPermission
-              };
-              setNotifications(initialNotificationSettings);
-              
-              // Save initial settings
-              await chrome.storage.local.set({
-                notificationSettings: initialNotificationSettings
-              });
-            }
-            
-            if (result.appPreferences) {
-              setPreferences(result.appPreferences);
-            }
-            if (result.privacySettings) {
-              setPrivacy(result.privacySettings);
-            }
-          } else {
-            // No Chrome storage available, just set permission status
-            setNotifications(prev => ({
-              ...prev,
-              permission: currentPermission,
-              enabled: prev.enabled && (currentPermission === 'granted')
-            }));
-          }
-        } catch (error) {
-          console.error('Error initializing settings:', error);
-        }
-      }
-    };
-
-    initializeSettings();
-  }, []);
-
-  // Listen for permission changes (when user changes settings in Chrome)
-  useEffect(() => {
-    if (typeof chrome !== 'undefined' && chrome.permissions) {
-      const handlePermissionChange = (permissions: chrome.permissions.Permissions) => {
-        if (permissions.permissions?.includes('notifications')) {
-          setNotifications(prev => ({
-            ...prev,
-            permission: 'granted',
-            enabled: true
-          }));
-        } else {
-          setNotifications(prev => ({
-            ...prev,
-            permission: 'denied',
-            enabled: false
-          }));
-        }
-      };
-
-      // Listen for permission changes
-      chrome.permissions.onAdded.addListener(handlePermissionChange);
-      chrome.permissions.onRemoved.addListener(handlePermissionChange);
-
-      // Cleanup listeners
-      return () => {
-        chrome.permissions.onAdded.removeListener(handlePermissionChange);
-        chrome.permissions.onRemoved.removeListener(handlePermissionChange);
-      };
-    }
-  }, []);
-
-  const handleNotificationChange = async () => {
-    const newEnabled = !notifications.enabled;
-    
-    if (newEnabled) {
-      // User wants to enable notifications - request Chrome permission
-      if (typeof chrome !== 'undefined' && chrome.permissions) {
-        try {
-          // Request notification permission
-          const granted = await chrome.permissions.request({
-            permissions: ['notifications']
-          });
-          
-          if (granted) {
-            const newNotificationState = {
-              ...notifications,
-              enabled: true,
-              permission: 'granted' as const
-            };
-            setNotifications(newNotificationState);
-            
-            // Immediately save to Chrome storage
-            if (chrome.storage) {
-              await chrome.storage.local.set({
-                notificationSettings: newNotificationState
-              });
-            }
-            
-            // Show a test notification to confirm it's working
-            if (chrome.notifications) {
-              chrome.notifications.create({
-                type: 'basic',
-                iconUrl: '/achievo-clap-transparent.png',
-                title: 'Notifications Enabled!',
-                message: 'You will now receive Achievo task reminders.',
-                priority: 2
-              });
-            }
-          } else {
-            // Permission denied
-            const newNotificationState = {
-              ...notifications,
-              enabled: false,
-              permission: 'denied' as const
-            };
-            setNotifications(newNotificationState);
-            
-            // Save denied state to Chrome storage
-            if (chrome.storage) {
-              await chrome.storage.local.set({
-                notificationSettings: newNotificationState
-              });
-            }
-            alert('Notification permission was denied. You can enable it later in Chrome settings or by clicking the toggle again.');
-          }
-        } catch (error) {
-          console.error('Error requesting notification permission:', error);
-          alert('Error requesting notification permission. Please try again.');
-        }
-      } else {
-        // Fallback for non-extension environment
-        const newNotificationState = {
-          ...notifications,
-          enabled: newEnabled
-        };
-        setNotifications(newNotificationState);
-      }
-    } else {
-      // User wants to disable notifications
-      if (typeof chrome !== 'undefined' && chrome.permissions) {
-        try {
-          // Update state first to show immediate feedback
-          const newNotificationState = {
-            ...notifications,
-            enabled: false,
-            permission: notifications.permission // Keep current permission status
-          };
-          setNotifications(newNotificationState);
-          
-          // Immediately save to Chrome storage
-          if (chrome.storage) {
-            await chrome.storage.local.set({
-              notificationSettings: newNotificationState
-            });
-          }
-          
-          // Optionally remove Chrome permission (user can choose to keep permission but disable notifications)
-          // For now, we'll keep the permission but just disable notifications in the app
-          console.log('Notifications disabled - permission kept for easy re-enabling');
-          
-        } catch (error) {
-          console.error('Error disabling notifications:', error);
-          // Still update the UI even if storage fails
-          setNotifications(prev => ({
-            ...prev,
-            enabled: false
-          }));
-        }
-      } else {
-        // Fallback for non-extension environment
-        const newNotificationState = {
-          ...notifications,
-          enabled: newEnabled
-        };
-        setNotifications(newNotificationState);
-      }
-    }
-  };
-
-  const handlePreferenceChange = (key: keyof typeof preferences, value: string) => {
-    setPreferences(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
-
   const handleProfileChange = (key: keyof typeof profile, value: string | File) => {
     if (key === 'profilePicture' && value instanceof File) {
       // Handle file upload - in a real app, you'd upload to a server
@@ -319,13 +73,6 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
         [key]: value as string
       }));
     }
-  };
-
-  const handlePrivacyChange = (key: keyof typeof privacy) => {
-    setPrivacy(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
   };
 
   const handleSave = async () => {
@@ -364,22 +111,7 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
           }
         }
       }
-      
-      // Save notification settings to Chrome storage
-      if (typeof chrome !== 'undefined' && chrome.storage) {
-        try {
-          await chrome.storage.local.set({
-            notificationSettings: notifications,
-            appPreferences: preferences,
-            privacySettings: privacy
-          });
-        } catch (error) {
-          console.error('Error saving settings to Chrome storage:', error);
-        }
-      }
-      
-      console.log('Saving settings...', { notifications, preferences, privacy });
-      
+          
       setIsEditing(false);
       alert('Settings saved successfully!');
     } catch (error) {
@@ -612,117 +344,10 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
           </div>
         </div>
 
-        {/* Onboarding Setup */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">🚀 Guide</h2>
-          <p className="text-gray-600 mb-4">
-            Revisit any step from your initial setup to update your preferences or reconnect accounts.
-          </p>
-          
-          <div className="space-y-3 mb-6">
-            {onboardingSteps.map((step) => (
-              <div 
-                key={step.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center space-x-3">
-                  <span className="text-xl">{step.icon}</span>
-                  <div>
-                    <p className="font-medium text-gray-700">{step.name}</p>
-                    <p className="text-sm text-gray-500">{step.description}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleRedoStep(step.id)}
-                  className="px-3 py-1 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-600 transition-colors"
-                >
-                  Open
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Preferences */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">🎯 Habits and Preferences (dummy)</h2>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                What do you like to do during a break?
-              </label>
-              <div className="w-full px-3 py-2 bg-gray-50 rounded-lg text-gray-700">
-                {preferences.breakActivity === 'Run' && '🏃‍♂️ Run'}
-                {preferences.breakActivity === 'Read' && '📚 Read'}
-                {preferences.breakActivity === 'Walk' && '🚶‍♂️ Walk'}
-                {preferences.breakActivity === 'Grab Food' && '🍕 Grab Food'}
-              </div>
-            </div>
-            
-            <div className="pt-4 border-t border-gray-200">
-              <button
-                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors border border-gray-300 font-medium"
-                onClick={() => alert('Preferences quiz feature coming soon!')}
-              >
-                📝 Retake Preferences Quiz
-              </button>
-              <p className="text-xs text-gray-500 mt-2">
-                Take our quiz again to update your preferences and get better recommendations
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Notification Settings */}
+        {/* Notification Settings (moved to its own component) */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">🔔 Notifications</h2>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-gray-700">Enable Notifications</p>
-                <p className="text-sm text-gray-500">
-                  Receive notifications for tasks reminders
-                  {notifications.permission === 'denied' && (
-                    <span className="block text-red-500 text-xs mt-1">
-                      Permission denied. Enable in Chrome settings or click toggle to try again.
-                    </span>
-                  )}
-                  {notifications.permission === 'granted' && notifications.enabled && (
-                    <span className="block text-green-500 text-xs mt-1">
-                      ✓ Chrome notifications enabled
-                    </span>
-                  )}
-                </p>
-              </div>
-              <button
-                onClick={handleNotificationChange}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  notifications.enabled ? 'bg-orange-500' : 'bg-gray-200'
-                } ${notifications.permission === 'denied' ? 'opacity-75' : ''}`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    notifications.enabled ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-            
-            {notifications.permission === 'denied' && (
-              <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                <p className="text-sm text-red-700">
-                  <strong>Notifications Blocked:</strong> To enable notifications, you can:
-                </p>
-                <ul className="text-xs text-red-600 mt-1 ml-4 list-disc">
-                  <li>Click the toggle above to request permission again</li>
-                  <li>Go to Chrome Settings → Privacy & Security → Site Settings → Notifications</li>
-                  <li>Look for this extension and set it to "Allow"</li>
-                </ul>
-              </div>
-            )}
-          </div>
+          <NotificationEnable />
         </div>
 
         {/* App Preferences */}
@@ -733,8 +358,6 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
               <select
-                value={preferences.theme}
-                onChange={(e) => handlePreferenceChange('theme', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
               >
                 <option value="light">Light</option>
@@ -746,8 +369,6 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
               <select
-                value={preferences.language}
-                onChange={(e) => handlePreferenceChange('language', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
               >
                 <option value="English">English</option>
@@ -759,8 +380,6 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Start of Week</label>
               <select
-                value={preferences.startOfWeek}
-                onChange={(e) => handlePreferenceChange('startOfWeek', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
               >
                 <option value="Sunday">Sunday</option>
@@ -771,12 +390,10 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Time Format</label>
               <select
-                value={preferences.timeFormat}
-                onChange={(e) => handlePreferenceChange('timeFormat', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
               >
                 <option value="12-hour">12-hour (AM/PM)</option>
-                <option value="24-hour">24-hour</option>
+                <option value="24-hour">24-hour (coming soon)</option>
               </select>
             </div>
           </div>
