@@ -74,6 +74,15 @@ const Onboarding: React.FC<OnboardingProps> = ({
   };
 
   const handleSkip = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const standaloneParam = urlParams.get('standalone') === 'true';
+    const fromSettingsParam = urlParams.get('fromSettings') === 'true';
+    
+    if (standaloneParam && fromSettingsParam) {
+      navigate('/settings');
+      return;
+    }
+    
     if (currentStep < ONBOARDING_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -128,7 +137,7 @@ const Onboarding: React.FC<OnboardingProps> = ({
       {/* Progress Dots */}
       <div className="px-6 pt-8">
         <div className="max-w-2xl mx-auto">
-          {fromSettingsParam && (
+          {fromSettingsParam && !standaloneParam && (
             <div className="text-center mb-4">
               <button 
                 onClick={() => navigate('/settings')}
@@ -172,7 +181,7 @@ const Onboarding: React.FC<OnboardingProps> = ({
       <div className="px-6 pb-6">
         <CurrentStepComponent
           onNext={handleNext}
-          onSkip={currentStepInfo.skippable && !standaloneParam ? handleSkip : undefined}
+          onSkip={standaloneParam ? handleSkip : (currentStepInfo.skippable ? handleSkip : undefined)}
           onBack={fromSettingsParam || currentStep > 0 ? handleBack : undefined}
           isFirstStep={currentStep === 0}
           isLastStep={currentStep === ONBOARDING_STEPS.length - 1}
