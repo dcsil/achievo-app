@@ -40,6 +40,8 @@ export const AddAssignmentComponent: React.FC<AddAssignmentComponentProps> = ({ 
     const date = new Date();
     date.setDate(date.getDate() + daysFromNow);
     const dateStr = date.toISOString().split('T')[0];
+    
+    // Set time to end of day (11:59 PM) for future dates
     setFormData(prev => ({
       ...prev,
       due_date: dateStr,
@@ -54,6 +56,11 @@ export const AddAssignmentComponent: React.FC<AddAssignmentComponentProps> = ({ 
 
   const getCurrentTime = (): string => {
     const now = new Date();
+    // Add 10 minute buffer and round up to nearest 5 minutes
+    now.setMinutes(now.getMinutes() + 10);
+    const minutes = Math.ceil(now.getMinutes() / 5) * 5;
+    now.setMinutes(minutes);
+    now.setSeconds(0);
     return now.toTimeString().split(' ')[0].substring(0, 5);
   };
 
@@ -72,9 +79,11 @@ export const AddAssignmentComponent: React.FC<AddAssignmentComponentProps> = ({ 
 
     const dueDateTime = new Date(`${formData.due_date}T${formData.due_time}`);
     const now = new Date();
+    // Add 5 minute grace period for validation - gives users time to fill out the form
+    now.setMinutes(now.getMinutes() + 5);
 
     if (dueDateTime < now) {
-      setError('Due date and time cannot be in the past');
+      setError('Due date and time must be at least 5 minutes in the future');
       return false;
     }
     return true;
@@ -185,7 +194,7 @@ export const AddAssignmentComponent: React.FC<AddAssignmentComponentProps> = ({ 
             <option value="">Select a course</option>
             {courses.map((course) => (
               <option key={course.course_id} value={course.course_id}>
-                {course.course_id} - {course.name}
+                {course.name}
               </option>
             ))}
           </select>
@@ -222,7 +231,7 @@ export const AddAssignmentComponent: React.FC<AddAssignmentComponentProps> = ({ 
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+            className="flex-1 bg-orange-500 text-white py-3 px-4 rounded-lg hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
           >
             {loading ? 'Creating...' : 'Create Assignment'}
           </button>

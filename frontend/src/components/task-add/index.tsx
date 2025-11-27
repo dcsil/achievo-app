@@ -79,6 +79,12 @@ export const AddTaskComponent: React.FC<AddTaskComponentProps> = ({ userId, onSu
 
   const handleQuickTemplate = (template: 'pomodoro' | 'reading' | 'workout' | 'deep-work') => {
     const now = new Date();
+    // Add 10 minutes buffer and round up to nearest 5 minutes
+    now.setMinutes(now.getMinutes() + 10);
+    const minutes = Math.ceil(now.getMinutes() / 5) * 5;
+    now.setMinutes(minutes);
+    now.setSeconds(0);
+    
     const dateStr = now.toISOString().split('T')[0];
     const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
 
@@ -137,11 +143,16 @@ export const AddTaskComponent: React.FC<AddTaskComponentProps> = ({ userId, onSu
 
   const getCurrentTime = (): string => {
     const now = new Date();
+    // Add 10 minute buffer and round up to nearest 5 minutes
+    now.setMinutes(now.getMinutes() + 10);
+    const minutes = Math.ceil(now.getMinutes() / 5) * 5;
+    now.setMinutes(minutes);
+    now.setSeconds(0);
     return now.toTimeString().split(' ')[0].substring(0, 5);
   };
 
   const getMinStartTime = (): string => {
-    // If start date is today, minimum time is current time
+    // If start date is today, minimum time is current time + buffer
     const today = getTodayDate();
     if (formData.scheduled_start_date === today) {
       return getCurrentTime();
@@ -181,10 +192,12 @@ export const AddTaskComponent: React.FC<AddTaskComponentProps> = ({ userId, onSu
     const startDateTime = new Date(`${formData.scheduled_start_date}T${formData.scheduled_start_time}`);
     const endDateTime = new Date(`${formData.scheduled_end_date}T${formData.scheduled_end_time}`);
     const now = new Date();
+    // Add 5 minute grace period for validation
+    now.setMinutes(now.getMinutes() + 5);
 
-    // Check if start time is in the past
+    // Check if start time is in the past (with grace period)
     if (startDateTime < now) {
-      setError('Start time cannot be in the past');
+      setError('Start time must be at least 5 minutes in the future');
       return false;
     }
 
@@ -439,7 +452,7 @@ export const AddTaskComponent: React.FC<AddTaskComponentProps> = ({ userId, onSu
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+            className="flex-1 bg-orange-500 text-white py-3 px-4 rounded-lg hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
           >
             {loading ? 'Creating...' : 'Create Task'}
           </button>

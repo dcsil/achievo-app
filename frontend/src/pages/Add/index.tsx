@@ -95,7 +95,7 @@ export const AddPage: React.FC<AddPageProps> = ({
               onClick={() => setViewMode('task')}
               className={`px-6 py-2 rounded-md font-medium transition-all duration-200 ${
                 viewMode === 'task'
-                  ? 'bg-blue-600 text-white shadow-sm'
+                  ? 'bg-orange-500 text-white shadow-sm'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -105,7 +105,7 @@ export const AddPage: React.FC<AddPageProps> = ({
               onClick={() => setViewMode('assignment')}
               className={`px-6 py-2 rounded-md font-medium transition-all duration-200 ${
                 viewMode === 'assignment'
-                  ? 'bg-blue-600 text-white shadow-sm'
+                  ? 'bg-orange-500 text-white shadow-sm'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
