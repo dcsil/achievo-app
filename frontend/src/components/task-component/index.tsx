@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 
 interface TaskComponentProps {
   task: any;
@@ -22,17 +22,17 @@ const TASK_TYPES = [
 function TaskComponent({ task, onCompleteTask, showCompleteButton = true, isCompleting = false, timeAdjustment = true }: TaskComponentProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = useCallback(() => {
     setIsHovered(true);
-  };
+  }, []);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     setIsHovered(false);
-  };
+  }, []);
 
-  const handleCompleteClick = () => {
+  const handleCompleteClick = useCallback(() => {
     onCompleteTask(task);
-  };
+  }, [task, onCompleteTask]);
 
   return (
     <li 
@@ -111,4 +111,4 @@ function TaskComponent({ task, onCompleteTask, showCompleteButton = true, isComp
   );
 }
 
-export default TaskComponent;
+export default React.memo(TaskComponent);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { apiService, User } from '../../api-contexts/user-context';
 import MultipleTaskContainer from '../../components/multiple-task-container';
 
@@ -98,39 +98,14 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
     try {
       setLoading(true);
       setError(null);
-      // Fetch incomplete tasks
-      const tasksData = await apiService.getTasks(userId, undefined, undefined, false);
-      setAllTasks(tasksData);
       
-      // Fetch completed tasks  
-      const completedTasksData = await apiService.getTasks(userId, undefined, undefined, true);
-      setCompletedTasks(completedTasksData);
+      // Use optimized combined endpoint
+      const combinedData = await apiService.getCombinedTasks(userId);
       
-      // Extract available courses and task types from all tasks
-      const allTasksCombined = [...tasksData, ...completedTasksData];
-      
-      // Extract unique courses
-      const courseOptions = Array.from(
-        new Set(allTasksCombined
-          .filter(task => task.course_name)
-          .map(task => JSON.stringify({ value: task.course_id, label: task.course_name }))
-        )
-      ).map(str => JSON.parse(str));
-      setAvailableCourses(courseOptions);
-      
-      // Extract unique task types
-      const taskTypeOptions = Array.from(
-        new Set(allTasksCombined.map(task => task.type))
-      )
-      .filter(type => type)
-      .map(type => {
-        const taskTypeInfo = TASK_TYPES.find(t => t.value === type);
-        return {
-          value: type,
-          label: taskTypeInfo ? taskTypeInfo.label : type
-        };
-      });
-      setAvailableTaskTypes(taskTypeOptions);
+      setAllTasks(combinedData.incomplete_tasks);
+      setCompletedTasks(combinedData.completed_tasks);
+      setAvailableCourses(combinedData.available_courses);
+      setAvailableTaskTypes(combinedData.available_task_types);
       
     } catch (err) {
       console.error('Failed to fetch tasks:', err);
@@ -143,13 +118,12 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
   // Function to refresh task data from backend without loading state
   const refreshTaskData = async () => {
     try {
-      // Fetch fresh incomplete tasks
-      const tasksData = await apiService.getTasks(userId, undefined, undefined, false);
-      setAllTasks(tasksData);
-      
-      // Fetch fresh completed tasks  
-      const completedTasksData = await apiService.getTasks(userId, undefined, undefined, true);
-      setCompletedTasks(completedTasksData);
+      // Use optimized combined endpoint
+      const combinedData = await apiService.getCombinedTasks(userId);
+      setAllTasks(combinedData.incomplete_tasks);
+      setCompletedTasks(combinedData.completed_tasks);
+      setAvailableCourses(combinedData.available_courses);
+      setAvailableTaskTypes(combinedData.available_task_types);
       console.log('✅ Refreshed task data from backend');
     } catch (err) {
       console.error('Failed to refresh task data:', err);
@@ -217,124 +191,124 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
   };
 
   // Course dropdown handlers
-  const handleCourseSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setCourseSearch(value);
-    setShowCourseDropdown(true);
+  // const handleCourseSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const value = e.target.value;
+  //   setCourseSearch(value);
+  //   setShowCourseDropdown(true);
     
-    // Clear selected course if user is typing
-    if (selectedCourse && value !== selectedCourse.label) {
-      setSelectedCourse(null);
-      setCourseFilter('');
-    }
-  };
+  //   // Clear selected course if user is typing
+  //   if (selectedCourse && value !== selectedCourse.label) {
+  //     setSelectedCourse(null);
+  //     setCourseFilter('');
+  //   }
+  // };
 
-  const handleCourseSelect = (course: {value: string, label: string}) => {
-    setSelectedCourse(course);
-    setCourseSearch(course.label);
-    setShowCourseDropdown(false);
-    setCourseFilter(course.value);
-  };
+  // const handleCourseSelect = (course: {value: string, label: string}) => {
+  //   setSelectedCourse(course);
+  //   setCourseSearch(course.label);
+  //   setShowCourseDropdown(false);
+  //   setCourseFilter(course.value);
+  // };
 
-  // Task type dropdown handlers
-  const handleTaskTypeSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setTaskTypeSearch(value);
-    setShowTaskTypeDropdown(true);
+  // // Task type dropdown handlers
+  // const handleTaskTypeSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const value = e.target.value;
+  //   setTaskTypeSearch(value);
+  //   setShowTaskTypeDropdown(true);
     
-    // Clear selected task type if user is typing
-    if (selectedTaskType && value !== selectedTaskType.label) {
-      setSelectedTaskType(null);
-      setTaskTypeFilter('');
-    }
-  };
+  //   // Clear selected task type if user is typing
+  //   if (selectedTaskType && value !== selectedTaskType.label) {
+  //     setSelectedTaskType(null);
+  //     setTaskTypeFilter('');
+  //   }
+  // };
 
-  const handleTaskTypeSelect = (taskType: {value: string, label: string}) => {
-    setSelectedTaskType(taskType);
-    setTaskTypeSearch(taskType.label);
-    setShowTaskTypeDropdown(false);
-    setTaskTypeFilter(taskType.value);
-  };
+  // const handleTaskTypeSelect = (taskType: {value: string, label: string}) => {
+  //   setSelectedTaskType(taskType);
+  //   setTaskTypeSearch(taskType.label);
+  //   setShowTaskTypeDropdown(false);
+  //   setTaskTypeFilter(taskType.value);
+  // };
 
-  // Filter courses and task types based on search
-  const filteredCourses = availableCourses.filter(course =>
-    course.label.toLowerCase().includes(courseSearch.toLowerCase())
-  );
+  // // Filter courses and task types based on search
+  // const filteredCourses = availableCourses.filter(course =>
+  //   course.label.toLowerCase().includes(courseSearch.toLowerCase())
+  // );
 
-  const filteredTaskTypes = availableTaskTypes.filter(taskType =>
-    taskType.label.toLowerCase().includes(taskTypeSearch.toLowerCase())
-  );
+  // const filteredTaskTypes = availableTaskTypes.filter(taskType =>
+  //   taskType.label.toLowerCase().includes(taskTypeSearch.toLowerCase())
+  // );
 
-  // Apply filters handler
-  const handleApplyFilters = () => {
-    setAppliedCourseFilter(courseFilter);
-    setAppliedTaskTypeFilter(taskTypeFilter);
-    setAppliedStartDateFilter(startDateFilter);
-    setAppliedEndDateFilter(endDateFilter);
-  };
+  // // Apply filters handler
+  // const handleApplyFilters = () => {
+  //   setAppliedCourseFilter(courseFilter);
+  //   setAppliedTaskTypeFilter(taskTypeFilter);
+  //   setAppliedStartDateFilter(startDateFilter);
+  //   setAppliedEndDateFilter(endDateFilter);
+  // };
 
-  // Clear filters handler
-  const handleClearFilters = () => {
-    // Clear filter values
-    setCourseFilter('');
-    setTaskTypeFilter('');
-    setStartDateFilter('');
-    setEndDateFilter('');
+  // // Clear filters handler
+  // const handleClearFilters = () => {
+  //   // Clear filter values
+  //   setCourseFilter('');
+  //   setTaskTypeFilter('');
+  //   setStartDateFilter('');
+  //   setEndDateFilter('');
     
-    // Clear applied filters
-    setAppliedCourseFilter('');
-    setAppliedTaskTypeFilter('');
-    setAppliedStartDateFilter('');
-    setAppliedEndDateFilter('');
+  //   // Clear applied filters
+  //   setAppliedCourseFilter('');
+  //   setAppliedTaskTypeFilter('');
+  //   setAppliedStartDateFilter('');
+  //   setAppliedEndDateFilter('');
     
-    // Clear search states
-    setCourseSearch('');
-    setTaskTypeSearch('');
-    setSelectedCourse(null);
-    setSelectedTaskType(null);
-    setShowCourseDropdown(false);
-    setShowTaskTypeDropdown(false);
-  };
+  //   // Clear search states
+  //   setCourseSearch('');
+  //   setTaskTypeSearch('');
+  //   setSelectedCourse(null);
+  //   setSelectedTaskType(null);
+  //   setShowCourseDropdown(false);
+  //   setShowTaskTypeDropdown(false);
+  // };
 
-  const applyAdditionalFilters = (tasks: any[]) => {
-    let filtered = tasks;
+  // const applyAdditionalFilters = (tasks: any[]) => {
+  //   let filtered = tasks;
 
-    // Apply course filter
-    if (appliedCourseFilter) {
-      filtered = filtered.filter(task => task.course_id === appliedCourseFilter);
-    }
+  //   // Apply course filter
+  //   if (appliedCourseFilter) {
+  //     filtered = filtered.filter(task => task.course_id === appliedCourseFilter);
+  //   }
 
-    // Apply task type filter
-    if (appliedTaskTypeFilter) {
-      filtered = filtered.filter(task => task.type === appliedTaskTypeFilter);
-    }
+  //   // Apply task type filter
+  //   if (appliedTaskTypeFilter) {
+  //     filtered = filtered.filter(task => task.type === appliedTaskTypeFilter);
+  //   }
 
-    // Apply date range filters
-    if (appliedStartDateFilter) {
-      const startDate = new Date(appliedStartDateFilter);
-      startDate.setHours(0, 0, 0, 0);
-      filtered = filtered.filter(task => {
-        if (!task.scheduled_end_at) return true; // Include tasks without dates
-        const taskDate = new Date(task.scheduled_end_at);
-        taskDate.setHours(0, 0, 0, 0);
-        return taskDate >= startDate;
-      });
-    }
+  //   // Apply date range filters
+  //   if (appliedStartDateFilter) {
+  //     const startDate = new Date(appliedStartDateFilter);
+  //     startDate.setHours(0, 0, 0, 0);
+  //     filtered = filtered.filter(task => {
+  //       if (!task.scheduled_end_at) return true; // Include tasks without dates
+  //       const taskDate = new Date(task.scheduled_end_at);
+  //       taskDate.setHours(0, 0, 0, 0);
+  //       return taskDate >= startDate;
+  //     });
+  //   }
 
-    if (appliedEndDateFilter) {
-      const endDate = new Date(appliedEndDateFilter);
-      endDate.setHours(23, 59, 59, 999);
-      filtered = filtered.filter(task => {
-        if (!task.scheduled_end_at) return true; // Include tasks without dates
-        const taskDate = new Date(task.scheduled_end_at);
-        return taskDate <= endDate;
-      });
-    }
+  //   if (appliedEndDateFilter) {
+  //     const endDate = new Date(appliedEndDateFilter);
+  //     endDate.setHours(23, 59, 59, 999);
+  //     filtered = filtered.filter(task => {
+  //       if (!task.scheduled_end_at) return true; // Include tasks without dates
+  //       const taskDate = new Date(task.scheduled_end_at);
+  //       return taskDate <= endDate;
+  //     });
+  //   }
 
-    return filtered;
-  };
+  //   return filtered;
+  // };
 
-  const getFilteredTasks = () => {
+  const getFilteredTasks = useCallback((): Record<string, any[]> | any[] => {
     const now = new Date();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -376,8 +350,8 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
         tasksToFilter = allTasks;
     }
 
-    // Apply additional filters
-    const filteredTasks = applyAdditionalFilters(tasksToFilter);
+  // Apply additional filters (currently disabled) - use tasksToFilter directly
+  const filteredTasks: any[] = tasksToFilter;
 
     // Group by date for certain filters
     if (filter === 'all' || filter === 'upcoming' || filter === 'overdue') {
@@ -385,9 +359,9 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
     } else {
       return filteredTasks;
     }
-  };
+  }, [filter, allTasks, completedTasks]);
 
-  const getFilterCount = (filterType: typeof filter) => {
+  const getFilterCount = useCallback((filterType: typeof filter) => {
     const now = new Date();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -426,12 +400,12 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
         tasksToCount = allTasks;
     }
 
-    // Apply additional filters to the count
-    return applyAdditionalFilters(tasksToCount).length;
-  };
+    // Apply additional filters to the count (additional filters disabled)
+    return tasksToCount.length;
+  }, [allTasks, completedTasks]);
 
-  const filteredTasks = getFilteredTasks();
-  const isGroupedData = (filter === 'all' || filter === 'upcoming' || filter === 'overdue') && !Array.isArray(filteredTasks);
+  const filteredTasks = useMemo(() => getFilteredTasks(), [getFilteredTasks]);
+  const isGroupedData = useMemo(() => (filter === 'all' || filter === 'upcoming' || filter === 'overdue') && !Array.isArray(filteredTasks), [filter, filteredTasks]);
 
   if (loading) {
     return (
@@ -525,9 +499,9 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
         </div>
       </div>
 
-      {/* Additional Filters */}
+      {/* Additional Filters
       <div className="mb-6 bg-gray-50 rounded-lg">
-        {/* Collapsible Header */}
+        Collapsible Header
         <button
           onClick={() => setShowAdditionalFilters(!showAdditionalFilters)}
           className={`flex bg-gray-100 gap-3 items-center justify-between py-2 px-3 hover:bg-gray-200 ${!showAdditionalFilters ? 'rounded-lg' : 'rounded-t-lg'} transition-colors cursor-pointer`}
@@ -545,11 +519,11 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
           </span>
         </button>
         
-        {/* Collapsible Content */}
+        Collapsible Content
         {showAdditionalFilters && (
           <div className="bg-white px-4 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Course Filter */}
+              Course Filter
               <div className="relative">
                 <label htmlFor="course-filter" className="block text-xs font-medium text-gray-600 mb-1">
                   Course
@@ -572,10 +546,10 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
                   }
                 />
                 
-                {/* Course Dropdown */}
+                Course Dropdown
                 {showCourseDropdown && availableCourses.length > 0 && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {/* "All Courses" option */}
+                    "All Courses" option
                     <button
                       onClick={() => {
                         setSelectedCourse(null);
@@ -607,7 +581,7 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
                 )}
               </div>
 
-              {/* Task Type Filter */}
+              Task Type Filter
               <div className="relative">
                 <label htmlFor="type-filter" className="block text-xs font-medium text-gray-600 mb-1">
                   Task Type
@@ -630,10 +604,10 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
                   }
                 />
                 
-                {/* Task Type Dropdown */}
+                Task Type Dropdown
                 {showTaskTypeDropdown && availableTaskTypes.length > 0 && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {/* "All Types" option */}
+                    "All Types" option
                     <button
                       onClick={() => {
                         setSelectedTaskType(null);
@@ -665,7 +639,7 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
                 )}
               </div>
 
-              {/* Start Date Filter */}
+              Start Date Filter
               <div>
                 <label htmlFor="start-date-filter" className="block text-xs font-medium text-gray-600 mb-1">
                   From Date
@@ -679,7 +653,7 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
                 />
               </div>
 
-              {/* End Date Filter */}
+              End Date Filter
               <div>
                 <label htmlFor="end-date-filter" className="block text-xs font-medium text-gray-600 mb-1">
                   To Date
@@ -694,7 +668,7 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
               </div>
             </div>
 
-            {/* Filter Action Buttons */}
+            Filter Action Buttons
             <div className="mt-3 flex justify-end gap-2">
               <button
                 onClick={handleApplyFilters}
@@ -711,9 +685,7 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
             </div>
           </div>
         )}
-      </div>
-
-
+      </div> */}
 
       {/* TaskContainer - handle both grouped and ungrouped tasks */}
       {isGroupedData ? (

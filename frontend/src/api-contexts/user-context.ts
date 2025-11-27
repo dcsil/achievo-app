@@ -77,6 +77,16 @@ class ApiService {
     return this.fetchWithErrorHandling<any[]>(url);
   }
 
+  async getCombinedTasks(userId: string): Promise<{
+    incomplete_tasks: any[];
+    completed_tasks: any[];
+    available_courses: {value: string, label: string}[];
+    available_task_types: {value: string, label: string}[];
+  }> {
+    const url = `${this.baseUrl}/db/tasks/combined?user_id=${encodeURIComponent(userId)}`;
+    return this.fetchWithErrorHandling(url);
+  }
+
   async completeTask(taskId: string): Promise<{
     status: string;
     task_id: string;
