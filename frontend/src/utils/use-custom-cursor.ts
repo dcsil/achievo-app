@@ -27,7 +27,7 @@ export const useCustomCursor = (figures: Figure[]) => {
     return () => window.removeEventListener('cursor-changed', handleCursorChange);
   }, []);
 
-  // Create cursor with proper aspect ratio
+  // Create cursor with higher resolution
   const createCursor = async (imageUrl: string): Promise<string | null> => {
     // Check cache first
     if (cursorCache.has(imageUrl)) {
@@ -50,8 +50,8 @@ export const useCustomCursor = (figures: Figure[]) => {
 
       img.onload = () => {
         try {
-          // Calculate optimal cursor size while maintaining aspect ratio
-          const maxSize = 28; // Maximum dimension for cursor
+          // Use higher resolution - browsers support up to 128x128 on most systems
+          const maxSize = 48; // Increased from 28 to 48 for better quality
           const aspectRatio = img.width / img.height;
           
           let canvasWidth, canvasHeight;
@@ -68,19 +68,24 @@ export const useCustomCursor = (figures: Figure[]) => {
           }
           
           // Canvas size should be just big enough to contain the image
-          canvasWidth = Math.ceil(drawWidth) + 4; // 2px padding on each side
-          canvasHeight = Math.ceil(drawHeight) + 4; // 2px padding on each side
+          canvasWidth = Math.ceil(drawWidth);
+          canvasHeight = Math.ceil(drawHeight);
           
           // Ensure minimum size for visibility
-          canvasWidth = Math.max(canvasWidth, 16);
-          canvasHeight = Math.max(canvasHeight, 16);
+          canvasWidth = Math.max(canvasWidth, 24);
+          canvasHeight = Math.max(canvasHeight, 24);
           
-          // Ensure maximum size for performance
-          canvasWidth = Math.min(canvasWidth, 32);
-          canvasHeight = Math.min(canvasHeight, 32);
+          // Increased maximum size for better quality
+          canvasWidth = Math.min(canvasWidth, 64);
+          canvasHeight = Math.min(canvasHeight, 64);
 
           const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
+          const ctx = canvas.getContext('2d', { 
+            // High-quality rendering options
+            alpha: true,
+            desynchronized: false,
+            colorSpace: 'srgb'
+          });
           
           canvas.width = canvasWidth;
           canvas.height = canvasHeight;
@@ -91,24 +96,24 @@ export const useCustomCursor = (figures: Figure[]) => {
             return;
           }
 
-          // Enable high-quality scaling
+          // Enable the highest quality scaling
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
 
-          // Clear canvas
+          // Clear canvas with transparency
           ctx.clearRect(0, 0, canvasWidth, canvasHeight);
           
           // Center the image in the canvas
           const x = (canvasWidth - drawWidth) / 2;
           const y = (canvasHeight - drawHeight) / 2;
           
-          // Optional: Add a subtle drop shadow for better visibility
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-          ctx.shadowBlur = 1;
+          // Optional: Add a more subtle drop shadow for better contrast
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+          ctx.shadowBlur = 2;
           ctx.shadowOffsetX = 1;
           ctx.shadowOffsetY = 1;
           
-          // Draw the image with proper aspect ratio
+          // Draw the image with proper aspect ratio and crisp edges
           ctx.drawImage(img, x, y, drawWidth, drawHeight);
           
           // Reset shadow
@@ -117,7 +122,8 @@ export const useCustomCursor = (figures: Figure[]) => {
           ctx.shadowOffsetX = 0;
           ctx.shadowOffsetY = 0;
           
-          const dataUrl = canvas.toDataURL('image/png');
+          // Use maximum quality PNG encoding
+          const dataUrl = canvas.toDataURL('image/png', 1.0);
           setCursorCache(prev => new Map(prev).set(imageUrl, dataUrl));
           
           cleanup();
@@ -168,15 +174,17 @@ export const useCustomCursor = (figures: Figure[]) => {
         const cursorDataUrl = await createCursor(figure.image);
         
         if (cursorDataUrl) {
-          // Use center hotspot - this will be calculated based on the actual canvas size
-          const cursorStyle = `url("${cursorDataUrl}") 8 8, auto`;
+          // Use center hotspot - adjusted for larger cursor size
+          const cursorStyle = `url("${cursorDataUrl}") 24 24, auto`;
           
-          // Apply via CSS for better performance
+          // Apply via CSS with higher specificity and image-rendering optimization
           const style = document.createElement('style');
           style.id = 'global-custom-cursor';
           style.textContent = `
             *, *::before, *::after {
               cursor: ${cursorStyle} !important;
+              image-rendering: -webkit-optimize-contrast;
+              image-rendering: crisp-edges;
             }
           `;
           document.head.appendChild(style);

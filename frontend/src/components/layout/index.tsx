@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { apiService, User } from '../../api-contexts/user-context';
+import { useNavigate } from 'react-router-dom';
+import { User } from '../../api-contexts/user-context';
 import Header from '../header';
 import Footer from '../footer';
 
@@ -8,11 +9,10 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const userId = 'paul_paw_test';
 
   useEffect(() => {
     fetchUserData();
@@ -22,7 +22,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      const userData = await apiService.getUser(userId);
+      
+      // Get user from localStorage
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser) {
+        // No user logged in, redirect to login
+        navigate('/login');
+        return;
+      }
+      
+      const userData = JSON.parse(storedUser);
       setUser(userData);
     } catch (err) {
       console.error('Failed to fetch user data:', err);
@@ -56,7 +65,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return (
       <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
         <Header user={null} />
-        <main id="main-content" className="flex-1 overflow-y-auto flex items-center justify-center">
+        <main id="main-content" className="flex-1 overflow-y-auto pb-20 flex items-center justify-center">
           <div className="text-center">
             <div className="text-6xl mb-4 animate-spin">⏳</div>
             <p className="text-gray-600">Loading...</p>
@@ -71,7 +80,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return (
       <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
         <Header user={null} />
-        <main id="main-content" className="flex-1 overflow-y-auto flex items-center justify-center">
+        <main id="main-content" className="flex-1 overflow-y-auto pb-20 flex items-center justify-center">
           <div className="text-center">
             <div className="text-4xl mb-4">⚠️</div>
             <p className="text-red-600 mb-4">{error}</p>
@@ -91,13 +100,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
       <Header user={user} />
-      <main id="main-content" className="flex-1 overflow-y-auto">
+      <main id="main-content" className="flex-1 overflow-y-auto pb-20">
         {/* Pass user data and update function to children via React.cloneElement */}
         {React.cloneElement(children as React.ReactElement, { 
             user: user, 
             updateUserPoints: updateUserPoints,
             updateUserProfile: updateUserProfile,
-            userId: userId 
+            userId: user?.user_id 
         } as any)}
       </main>
       <Footer />

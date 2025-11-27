@@ -1,17 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AssignmentProgressContainer from '../assignment-progress-container';
 import MultipleTaskContainer from '../multiple-task-container';
 import { getAssignments, Assignment } from '../../api-contexts/get-assignments';
 import { apiService } from '../../api-contexts/user-context';
 
-function CourseContainer ({ name, courseId, color, refreshKey }: { name: string, courseId: string, color: string, refreshKey?: number }) {
+function CourseContainer ({ 
+    name, 
+    courseId, 
+    color, 
+    refreshKey,
+    onTaskCompleted,
+    onRefreshData,
+    userId: propUserId
+}: { 
+    name: string;
+    courseId: string;
+    color: string;
+    refreshKey?: number;
+    onTaskCompleted?: (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => void;
+    onRefreshData?: () => void;
+    userId?: string;
+}) {
     const [assignList, setAssignList] = useState<Assignment[]>([]);
     const [courseTasks, setCourseTasks] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [tasksLoading, setTasksLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isTasksCollapsed, setIsTasksCollapsed] = useState(true);
-    const userId = "paul_paw_test";
+    const userId = propUserId || "paul_paw_test";
+    
+    // Track if a task completion is in progress
+    const isTaskCompletingRef = useRef(false);
 
     // Fetch assignments when component mounts or courseId changes
     useEffect(() => {
@@ -37,8 +56,15 @@ function CourseContainer ({ name, courseId, color, refreshKey }: { name: string,
     // Fetch course tasks that are not in any assignment
     useEffect(() => {
         const fetchCourseTasks = async () => {
+            // Don't fetch if we're in the middle of a task completion FROM THIS COMPONENT
+            if (isTaskCompletingRef.current) {
+                console.log('⏸️ CourseContainer: Skipping fetch - task completion in progress');
+                return;
+            }
+            
             try {
                 setTasksLoading(true);
+                console.log('🔄 CourseContainer: Fetching course tasks for', courseId);
                 // Get all tasks for the user
                 const allTasks = await apiService.getTasks(userId);
                 
@@ -48,6 +74,7 @@ function CourseContainer ({ name, courseId, color, refreshKey }: { name: string,
                     !task.is_completed
                 );
                 
+                console.log(`✅ CourseContainer: Found ${courseSpecificTasks.length} incomplete tasks for course ${courseId}`);
                 setCourseTasks(courseSpecificTasks);
             } catch (err) {
                 console.error('Error fetching course tasks:', err);
@@ -60,7 +87,8 @@ function CourseContainer ({ name, courseId, color, refreshKey }: { name: string,
         if (courseId) {
             fetchCourseTasks();
         }
-    }, [courseId, refreshKey]);
+    }, [courseId, refreshKey, userId]);
+
 
     // Helper function to group tasks by date
     const groupTasksByDate = (tasks: any[]) => {
@@ -85,14 +113,23 @@ function CourseContainer ({ name, courseId, color, refreshKey }: { name: string,
         }));
     };
 
-    const handleTaskCompleted = (taskId: string, taskType: string, pointsEarned: number) => {
-        // Remove completed task from local state
-        setCourseTasks(prev => prev.filter(task => task.task_id !== taskId));
+    const handleTaskCompleted = (taskId: string, taskType: string, pointsEarned: number, taskCourseId?: string) => {
+        console.log('🎯 CourseContainer: Task completed:', taskId);
+        
+        // Mark that task completion is in progress to prevent premature refetch
+        isTaskCompletingRef.current = true;
+        
+        // Pass to parent component - parent will handle the refresh
+        if (onTaskCompleted) {
+            onTaskCompleted(taskId, taskType, pointsEarned, taskCourseId || courseId);
+        }
+        
+        // Parent (Home) will refresh after modal closes, which will update refreshKey
+        // and trigger our useEffect to re-fetch tasks
     };
 
-    const handleTasksUpdate = (updatedTasks: any[]) => {
-        setCourseTasks(updatedTasks);
-    };
+    // REMOVED handleTasksUpdate - don't update local state immediately
+    // Let the modal show first, then refresh from server after modal closes
 
     return (
         <div className={`flex flex-col rounded-lg bg-gradient-to-bl from-${color}-100 to-${color}-200 p-3 pt-5`}>
@@ -160,16 +197,7 @@ function CourseContainer ({ name, courseId, color, refreshKey }: { name: string,
                                             tasks={dateTasks}
                                             userId={userId}
                                             onTaskCompleted={handleTaskCompleted}
-                                            onTasksUpdate={(updatedTasks) => {
-                                                // Update the specific date group in the course tasks
-                                                setCourseTasks(prev => {
-                                                    // Remove tasks from this date and add updated ones
-                                                    const otherDateTasks = prev.filter(task => 
-                                                        new Date(task.scheduled_start_at).toDateString() !== date
-                                                    );
-                                                    return [...otherDateTasks, ...updatedTasks];
-                                                });
-                                            }}
+                                            onRefreshData={onRefreshData}
                                             showCompleteButton={true}
                                             timeAdjustment={true}
                                             dateString={date}

@@ -14,7 +14,7 @@ class UsersRepository:
             .table(self.table)
             .select(
                 # Skip pgsodium decryption for now - can be added back later when needed
-                "user_id,canvas_username,canvas_domain,profile_picture,total_points,current_level,last_activity_at"
+                "user_id,email,canvas_username,canvas_domain,profile_picture,total_points,current_level,last_activity_at,password"
             )
             .execute()
         )
@@ -23,6 +23,8 @@ class UsersRepository:
     def create(
         self,
         user_id: str,
+        email: str,
+        password: str,
         canvas_username: Optional[str] = None,
         canvas_domain: Optional[str] = None,
         canvas_api_key: Optional[str] = None,
@@ -34,6 +36,8 @@ class UsersRepository:
         client = DBClient.connect()
         payload = {
             "user_id": user_id,
+            "email": email,
+            "password": password,
             "canvas_username": canvas_username,
             "canvas_domain": canvas_domain,
             # Do not select/return api key elsewhere; DB handles encryption at-rest.
@@ -58,9 +62,24 @@ class UsersRepository:
             .table(self.table)
             .select(
                 # Skip pgsodium decryption for now - can be added back later when needed
-                "user_id,canvas_username,canvas_domain,profile_picture,total_points,current_level,last_activity_at"
+                "user_id,email,canvas_username,canvas_domain,profile_picture,total_points,current_level,last_activity_at,password"
             )
             .eq("user_id", user_id)
+            .execute()
+        )
+        rows = res.data or []
+        return rows[0] if rows else None
+
+    def fetch_by_email(self, email: str) -> Optional[Dict]:
+        """Return a single user dict by email, or None if not found."""
+        client = DBClient.connect()
+        res = (
+            client
+            .table(self.table)
+            .select(
+                "user_id,email,canvas_username,canvas_domain,profile_picture,total_points,current_level,last_activity_at,password"
+            )
+            .eq("email", email)
             .execute()
         )
         rows = res.data or []
