@@ -77,7 +77,7 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
                 "scheduled_start_at": "2025-09-05T09:00:00",
                 "task_id": "27b4aff0-2003-4620-a202-f12e2dfa7e9b",
                 "type": "assignment",
-                "user_id": "paul_paw_test"
+                "user_id": userId
               },
               {
                 "assignment_id": "5ae91363-a9cc-4d67-a3d2-52def8772ade",
@@ -89,7 +89,7 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
                 "scheduled_start_at": "2025-09-15T09:00:00",
                 "task_id": "ef75a0a8-a9d3-4054-9db6-70869b1fa07b",
                 "type": "assignment",
-                "user_id": "paul_paw_test"
+                "user_id": userId
               },
               {
                 "assignment_id": "5ae91363-a9cc-4d67-a3d2-52def8772ade",
@@ -101,7 +101,7 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
                 "scheduled_start_at": "2025-09-28T13:00:00",
                 "task_id": "66962790-6f69-4141-8d5e-3158aaf6f9a2",
                 "type": "assignment",
-                "user_id": "paul_paw_test"
+                "user_id": userId
               }
             ]
           },
@@ -123,7 +123,7 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
                 "scheduled_start_at": "2025-10-05T10:00:00",
                 "task_id": "78dd39ef-dd08-49ab-9def-1d8ef791a48d",
                 "type": "assignment",
-                "user_id": "paul_paw_test"
+                "user_id": userId
               },
               {
                 "assignment_id": "4bf2f2d0-419d-4734-b1e9-c453d1cf622f",
@@ -135,7 +135,7 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
                 "scheduled_start_at": "2025-10-20T09:00:00",
                 "task_id": "a6edd896-a716-46bd-a21f-b1a9b5cf3737",
                 "type": "assignment",
-                "user_id": "paul_paw_test"
+                "user_id": userId
               },
               {
                 "assignment_id": "4bf2f2d0-419d-4734-b1e9-c453d1cf622f",
@@ -147,7 +147,7 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
                 "scheduled_start_at": "2025-11-05T15:00:00",
                 "task_id": "afefa60f-e49f-4765-9519-16eb33c2a329",
                 "type": "assignment",
-                "user_id": "paul_paw_test"
+                "user_id": userId
               }
             ]
           }
@@ -165,7 +165,7 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
             "scheduled_start_at": "2025-10-17T18:00:00",
             "task_id": "46645429-8a28-4d2c-bfa1-32390b220c5e",
             "type": "exam",
-            "user_id": "paul_paw_test"
+            "user_id": userId
           },
           {
             "course_id": "CSC067",
@@ -176,7 +176,7 @@ const UploadSyllabi: React.FC<UploadSyllabiProps> = ({ userId = 'paul_paw_test' 
             "scheduled_start_at": "2025-12-19T14:00:00",
             "task_id": "26277304-92a5-4872-9875-d6bfc4d20a54",
             "type": "exam",
-            "user_id": "paul_paw_test"
+            "user_id": userId
           }
         ],
         "tasks_found": 2,
