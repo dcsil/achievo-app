@@ -126,7 +126,7 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
           }
         ],
         "tasks_found": 1,
-        "total_micro_tasks": 1
+        "total_micro_tasks": 3
       } as SyllabiResult;
 
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -354,12 +354,12 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
           </Button>
         </div>
 
-         {saveSuccess && (
+        {saveSuccess && (
             <div className="bg-green-100 p-3 rounded-lg mb-4">
               <p className="text-green-800 font-medium">✅ Syllabus saved successfully!</p>
               <p className="text-green-600 text-sm">Assignments and tasks are now available in your dashboard</p>
             </div>
-          )}
+        )}
       </div>
     </div>
   );
