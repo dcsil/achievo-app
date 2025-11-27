@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, apiService } from '../../api-contexts/user-context';
 import NotificationEnable from '../../notification-enable';
+import ImageUploadForm from '../../components/image-upload';
 
 interface SettingsProps {
   user?: User | null;
@@ -28,6 +29,8 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
   });
 
   const [originalProfile, setOriginalProfile] = useState(profile);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const onboardingSteps = [
     { id: 0, name: 'Timetable', description: 'Upload timetable', icon: ':calendar_spiral:' },
@@ -57,7 +60,8 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
 
   const handleProfileChange = (key: keyof typeof profile, value: string | File) => {
     if (key === 'profilePicture' && value instanceof File) {
-      // Handle file upload - in a real app, you'd upload to a server
+      // Do not automatically read here when called by form - prefer explicit upload action
+      // This function keeps legacy behavior, but Settings now triggers the upload flow explicitly.
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
@@ -72,6 +76,58 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
         ...prev,
         [key]: value as string
       }));
+    }
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (file && file.type.startsWith('image/')) {
+      // Immediately read and set preview so user sees the uploaded photo without clicking Upload
+      setIsUploadingImage(true);
+      readFileAsDataUrl(file).then((dataUrl) => {
+        setProfile(prev => ({ ...prev, profilePicture: dataUrl }));
+        // clear temporary selection - preview is stored in profile
+        setSelectedImageFile(null);
+      }).catch((err) => {
+        console.error('Failed to read selected image:', err);
+        alert('Failed to read image. Please try again.');
+      }).finally(() => setIsUploadingImage(false));
+    } else if (file) {
+      alert('Please select an image file (PNG, JPG, GIF)');
+    }
+  };
+
+  const readFileAsDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        if (result) resolve(result);
+        else reject(new Error('Failed to read file'));
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleUploadImage = async () => {
+    // Make upload local-only: convert selected file to data URL and set as profile preview.
+    if (!selectedImageFile) return;
+
+    setIsUploadingImage(true);
+    try {
+      const dataUrl = await readFileAsDataUrl(selectedImageFile);
+
+      // Do NOT persist to backend yet. Persist will happen on Save.
+      setProfile(prev => ({ ...prev, profilePicture: dataUrl }));
+
+      // Clear temporary file selection but keep preview until Save or Cancel
+      setSelectedImageFile(null);
+    } catch (err) {
+      console.error('Failed to read profile image:', err);
+      alert('Failed to read image. Please try again.');
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -129,6 +185,8 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
   const handleCancel = () => {
     // Reset profile changes if cancelled
     setProfile(originalProfile);
+    setSelectedImageFile(null);
+    setIsUploadingImage(false);
     setIsEditing(false);
   };
 
@@ -192,24 +250,23 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
                 {isEditing ? (
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        handleProfileChange('profilePicture', file);
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                  <ImageUploadForm
+                    selectedFile={selectedImageFile}
+                    onFileSelect={handleImageSelect}
+                    onUpload={handleUploadImage}
+                    isUploading={isUploadingImage}
+                    error={''}
+                    uploadButtonText={'Upload Image'}
+                    previewUrl={profile.profilePicture}
                   />
                 ) : (
-                  <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <div className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden shadow-sm">
                     {profile.profilePicture && profile.profilePicture !== '/default-profile.png' ? (
                       <img 
                         src={profile.profilePicture} 
                         alt="Profile" 
                         className="w-full h-full object-cover rounded-lg" 
+                         decoding="async"
                       />
                     ) : (
                       <span className="text-gray-400">No image</span>
@@ -315,7 +372,7 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
 
         {/* Onboarding Setup */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">🚀 Guide</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">🚀 Guide (dummy)</h2>
           <p className="text-gray-600 mb-4">
             Revisit any step from your initial setup to update your preferences or reconnect accounts.
           </p>
@@ -327,7 +384,6 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
                 className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <div className="flex items-center space-x-3">
-                  <span className="text-xl">{step.icon}</span>
                   <div>
                     <p className="font-medium text-gray-700">{step.name}</p>
                     <p className="text-sm text-gray-500">{step.description}</p>
