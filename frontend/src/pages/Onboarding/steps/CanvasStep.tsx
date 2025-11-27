@@ -29,9 +29,6 @@ const CanvasStep: React.FC<OnboardingStepProps> = ({ onNext, onBack, onSkip }) =
   };
 
   const handleNext = () => {
-    // Save Canvas integration data
-    localStorage.setItem('canvas-courses', JSON.stringify(selectedCourses));
-    localStorage.setItem('canvas-token', token);
     onNext();
   };
 

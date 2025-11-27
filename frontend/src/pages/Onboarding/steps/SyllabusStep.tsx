@@ -155,8 +155,7 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
       
       setSaveSuccess(true);
       setHasEverSaved(true);
-      // Mark this step as completed since data was actually saved
-      localStorage.setItem('onboarding-syllabi-completed', 'true');
+
       console.log('Syllabi data saved:', result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save syllabi data');
@@ -185,10 +184,6 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
   };
 
   const handleNext = () => {
-    // Only mark as completed if user actually saved data at least once
-    if (hasEverSaved) {
-      localStorage.setItem('onboarding-syllabi', 'uploaded');
-    }
     onNext();
   };
 

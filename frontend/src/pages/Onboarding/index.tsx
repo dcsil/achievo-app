@@ -36,7 +36,6 @@ const Onboarding: React.FC<OnboardingProps> = ({
   targetStep
 }) => {
   const [currentStep, setCurrentStep] = useState(targetStep ?? 0);
-  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
 
   // Parse URL params
@@ -51,10 +50,6 @@ const Onboarding: React.FC<OnboardingProps> = ({
   }, []);
 
   const handleNext = () => {
-    const newCompleted = new Set(completedSteps);
-    newCompleted.add(currentStep);
-    setCompletedSteps(newCompleted);
-    
     // Check if this is standalone mode
     const urlParams = new URLSearchParams(window.location.search);
     const standaloneParam = urlParams.get('standalone') === 'true';
@@ -107,13 +102,6 @@ const Onboarding: React.FC<OnboardingProps> = ({
   };
 
   const completeOnboarding = () => {
-    const progress = {
-      completed: true,
-      completedSteps: Array.from(completedSteps),
-      completedAt: new Date().toISOString()
-    };
-    localStorage.setItem('onboarding-progress', JSON.stringify(progress));
-    
     const urlParams = new URLSearchParams(window.location.search);
     const fromSettingsParam = urlParams.get('fromSettings') === 'true';
     
@@ -160,8 +148,6 @@ const Onboarding: React.FC<OnboardingProps> = ({
                     className={`w-2 h-2 rounded-full transition-all ${
                       index === currentStep
                         ? 'bg-blue-600 scale-125'
-                        : completedSteps.has(index)
-                        ? 'bg-green-500'
                         : 'bg-gray-300'
                     } ${fromSettingsParam ? 'hover:scale-110' : ''}`}
                   />

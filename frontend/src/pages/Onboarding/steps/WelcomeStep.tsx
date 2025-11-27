@@ -76,8 +76,7 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
       }
 
       setSaveSuccess(true);
-      // Mark this step as completed in localStorage since data was actually saved
-      localStorage.setItem('onboarding-welcome-completed', 'true');
+
     } catch (saveError) {
       setError(`Failed to save to dashboard: ${saveError instanceof Error ? saveError.message : 'Unknown error'}`);
     } finally {
@@ -108,10 +107,6 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
   };
 
   const handleNext = () => {
-    // Only mark as completed if user actually saved data, otherwise just continue
-    if (saveSuccess) {
-      localStorage.setItem('onboarding-timetable', 'uploaded');
-    }
     onNext();
   };
 

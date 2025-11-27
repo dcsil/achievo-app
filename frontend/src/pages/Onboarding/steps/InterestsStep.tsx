@@ -21,8 +21,6 @@ const InterestsStep: React.FC<OnboardingStepProps> = ({ onNext, onBack, onSkip }
   };
 
   const handleNext = () => {
-    // Save preferences to localStorage
-    localStorage.setItem('break-activities', JSON.stringify(selectedActivities));
     onNext();
   };
 
