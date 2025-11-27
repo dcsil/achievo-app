@@ -48,9 +48,14 @@ export interface TimetableProcessResult {
 class TimetableApiService {
   private baseUrl = 'http://127.0.0.1:5000';
 
-  async processTimetable(file: File): Promise<TimetableProcessResult> {
+  async processTimetable(file: File, userId?: string): Promise<TimetableProcessResult> {
     const formData = new FormData();
     formData.append('file', file);
+
+    // Add user_id if provided, otherwise backend will use default
+    if (userId) {
+      formData.append('user_id', userId);
+    }
 
     const response = await fetch(`${this.baseUrl}/api/timetable/process`, {
       method: 'POST',

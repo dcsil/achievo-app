@@ -72,9 +72,29 @@ const SignupPage: React.FC = () => {
         return;
       }
 
-      // Success - navigate to login page
+      // Success - now login to get user data
       console.log('Signup successful', data);
-      navigate('/login');
+      
+      // Immediately login after successful signup
+      const loginResponse = await fetch('http://127.0.0.1:5000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const loginData = await loginResponse.json();
+
+      if (!loginResponse.ok) {
+        setError('Signup successful but login failed. Please try logging in manually.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Store user data from login response
+      localStorage.setItem('user', JSON.stringify(loginData.user));
+      navigate('/onboarding');
     } catch (err) {
       console.error('Signup error:', err);
       setError('Network error. Please check your connection and try again.');

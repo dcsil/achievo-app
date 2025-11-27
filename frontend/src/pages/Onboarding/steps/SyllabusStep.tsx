@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { OnboardingStepProps } from '../index';
 import { processSyllabus, validatePdfFile, SyllabiResult } from '../../../api-contexts/syllabi-api';
 import { getCourses, CourseForUI } from '../../../api-contexts/get-courses';
+import { assignmentsApiService } from '../../../api-contexts/add-assignments';
+import { tasksApiService } from '../../../api-contexts/add-tasks';
 import PdfUploadForm from '../../../components/pdf-upload';
 import MultipleTaskContainer from '../../../components/multiple-task-container';
 import AssignmentProgressContainer from '../../../components/assignment-progress-container';
@@ -19,7 +21,22 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showUploadAnother, setShowUploadAnother] = useState(false);
   const [hasEverSaved, setHasEverSaved] = useState(false);
-  const userId = 'paul_paw_test';
+
+  // Get user ID from localStorage
+  const getUserId = () => {
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        return user.user_id || 'paul_paw_test'; // fallback
+      }
+    } catch (error) {
+      console.error('Error getting user from localStorage:', error);
+    }
+    return 'paul_paw_test'; // fallback
+  };
+  
+  const userId = getUserId();
 
   useEffect(() => {
     loadCourses();
@@ -48,6 +65,14 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
     }
   };
 
+  const generateRandomId = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
   const handleUpload = async () => {
     if (!selectedFile || !selectedCourseId) {
       setError('Please select both a course and a PDF file');
@@ -59,26 +84,57 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
     setResult(null);
 
     try {
+      // Generate random IDs for this upload
+      const assignmentId = generateRandomId();
+      const taskId1 = generateRandomId();
+      const taskId2 = generateRandomId();
+      const taskId3 = generateRandomId();
+      const examTaskId = generateRandomId();
+
       // Mock result for testing instead of actual API call
       const mockResult = {
         "assignments": [
           {
-            "assignment_id": "5ae91363-a9cc-4d67-a3d2-52def8772ade",
+            "assignment_id": assignmentId,
             "completion_points": 200,
             "course_id": selectedCourseId,
             "due_date": "2025-09-30T23:59:00",
             "is_complete": false,
-            "title": "Assignment 1",
+            "title": "Essay",
             "micro_tasks": [
               {
-                "assignment_id": "5ae91363-a9cc-4d67-a3d2-52def8772ade",
+                "assignment_id": assignmentId,
                 "course_id": selectedCourseId,
-                "description": "Research and outline Assignment 1",
+                "description": "Research and outline Essay",
                 "is_completed": false,
-                "reward_points": 10,
+                "reward_points": 30,
                 "scheduled_end_at": "2025-09-05T12:00:00",
                 "scheduled_start_at": "2025-09-05T09:00:00",
-                "task_id": "27b4aff0-2003-4620-a202-f12e2dfa7e9b",
+                "task_id": taskId1,
+                "type": "assignment",
+                "user_id": userId
+              },
+              {
+                "assignment_id": assignmentId,
+                "course_id": selectedCourseId,
+                "description": "First draft of Essay",
+                "is_completed": false,
+                "reward_points": 30,
+                "scheduled_end_at": "2025-09-12T12:00:00",
+                "scheduled_start_at": "2025-09-12T09:00:00",
+                "task_id": taskId2,
+                "type": "assignment",
+                "user_id": userId
+              },
+              {
+                "assignment_id": assignmentId,
+                "course_id": selectedCourseId,
+                "description": "Finalize and Submit Essay",
+                "is_completed": false,
+                "reward_points": 30,
+                "scheduled_end_at": "2025-09-26T12:00:00",
+                "scheduled_start_at": "2025-09-26T09:00:00",
+                "task_id": taskId3,
                 "type": "assignment",
                 "user_id": userId
               }
@@ -96,21 +152,31 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
             "reward_points": 25,
             "scheduled_end_at": "2025-10-17T20:00:00",
             "scheduled_start_at": "2025-10-17T18:00:00",
-            "task_id": "46645429-8a28-4d2c-bfa1-32390b220c5e",
+            "task_id": examTaskId,
             "type": "exam",
             "user_id": userId
           }
         ],
         "tasks_found": 1,
-        "total_micro_tasks": 1
+        "total_micro_tasks": 3
       } as SyllabiResult;
 
       await new Promise(resolve => setTimeout(resolve, 2000));
       setResult(mockResult);
 
       // Original API call (commented out for testing)
-      // const result = await processSyllabus(selectedFile, selectedCourseId, busyIntervals);
-      // setResult(result);
+      // const formData = new FormData();
+      // formData.append('file', selectedFile);
+      // formData.append('course_id', selectedCourseId);
+      // formData.append('user_id', userId);
+      // formData.append('busy_intervals', JSON.stringify(busyIntervals));
+      // const response = await fetch('http://127.0.0.1:5000/api/syllabi/process', {
+      //   method: 'POST',
+      //   body: formData,
+      // });
+      // const syllabusResult = await response.json();
+      // setResult(syllabusResult);
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process syllabus');
     } finally {
@@ -125,15 +191,50 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
     setError('');
 
     try {
-      // Here you would normally call the syllabi API to save the data
-      // For now, we'll simulate the save process
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Save assignments to backend
+      for (const assignment of result.assignments) {
+        await assignmentsApiService.createAssignment({
+          assignment_id: assignment.assignment_id,
+          course_id: assignment.course_id,
+          title: assignment.title,
+          due_date: assignment.due_date,
+          completion_points: assignment.completion_points
+        });
+
+        // Save micro-tasks for each assignment
+        for (const microTask of assignment.micro_tasks) {
+          await tasksApiService.createTask({
+            task_id: microTask.task_id,
+            user_id: microTask.user_id,
+            description: microTask.description,
+            type: microTask.type,
+            assignment_id: microTask.assignment_id,
+            course_id: microTask.course_id,
+            scheduled_start_at: microTask.scheduled_start_at || undefined,
+            scheduled_end_at: microTask.scheduled_end_at || undefined,
+            reward_points: microTask.reward_points
+          });
+        }
+      }
+
+      // Save standalone tasks (exams, quizzes)
+      for (const task of result.tasks) {
+        await tasksApiService.createTask({
+          task_id: task.task_id,
+          user_id: task.user_id,
+          description: task.description,
+          type: task.type,
+          course_id: task.course_id,
+          scheduled_start_at: task.scheduled_start_at || undefined,
+          scheduled_end_at: task.scheduled_end_at || undefined,
+          reward_points: task.reward_points
+        });
+      }
       
       setSaveSuccess(true);
       setHasEverSaved(true);
-      // Mark this step as completed since data was actually saved
-      localStorage.setItem('onboarding-syllabi-completed', 'true');
-      console.log('Syllabi data saved:', result);
+
+      console.log('Syllabi data saved to backend:', result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save syllabi data');
     } finally {
@@ -161,10 +262,6 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
   };
 
   const handleNext = () => {
-    // Only mark as completed if user actually saved data at least once
-    if (hasEverSaved) {
-      localStorage.setItem('onboarding-syllabi', 'uploaded');
-    }
     onNext();
   };
 
@@ -178,19 +275,34 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
 
       {/* Upload Form */}
       <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-        <PdfUploadForm
-          courses={courses}
-          selectedCourseId={selectedCourseId}
-          onCourseChange={setSelectedCourseId}
-          selectedFile={selectedFile}
-          onFileSelect={handleFileSelect}
-          onUpload={handleUpload}
-          isUploading={isUploading}
-          error={error}
-          uploadButtonText="📄 Process Syllabus"
-          title="Select Course & Upload Syllabus"
-          subtitle="Choose your course and upload the syllabus PDF to extract assignments and tasks"
-        />
+        {courses.length === 0 ? (
+          <div className="text-center py-8">
+            <div className="mb-4">
+              <span className="text-6xl">📚</span>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-3">
+              No courses found
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Please upload your timetable first to create courses, then come back to upload your syllabi.
+            </p>
+            
+          </div>
+        ) : (
+          <PdfUploadForm
+            courses={courses}
+            selectedCourseId={selectedCourseId}
+            onCourseChange={setSelectedCourseId}
+            selectedFile={selectedFile}
+            onFileSelect={handleFileSelect}
+            onUpload={handleUpload}
+            isUploading={isUploading}
+            error={error}
+            uploadButtonText="📄 Process Syllabus"
+            title="Select Course & Upload Syllabus"
+            subtitle="Choose your course and upload the syllabus PDF to extract assignments and tasks"
+          />
+        )}
       </div>
 
       {/* Results */}
@@ -296,7 +408,7 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
 
       {/* Navigation */}
       <div className="text-center mt-8">
-        <div className="flex gap-4 justify-center">
+        <div className="flex gap-4 justify-center mb-12">
           {result && !saveSuccess && (
             <Button
               onClick={handleSaveToDashboard}
@@ -315,13 +427,7 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
             </Button>
           )}
 
-          {saveSuccess && (
-            <div className="bg-green-100 p-3 rounded-lg mb-4">
-              <p className="text-green-800 font-medium">✅ Syllabus saved successfully!</p>
-              <p className="text-green-600 text-sm">Assignments and tasks are now available in your dashboard</p>
-            </div>
-          )}
-          
+         
           {result && saveSuccess && (
             <Button
               onClick={handleUploadAnother}
@@ -340,6 +446,13 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
             {hasEverSaved ? 'Continue' : 'Skip'}
           </Button>
         </div>
+
+        {saveSuccess && (
+            <div className="bg-green-100 p-3 rounded-lg mb-4">
+              <p className="text-green-800 font-medium">✅ Syllabus saved successfully!</p>
+              <p className="text-green-600 text-sm">Assignments and tasks are now available in your dashboard</p>
+            </div>
+        )}
       </div>
     </div>
   );

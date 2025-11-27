@@ -31,12 +31,24 @@ interface OnboardingProps {
 }
 
 const Onboarding: React.FC<OnboardingProps> = ({ 
-  userId = 'paul_paw_test',
   fromSettings = false,
   targetStep
 }) => {
+  // Get user ID from localStorage
+  const getUserId = () => {
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        return user.user_id || 'paul_paw_test'; // fallback
+      }
+    } catch (error) {
+      console.error('Error getting user from localStorage:', error);
+    }
+    return 'paul_paw_test'; // fallback
+  };
+
   const [currentStep, setCurrentStep] = useState(targetStep ?? 0);
-  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
 
   // Parse URL params
@@ -51,10 +63,6 @@ const Onboarding: React.FC<OnboardingProps> = ({
   }, []);
 
   const handleNext = () => {
-    const newCompleted = new Set(completedSteps);
-    newCompleted.add(currentStep);
-    setCompletedSteps(newCompleted);
-    
     // Check if this is standalone mode
     const urlParams = new URLSearchParams(window.location.search);
     const standaloneParam = urlParams.get('standalone') === 'true';
@@ -69,11 +77,20 @@ const Onboarding: React.FC<OnboardingProps> = ({
     if (currentStep < ONBOARDING_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      completeOnboarding();
+    navigate('/home');
     }
   };
 
   const handleSkip = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const standaloneParam = urlParams.get('standalone') === 'true';
+    const fromSettingsParam = urlParams.get('fromSettings') === 'true';
+    
+    if (standaloneParam && fromSettingsParam) {
+      navigate('/settings');
+      return;
+    }
+    
     if (currentStep < ONBOARDING_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -98,13 +115,6 @@ const Onboarding: React.FC<OnboardingProps> = ({
   };
 
   const completeOnboarding = () => {
-    const progress = {
-      completed: true,
-      completedSteps: Array.from(completedSteps),
-      completedAt: new Date().toISOString()
-    };
-    localStorage.setItem('onboarding-progress', JSON.stringify(progress));
-    
     const urlParams = new URLSearchParams(window.location.search);
     const fromSettingsParam = urlParams.get('fromSettings') === 'true';
     
@@ -128,7 +138,7 @@ const Onboarding: React.FC<OnboardingProps> = ({
       {/* Progress Dots */}
       <div className="px-6 pt-8">
         <div className="max-w-2xl mx-auto">
-          {fromSettingsParam && (
+          {fromSettingsParam && !standaloneParam && (
             <div className="text-center mb-4">
               <button 
                 onClick={() => navigate('/settings')}
@@ -151,8 +161,6 @@ const Onboarding: React.FC<OnboardingProps> = ({
                     className={`w-2 h-2 rounded-full transition-all ${
                       index === currentStep
                         ? 'bg-blue-600 scale-125'
-                        : completedSteps.has(index)
-                        ? 'bg-green-500'
                         : 'bg-gray-300'
                     } ${fromSettingsParam ? 'hover:scale-110' : ''}`}
                   />
@@ -172,7 +180,7 @@ const Onboarding: React.FC<OnboardingProps> = ({
       <div className="px-6 pb-6">
         <CurrentStepComponent
           onNext={handleNext}
-          onSkip={currentStepInfo.skippable && !standaloneParam ? handleSkip : undefined}
+          onSkip={standaloneParam ? handleSkip : (currentStepInfo.skippable ? handleSkip : undefined)}
           onBack={fromSettingsParam || currentStep > 0 ? handleBack : undefined}
           isFirstStep={currentStep === 0}
           isLastStep={currentStep === ONBOARDING_STEPS.length - 1}

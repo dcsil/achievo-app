@@ -58,7 +58,7 @@ function TaskComponent({ task, onCompleteTask, showCompleteButton = true, isComp
             </div>
           </div>
 
-          {showCompleteButton !== true && (
+          {showCompleteButton !== true && task.completion_date_at && (
             <div className="text-sm text-green-600 font-medium flex flex-col items-end px-4">
               <p>Completed on: </p>
               <p> {new Date(task.completion_date_at).toLocaleDateString('en-US', { 

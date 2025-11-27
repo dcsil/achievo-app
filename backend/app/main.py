@@ -1120,7 +1120,10 @@ def process_timetable():
         if error_response:
             return error_response
         
-        from app.services.read_timetable import user_id, term, assignment_id, start_date, end_date, breaks, holidays
+        # Get user_id from form data or use default
+        user_id = request.form.get("user_id", "paul_paw_test")
+        
+        from app.services.read_timetable import term, assignment_id, start_date, end_date, breaks, holidays
         
         courses = extract_timetable_courses(filepath, user_id, term)
         tasks = generate_tasks_for_courses(
@@ -1158,12 +1161,13 @@ def process_timetable():
 def process_syllabi():
     """
     Process uploaded syllabi PDF and return assignments with micro-tasks and exam/quiz tasks.
-    Requires PDF file upload and optional course_id parameter.
+    Requires PDF file upload and optional course_id and user_id parameters.
 
     testing:
     curl -X POST http://127.0.0.1:5000/api/syllabi/process \
         -F "file=@backend/app/storage/uploads/dummy.pdf" \
         -F "course_id=course_123" \
+        -F "user_id=paul_paw_test" \
         -F 'busy_intervals=[{"start": "2025-11-13T09:00:00", "end": "2025-11-13T14:00:00"}]'
     """
     try:
@@ -1172,15 +1176,16 @@ def process_syllabi():
         if error_response:
             return error_response
         
-        # Get course_id from form data (optional)
+        # Get parameters from form data
         course_id = request.form.get("course_id")
+        user_id = request.form.get("user_id", "paul_paw_test")
         
         # Extract assignments and tasks from PDF using AI
         extracted_data = extract_tasks_assignments_from_pdf(filepath)
         
         # Add IDs to the extracted data
         from app.services.read_syllabi import add_ids_to_extracted_data, generate_assignment_microtasks_with_ids
-        data_with_ids = add_ids_to_extracted_data(extracted_data, course_id=course_id)
+        data_with_ids = add_ids_to_extracted_data(extracted_data, user_id=user_id, course_id=course_id)
         
         # Get busy intervals from form data (optional)
         busy_intervals_json = request.form.get("busy_intervals", "[]")
@@ -1193,7 +1198,8 @@ def process_syllabi():
         assignments_with_micro = generate_assignment_microtasks_with_ids(
             data_with_ids["assignments"], 
             busy_intervals,
-            default_micro_task_count=3
+            default_micro_task_count=3,
+            user_id=user_id
         )
         
         try:

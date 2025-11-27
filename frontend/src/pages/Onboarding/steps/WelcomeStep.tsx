@@ -15,7 +15,22 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const userId = 'paul_paw_test';
+  
+  // Get user ID from localStorage
+  const getUserId = () => {
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        return user.user_id || 'paul_paw_test'; // fallback
+      }
+    } catch (error) {
+      console.error('Error getting user from localStorage:', error);
+    }
+    return 'paul_paw_test'; // fallback
+  };
+  
+  const userId = getUserId();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -34,12 +49,12 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
     }
 
     setIsUploading(true);
-    setError(null);
+    setError('');
     setResult(null);
     setSaveSuccess(false);
 
     try {
-      const response = await timetableApiService.processTimetable(file);
+      const response = await timetableApiService.processTimetable(file, userId);
       setResult(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process timetable');
@@ -76,8 +91,7 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
       }
 
       setSaveSuccess(true);
-      // Mark this step as completed in localStorage since data was actually saved
-      localStorage.setItem('onboarding-welcome-completed', 'true');
+
     } catch (saveError) {
       setError(`Failed to save to dashboard: ${saveError instanceof Error ? saveError.message : 'Unknown error'}`);
     } finally {
@@ -108,10 +122,6 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
   };
 
   const handleNext = () => {
-    // Only mark as completed if user actually saved data, otherwise just continue
-    if (saveSuccess) {
-      localStorage.setItem('onboarding-timetable', 'uploaded');
-    }
     onNext();
   };
 
@@ -202,6 +212,8 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
                                   onRefreshData={() => {}}
                                   showCompleteButton={false}
                                   dateString={date}
+                                  timeAdjustment={false}
+
                                 />
                               </div>
                             );
@@ -221,7 +233,8 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
 
       {/* Navigation */}
       <div className="text-center mt-8">
-        <div className="flex gap-4 justify-center">
+        
+        <div className="flex gap-4 justify-center mb-8">
           {result && !saveSuccess && (
             <Button
               onClick={handleSaveToDashboard}
@@ -240,21 +253,21 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
             </Button>
           )}
 
-          {saveSuccess && (
-            <div className="bg-green-100 p-3 rounded-lg mb-4">
-              <p className="text-green-800 font-medium">✅ Timetable saved successfully!</p>
-              <p className="text-green-600 text-sm">Your courses and tasks are now available in your dashboard</p>
-            </div>
-          )}
-
           <Button
             onClick={handleNext}
             variant={saveSuccess ? "primary" : "secondary"}
             className="px-8 py-3"
           >
-            {result && saveSuccess ? 'Continue' : saveSuccess ? 'Continue' : 'Skip'}
+            {saveSuccess ? 'Continue' : 'Skip'}
           </Button>
         </div>
+        
+        {saveSuccess && (
+            <div className="bg-green-100 p-3 rounded-lg mb-4">
+                <p className="text-green-800 font-medium">✅ Timetable saved successfully!</p>
+                <p className="text-green-600 text-sm">Your courses and tasks are now available in your dashboard</p>
+            </div>
+        )}
       </div>
     </div>
   );
