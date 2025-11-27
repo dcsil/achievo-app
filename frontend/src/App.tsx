@@ -7,7 +7,7 @@ import SignupPage from './pages/Signup';
 import Rewards from './pages/Rewards';
 import Settings from './pages/Settings';
 import ToDo from './pages/ToDo';
-import AddTask from './pages/AddTask';
+import { AddPage } from './pages/Add';
 import UploadTimetable from './pages/UploadTimetable';
 import UploadSyllabi from './pages/UploadSyllabi';
 import Layout from './components/layout';
@@ -70,7 +70,7 @@ function AppContent() {
         <Route path="/rewards" element={<Layout><Rewards /></Layout>} />
         <Route path="/todo" element={<Layout><ToDo /></Layout>} />
         <Route path="/settings" element={<Layout><Settings /></Layout>} />
-        <Route path="/add-task" element={<Layout><AddTask /></Layout>} />
+        <Route path="/add" element={<Layout><AddPage /></Layout>} />
         <Route path="/upload-timetable" element={<Layout><UploadTimetable /></Layout>} />
         <Route path="/upload-syllabi" element={<Layout><UploadSyllabi /></Layout>} /> 
         <Route path="*" element={<Navigate to="/" replace />} />
