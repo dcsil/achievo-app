@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Landing from './pages/Landing';
 import LoginPage from './pages/Login';
 import SignupPage from './pages/Signup';
+import Onboarding from './pages/Onboarding';
 import Rewards from './pages/Rewards';
 import Settings from './pages/Settings';
 import ToDo from './pages/ToDo';
@@ -45,8 +46,8 @@ function AppContent() {
     return () => window.removeEventListener('figures-updated', handleFiguresUpdate);
   }, []);
 
-  // Only apply cursor on authenticated pages (not login/signup/landing)
-  const isAuthPage = ['/', '/login', '/signup'].includes(location.pathname);
+  // Only apply cursor on authenticated pages (not login/signup/landing/onboarding)
+  const isAuthPage = ['/', '/login', '/signup', '/onboarding'].includes(location.pathname);
   const figuresForCursor = isAuthPage ? [] : allFigures;
 
   // Apply cursor globally
@@ -66,6 +67,7 @@ function AppContent() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/home" element={<Layout><Home /></Layout>} />
         <Route path="/rewards" element={<Layout><Rewards /></Layout>} />
         <Route path="/todo" element={<Layout><ToDo /></Layout>} />
