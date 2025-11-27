@@ -212,6 +212,8 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
                                   onRefreshData={() => {}}
                                   showCompleteButton={false}
                                   dateString={date}
+                                  timeAdjustment={false}
+
                                 />
                               </div>
                             );
