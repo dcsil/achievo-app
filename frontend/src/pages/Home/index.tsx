@@ -382,40 +382,6 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId }) => {
             </div>
           ))}
         </div>
-
-        {/* Quick Actions */}
-        <div className="max-w-2xl mx-auto p-2 mb-6 pb-8">
-          <h2 className="text-xl font-semibold text-left mb-3">Quick Actions</h2>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                console.log('Navigating to upload-timetable...');
-                navigate('/upload-timetable');
-              }}
-              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-4 hover:scale-105 transition-transform shadow-lg"
-            >
-              <div className="text-center">
-                <div className="text-2xl mb-2">📅</div>
-                <div className="font-bold text-sm">Upload Timetable</div>
-                <div className="text-xs opacity-90 mt-1">Import your class schedule</div>
-              </div>
-            </button>
-            
-            <button
-              onClick={() => {
-                console.log('Navigating to upload-syllabi...');
-                navigate('/upload-syllabi');
-              }}
-              className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl p-4 hover:scale-105 transition-transform shadow-lg"
-            >
-              <div className="text-center">
-                <div className="text-2xl mb-2">➕</div>
-                <div className="font-bold text-sm">Upload Syllabi</div>
-                <div className="text-xs opacity-90 mt-1">Create a new task</div>
-              </div>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
