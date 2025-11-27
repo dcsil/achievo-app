@@ -26,6 +26,19 @@ from database.user_blind_boxes_repository import UserBlindBoxesRepository
 from database.blind_box_series_repository import BlindBoxSeriesRepository
 from database.blind_box_figures_repository import BlindBoxFiguresRepository
 
+# Task types from AddTask page
+TASK_TYPES = [
+  {"value": "assignment", "label": "📝 Assignment/Tutorial/Quiz"},
+  {"value": "study", "label": "📚 Study/Review Session"},
+  {"value": "reading", "label": "📖 Required Reading"},
+  {"value": "exercise", "label": "💪 Exercise"},
+  {"value": "break", "label": "☕ Break"},
+  {"value": "exam", "label": "📋 Exam/Test"},
+  {"value": "class", "label": "🏫 Class"},
+  {"value": "personal", "label": "🏠 Personal"},
+  {"value": "other", "label": "📌 Other"}
+]
+
 # ---------------- Gamification / Progress Helper Functions -----------------
 
 def _calculate_assignment_progress_for_user(user_id: str, assignments: List[Dict]) -> List[Dict]:
@@ -289,6 +302,43 @@ def post_db_user():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/db/users/<user_id>", methods=["PUT"])
+def put_db_user(user_id):
+    """Update user information."""
+    try:
+        payload = request.get_json() or {}
+        canvas_username = payload.get("canvas_username")
+        canvas_domain = payload.get("canvas_domain")
+        canvas_api_key = payload.get("canvas_api_key")
+        profile_picture = payload.get("profile_picture")
+        
+        # Check if at least one field is provided
+        if all(field is None for field in [canvas_username, canvas_domain, canvas_api_key, profile_picture]):
+            return jsonify({"error": "At least one field must be provided"}), 400
+        
+        repo = UsersRepository()
+        updated = repo.update_user_info(
+            user_id=user_id,
+            canvas_username=canvas_username,
+            canvas_domain=canvas_domain,
+            canvas_api_key=canvas_api_key,
+            profile_picture=profile_picture
+        )
+        
+        if updated:
+            # Return updated user data
+            user = repo.fetch_by_id(user_id)
+            return jsonify({
+                "status": "updated", 
+                "user_id": user_id,
+                "user": user
+            }), 200
+        else:
+            return jsonify({"error": "User not found or no changes made"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/db/users/<user_id>", methods=["DELETE"])
 def delete_db_user(user_id):
     try:
@@ -371,6 +421,66 @@ def get_db_tasks():
             is_completed=is_completed
         )
         return jsonify(tasks), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/db/tasks/combined", methods=["GET"])
+def get_combined_tasks():
+    """Optimized endpoint that returns both incomplete and completed tasks with processed metadata."""
+    try:
+        user_id = request.args.get("user_id")
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+
+        repo = TasksRepository()
+
+        # Fetch both incomplete and completed tasks
+        incomplete_tasks = repo.fetch_by_user(user_id=user_id, is_completed=False)
+        completed_tasks = repo.fetch_by_user(user_id=user_id, is_completed=True)
+
+        # Combine all tasks for processing
+        all_tasks = incomplete_tasks + completed_tasks
+
+        # Extract available courses
+        course_options = []
+        seen_courses = set()
+        for task in all_tasks:
+            course_name = task.get("course_name")
+            course_id = task.get("course_id")
+            if course_name and course_id:
+                course_key = f"{course_id}:{course_name}"
+                if course_key not in seen_courses:
+                    seen_courses.add(course_key)
+                    course_options.append({
+                        "value": course_id,
+                        "label": course_name
+                    })
+
+        # Extract unique task types
+        task_type_options = []
+        seen_types = set()
+        for task in all_tasks:
+            task_type = task.get("type")
+            if task_type and task_type not in seen_types:
+                seen_types.add(task_type)
+                # Find the task type info
+                task_type_info = None
+                for tt in TASK_TYPES:
+                    if tt["value"] == task_type:
+                        task_type_info = tt
+                        break
+                task_type_options.append({
+                    "value": task_type,
+                    "label": task_type_info["label"] if task_type_info else task_type
+                })
+
+        return jsonify({
+            "incomplete_tasks": incomplete_tasks,
+            "completed_tasks": completed_tasks,
+            "available_courses": course_options,
+            "available_task_types": task_type_options
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

@@ -14,8 +14,10 @@ def mock_courses():
             "date_imported_at": datetime.now().isoformat(),
             "term": "2025 Fall",
             "color": "",
-            "meeting_days": ["Monday", "Wednesday"],
-            "meeting_times": ["09:00 - 10:00", "09:00 - 10:00"]
+            "meeting_sessions": [
+                {"day": "Monday", "time": "09:00 - 10:00"},
+                {"day": "Wednesday", "time": "09:00 - 10:00"}
+            ]
         }
     ]
 
@@ -49,4 +51,4 @@ def test_extract_timetable_courses(monkeypatch):
     courses = read_timetable.extract_timetable_courses("dummy.pdf", "user1", "2025 Fall")
     assert isinstance(courses, list)
     assert courses[0]["course_code"] == "MATH101"
-    assert "Monday" in courses[0]["meeting_days"]
+    assert any(session["day"] == "Monday" for session in courses[0]["meeting_sessions"])

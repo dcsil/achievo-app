@@ -90,7 +90,7 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
             }`}
           >
             <img 
-              src={paul}
+              src={user.profile_picture || paul}
               alt="User Profile" 
               className="w-full h-full object-cover"
             />

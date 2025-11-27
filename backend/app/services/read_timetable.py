@@ -50,6 +50,7 @@ def extract_timetable_courses(pdf_path, user_id, term):
                         continue
                     course_code = code_part.split()[0]
                     meeting_day = header[i]   # E.g. "Tuesday"
+                    
                     # Initialize course entry if not present
                     if course_code not in courses:
                         courses[course_code] = {
@@ -61,14 +62,24 @@ def extract_timetable_courses(pdf_path, user_id, term):
                             "date_imported_at": date_imported_at,
                             "term": term,
                             "color": random.choice(colors),
-                            "meeting_days": [],
-                            "meeting_times": []
+                            "meeting_sessions": []
                         }
-                    # Add meeting day and time if not already present
-                    if meeting_day not in courses[course_code]["meeting_days"]:
-                        courses[course_code]["meeting_days"].append(meeting_day)
-                    if time_label and time_label not in courses[course_code]["meeting_times"]:
-                        courses[course_code]["meeting_times"].append(time_label)
+                    
+                    # Add meeting session if not already present
+                    session = {
+                        "day": meeting_day,
+                        "time": time_label
+                    }
+                    
+                    # Check if this session already exists
+                    session_exists = any(
+                        s["day"] == meeting_day and s["time"] == time_label 
+                        for s in courses[course_code]["meeting_sessions"]
+                    )
+                    
+                    if not session_exists:
+                        courses[course_code]["meeting_sessions"].append(session)
+    
     return list(courses.values())
 
 def _parse_course_cell(cell):
@@ -166,12 +177,19 @@ def generate_tasks_for_courses(courses, user_id, assignment_id, start_date, end_
 
     tasks = []
     for course in courses:
-        for day, time_str in zip(course["meeting_days"], course["meeting_times"]):
+        for session in course["meeting_sessions"]:
+            day = session["day"]
+            time_str = session["time"]
+            
+            if not time_str:
+                continue  # Skip if no time information
+                
             weekday_num = get_weekday_number(day)
             try:
                 start_time, end_time = parse_time_range(time_str)
             except Exception:
                 continue  # skip if can't parse
+                
             for current_date in daterange(start_date, end_date):
                 if (
                     current_date.weekday() == weekday_num

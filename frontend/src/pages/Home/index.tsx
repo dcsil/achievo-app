@@ -235,10 +235,10 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId }) => {
 
   if (loading) {
     return (
-      <div className="px-2 py-4 flex items-center justify-center h-full">
+      <div className="px-6 py-6 max-w-4xl mx-auto pb-20 flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="text-4xl mb-4">⏳</div>
-          <p className="text-gray-600">Loading your tasks...</p>
+          <div className="text-6xl mb-4 animate-spin">⏳</div>
+          <p className="text-gray-600">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -381,40 +381,6 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId }) => {
               />
             </div>
           ))}
-        </div>
-
-        {/* Quick Actions */}
-        <div className="max-w-2xl mx-auto p-2 mb-6 pb-8">
-          <h2 className="text-xl font-semibold text-left mb-3">Quick Actions</h2>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                console.log('Navigating to upload-timetable...');
-                navigate('/upload-timetable');
-              }}
-              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-4 hover:scale-105 transition-transform shadow-lg"
-            >
-              <div className="text-center">
-                <div className="text-2xl mb-2">📅</div>
-                <div className="font-bold text-sm">Upload Timetable</div>
-                <div className="text-xs opacity-90 mt-1">Import your class schedule</div>
-              </div>
-            </button>
-            
-            <button
-              onClick={() => {
-                console.log('Navigating to upload-syllabi...');
-                navigate('/upload-syllabi');
-              }}
-              className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl p-4 hover:scale-105 transition-transform shadow-lg"
-            >
-              <div className="text-center">
-                <div className="text-2xl mb-2">➕</div>
-                <div className="font-bold text-sm">Upload Syllabi</div>
-                <div className="text-xs opacity-90 mt-1">Create a new task</div>
-              </div>
-            </button>
-          </div>
         </div>
       </div>
     </div>

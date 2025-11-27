@@ -38,7 +38,21 @@ function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, 
   useEffect(() => {
     // Ensure tasks is always an array
     if (Array.isArray(tasks)) {
-      setTaskList(tasks);
+      // Sort tasks based on whether they are completed or not
+      const sortedTasks = [...tasks].sort((a, b) => {
+        if (!showCompleteButton) {
+          // For completed tasks, sort by completion_date_at (most recent first)
+          const dateA = new Date(a.completion_date_at).getTime();
+          const dateB = new Date(b.completion_date_at).getTime();
+          return dateB - dateA; // Descending order (most recent first)
+        } else {
+          // For incomplete tasks, sort by scheduled_start_at (earliest first)
+          const dateA = new Date(a.scheduled_start_at).getTime();
+          const dateB = new Date(b.scheduled_start_at).getTime();
+          return dateA - dateB; // Ascending order (earliest first)
+        }
+      });
+      setTaskList(sortedTasks);
       // Reset to initial view when tasks change
       setTasksToShow(initialTasksPerPage);
     } else {
@@ -46,7 +60,7 @@ function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, 
       setTaskList([]);
       setTasksToShow(initialTasksPerPage);
     }
-  }, [tasks]);
+  }, [tasks, showCompleteButton]);
 
   // Show more/collapse logic
   const displayedTasks = taskList.slice(0, tasksToShow);
@@ -157,6 +171,11 @@ function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, 
   };
 
   const formatDateForDisplay = (dateString: string) => {
+
+    if (dateString.endsWith("overdue)"))  {
+      return dateString;
+    }
+
     const date = new Date(dateString);
     const today = new Date();
     const tomorrow = new Date(today);
