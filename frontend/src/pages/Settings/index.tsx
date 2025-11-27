@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User } from '../../api-contexts/user-context';
 
 interface SettingsProps {
@@ -8,6 +9,8 @@ interface SettingsProps {
 }
 
 const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, userId }) => {
+  const navigate = useNavigate();
+  
   const [notifications, setNotifications] = useState({
     taskReminders: true,
     assignmentDeadlines: true,
@@ -35,6 +38,16 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, userId }) =
     progressVisible: false,
     allowDataCollection: true,
   });
+
+  const onboardingSteps = [
+    { id: 0, name: 'Timetable', description: 'Upload timetable', icon: ':calendar_spiral:' },
+    { id: 1, name: 'Interests', description: 'Set your break activity preferences', icon: ':dart:' },
+    { id: 2, name: 'Canvas', description: 'Connect your Canvas account', icon: ':link:' },
+    { id: 3, name: 'Syllabi', description: 'Upload course syllabi', icon: ':books:' }  ];
+
+  const handleRedoStep = (stepIndex: number) => {
+    navigate(`/onboarding?fromSettings=true&targetStep=${stepIndex}&standalone=true`);
+  };
 
   const handleNotificationChange = (key: keyof typeof notifications) => {
     setNotifications(prev => ({
@@ -129,6 +142,37 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, userId }) =
                 <p className="text-sm text-orange-600 font-semibold">Level {user?.current_level || 1}</p>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Onboarding Setup */}
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">🚀 Guide</h2>
+          <p className="text-gray-600 mb-4">
+            Revisit any step from your initial setup to update your preferences or reconnect accounts.
+          </p>
+          
+          <div className="space-y-3 mb-6">
+            {onboardingSteps.map((step) => (
+              <div 
+                key={step.id}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <span className="text-xl">{step.icon}</span>
+                  <div>
+                    <p className="font-medium text-gray-700">{step.name}</p>
+                    <p className="text-sm text-gray-500">{step.description}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleRedoStep(step.id)}
+                  className="px-3 py-1 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-600 transition-colors"
+                >
+                  Open
+                </button>
+              </div>
+            ))}
           </div>
         </div>
 
