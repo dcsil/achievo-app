@@ -275,19 +275,34 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
 
       {/* Upload Form */}
       <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-        <PdfUploadForm
-          courses={courses}
-          selectedCourseId={selectedCourseId}
-          onCourseChange={setSelectedCourseId}
-          selectedFile={selectedFile}
-          onFileSelect={handleFileSelect}
-          onUpload={handleUpload}
-          isUploading={isUploading}
-          error={error}
-          uploadButtonText="📄 Process Syllabus"
-          title="Select Course & Upload Syllabus"
-          subtitle="Choose your course and upload the syllabus PDF to extract assignments and tasks"
-        />
+        {courses.length === 0 ? (
+          <div className="text-center py-8">
+            <div className="mb-4">
+              <span className="text-6xl">📚</span>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-3">
+              No courses found
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Please upload your timetable first to create courses, then come back to upload your syllabi.
+            </p>
+            
+          </div>
+        ) : (
+          <PdfUploadForm
+            courses={courses}
+            selectedCourseId={selectedCourseId}
+            onCourseChange={setSelectedCourseId}
+            selectedFile={selectedFile}
+            onFileSelect={handleFileSelect}
+            onUpload={handleUpload}
+            isUploading={isUploading}
+            error={error}
+            uploadButtonText="📄 Process Syllabus"
+            title="Select Course & Upload Syllabus"
+            subtitle="Choose your course and upload the syllabus PDF to extract assignments and tasks"
+          />
+        )}
       </div>
 
       {/* Results */}
