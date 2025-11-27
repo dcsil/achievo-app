@@ -68,16 +68,40 @@ const SyllabusStep: React.FC<OnboardingStepProps> = ({ onNext, onBack }) => {
             "course_id": selectedCourseId,
             "due_date": "2025-09-30T23:59:00",
             "is_complete": false,
-            "title": "Assignment 1",
+            "title": "Essay",
             "micro_tasks": [
               {
                 "assignment_id": "5ae91363-a9cc-4d67-a3d2-52def8772ade",
                 "course_id": selectedCourseId,
-                "description": "Research and outline Assignment 1",
+                "description": "Research and outline Essay",
                 "is_completed": false,
-                "reward_points": 10,
+                "reward_points": 30,
                 "scheduled_end_at": "2025-09-05T12:00:00",
                 "scheduled_start_at": "2025-09-05T09:00:00",
+                "task_id": "27b4aff0-2003-4620-a202-f12e2dfa7e9b",
+                "type": "assignment",
+                "user_id": userId
+              },
+              {
+                "assignment_id": "5ae91363-a9cc-4d67-a3d2-52def8772ade",
+                "course_id": selectedCourseId,
+                "description": "First draft of Essay",
+                "is_completed": false,
+                "reward_points": 30,
+                "scheduled_end_at": "2025-09-12T12:00:00",
+                "scheduled_start_at": "2025-09-12T09:00:00",
+                "task_id": "27b4aff0-2003-4620-a202-f12e2dfa7e9b",
+                "type": "assignment",
+                "user_id": userId
+              },
+              {
+                "assignment_id": "5ae91363-a9cc-4d67-a3d2-52def8772ade",
+                "course_id": selectedCourseId,
+                "description": "Finalize and Submit Essay",
+                "is_completed": false,
+                "reward_points": 30,
+                "scheduled_end_at": "2025-09-26T12:00:00",
+                "scheduled_start_at": "2025-09-26T09:00:00",
                 "task_id": "27b4aff0-2003-4620-a202-f12e2dfa7e9b",
                 "type": "assignment",
                 "user_id": userId
