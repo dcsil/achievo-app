@@ -11,7 +11,7 @@ interface HomeProps {
   userId?: string;
 }
 
-const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_test' }) => {
+const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId }) => {
   const navigate = useNavigate();
   const [todayTasks, setTodayTasks] = useState<any[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<{ [key: string]: any[] }>({});
@@ -76,10 +76,14 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
 
   // Fetch all data when component mounts
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (userId) {
+      fetchData();
+    }
+  }, [userId]);
 
   const fetchData = async () => {
+    if (!userId) return;
+    
     try {
       setLoading(true);
       setError(null);
@@ -124,6 +128,8 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
 
   // Separate function to refresh courses data
   const fetchCourses = async () => {
+    if (!userId) return;
+    
     try {
       const fetchedCourses = await getCourses(userId);
       console.log('Fetched courses:', fetchedCourses);
@@ -136,6 +142,7 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
 
   // Function to refresh task data from backend
   const refreshTaskData = async () => {
+    if (!userId) return;
     try {
       // Fetch fresh task data from backend
       const tasksData = await apiService.getTasks(userId);
@@ -176,6 +183,7 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
     }
     
     // Refresh user data from backend
+    if (!userId) return;
     try {
       const updatedUser = await apiService.getUser(userId);
       if (updateUserPoints) {
@@ -269,13 +277,15 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
               </span>
             )}
           </h2>
-          <MultipleTaskContainer 
-            tasks={todayTasks}
-            userId={userId}
-            onTaskCompleted={handleTaskCompleted}
-            onRefreshData={refreshTaskData}
-            showCompleteButton={true}
-          />
+          {userId && (
+            <MultipleTaskContainer 
+              tasks={todayTasks}
+              userId={userId}
+              onTaskCompleted={handleTaskCompleted}
+              onRefreshData={refreshTaskData}
+              showCompleteButton={true}
+            />
+          )}
         </div>
 
         {/* Upcoming Tasks - Set to max-w-2xl for consistent width */}
@@ -289,16 +299,18 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
             )}
           </h2>
           {Object.keys(upcomingTasks).length === 0 ? (
-            <MultipleTaskContainer 
-              tasks={[]}
-              userId={userId}
-              onTaskCompleted={handleTaskCompleted}
-              onRefreshData={refreshTaskData}
-              showCompleteButton={true}
-            />
+            userId && (
+              <MultipleTaskContainer 
+                tasks={[]}
+                userId={userId}
+                onTaskCompleted={handleTaskCompleted}
+                onRefreshData={refreshTaskData}
+                showCompleteButton={true}
+              />
+            )
           ) : (
             <>
-              {getDisplayedUpcomingDays().map(([dateString, tasks]) => (
+              {userId && getDisplayedUpcomingDays().map(([dateString, tasks]) => (
                 <div key={dateString} className="mb-6">
                   <MultipleTaskContainer 
                     tasks={tasks}
