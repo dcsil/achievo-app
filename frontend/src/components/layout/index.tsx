@@ -52,13 +52,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
+  // Function to update user profile data (can be called by child components)
+  const updateUserProfile = (updates: Partial<User>) => {
+    if (user) {
+      setUser({
+        ...user,
+        ...updates
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
         <Header user={null} />
         <main id="main-content" className="flex-1 overflow-y-auto flex items-center justify-center">
           <div className="text-center">
-            <div className="text-4xl mb-4">⏳</div>
+            <div className="text-6xl mb-4 animate-spin">⏳</div>
             <p className="text-gray-600">Loading...</p>
           </div>
         </main>
@@ -96,6 +106,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {React.cloneElement(children as React.ReactElement, { 
             user: user, 
             updateUserPoints: updateUserPoints,
+            updateUserProfile: updateUserProfile,
             userId: user?.user_id 
         } as any)}
       </main>
