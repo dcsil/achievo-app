@@ -1,5 +1,6 @@
 // TaskContainer component - updated with backend integration
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { apiService } from '../../api-contexts/user-context';
 import TaskComplete from '../task-complete';
 import TaskComponent from '../task-component';
@@ -25,6 +26,13 @@ function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, 
   const [tasksToShow, setTasksToShow] = useState(5);
   const initialTasksPerPage = 5;
   const tasksPerIncrement = 3;
+  
+  // Use ref to track overlay state independently of React's render cycle
+  const overlayDataRef = useRef<{
+    show: boolean;
+    task: any;
+    points: number;
+  } | null>(null);
 
   // Sync local state with parent's tasks prop
   useEffect(() => {
@@ -55,7 +63,12 @@ function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, 
   };
 
   const handleCompleteTask = async (task: any) => {
-    if (isCompleting) return;
+    if (isCompleting) {
+      console.log('⚠️ Already completing a task, ignoring click');
+      return;
+    }
+    
+    console.log('🎯 Starting task completion:', task.task_id);
     
     try {
       setIsCompleting(true);
@@ -81,7 +94,32 @@ function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, 
 
       console.log(`About to set assignment title: ${completedAssignmentTitle}`);
 
-      // Set all state values at once to avoid timing issues
+      // Store overlay data in ref FIRST - this persists across renders
+      overlayDataRef.current = {
+        show: true,
+        task: {
+          ...task,
+          completedAssignmentTitle: completedAssignmentTitle
+        },
+        points: totalPointsEarned
+      };
+
+      // Remove task from local state
+      const updatedTasks = taskList.filter(t => t.task_id !== task.task_id);
+      
+      // Adjust tasksToShow if needed after removing task
+      let newTasksToShow = tasksToShow;
+      if (updatedTasks.length <= initialTasksPerPage) {
+        newTasksToShow = initialTasksPerPage;
+      } else if (tasksToShow > updatedTasks.length) {
+        newTasksToShow = updatedTasks.length;
+      }
+      
+      // Update task list
+      setTaskList(updatedTasks);
+      setTasksToShow(newTasksToShow);
+      
+      // Now trigger overlay with state
       setPointsEarned(totalPointsEarned);
       setSelectedTaskWithAssignment({
         ...task,
@@ -89,21 +127,7 @@ function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, 
       });
       setShowOverlay(true);
       
-      // Log after state is set
-      setTimeout(() => {
-        console.log(`Assignment title should now be available`);
-      }, 100);
-      
-      // Remove task from local state
-      const updatedTasks = taskList.filter(t => t.task_id !== task.task_id);
-      setTaskList(updatedTasks);
-      
-      // Adjust tasksToShow if needed after removing task
-      if (updatedTasks.length <= initialTasksPerPage) {
-        setTasksToShow(initialTasksPerPage);
-      } else if (tasksToShow > updatedTasks.length) {
-        setTasksToShow(updatedTasks.length);
-      }
+      console.log('🎉 Overlay data stored and state updated');
       
       // Notify parent component
       if (onTaskCompleted) {
@@ -117,16 +141,19 @@ function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, 
       console.log(endMessage);
 
     } catch (error) {
-      console.error('Failed to complete task:', error);
+      console.error('❌ Failed to complete task:', error);
       setIsCompleting(false);
+      overlayDataRef.current = null;
       alert('Failed to complete task. Please try again.');
     }
   };
 
   const handleCloseOverlay = () => {
+    console.log('🔒 Closing overlay - called by:', new Error().stack);
     setShowOverlay(false);
     setIsCompleting(false);
     setSelectedTaskWithAssignment(null);
+    overlayDataRef.current = null;
   };
 
   const formatDateForDisplay = (dateString: string) => {
@@ -146,6 +173,54 @@ function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, 
         day: 'numeric' 
       });
     }
+  };
+
+  // Render overlay using portal to ensure it's always on top
+  const renderOverlay = () => {
+    // Use ref data as source of truth
+    const overlayData = overlayDataRef.current;
+    
+    if (!overlayData || !overlayData.show) {
+      console.log('🚫 Overlay not rendering - ref check:', overlayData);
+      return null;
+    }
+
+    // Also check state as fallback
+    if (!selectedTaskWithAssignment || !showOverlay) {
+      console.log('🚫 Overlay not rendering - state check:', { 
+        hasTask: !!selectedTaskWithAssignment, 
+        showOverlay 
+      });
+      return null;
+    }
+
+    console.log('✅ Rendering overlay with portal:', {
+      taskId: overlayData.task.task_id,
+      assignmentTitle: overlayData.task.completedAssignmentTitle,
+      points: overlayData.points
+    });
+
+    const overlayContent = (
+      <TaskComplete 
+        isOpen={true}
+        task={{
+          title: overlayData.task.description,
+          course_color: overlayData.task.course_color,
+          id: overlayData.task.task_id
+        }}
+        assignment={overlayData.task.completedAssignmentTitle}
+        onClose={handleCloseOverlay}
+        onRefreshData={onRefreshData}
+        coinsEarned={overlayData.points}
+        userId={userId}
+      />
+    );
+
+    // Use portal to render at document body level
+    return ReactDOM.createPortal(
+      overlayContent,
+      document.body
+    );
   };
 
   return (
@@ -220,25 +295,8 @@ function MultipleTaskContainer({ tasks, userId, onTaskCompleted, onTasksUpdate, 
         </div>
       )}
       
-      {/* Task Completion Overlay */}
-      {selectedTaskWithAssignment && (
-        <>
-          {console.log('Rendering TaskComplete with assignment:', selectedTaskWithAssignment.completedAssignmentTitle)}
-          <TaskComplete 
-            isOpen={showOverlay}
-            task={{
-              title: selectedTaskWithAssignment.description,
-              course_color: selectedTaskWithAssignment.course_color,
-              id: selectedTaskWithAssignment.task_id
-            }}
-            assignment={selectedTaskWithAssignment.completedAssignmentTitle}
-            onClose={handleCloseOverlay}
-            onRefreshData={onRefreshData}
-            coinsEarned={pointsEarned}
-            userId={userId}
-          />
-        </>
-      )}
+      {/* Task Completion Overlay - Rendered via Portal */}
+      {renderOverlay()}
     </div>
   );
 }

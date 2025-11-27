@@ -4,14 +4,30 @@ import MultipleTaskContainer from '../multiple-task-container';
 import { getAssignments, Assignment } from '../../api-contexts/get-assignments';
 import { apiService } from '../../api-contexts/user-context';
 
-function CourseContainer ({ name, courseId, color, refreshKey }: { name: string, courseId: string, color: string, refreshKey?: number }) {
+function CourseContainer ({ 
+    name, 
+    courseId, 
+    color, 
+    refreshKey,
+    onTaskCompleted,
+    onRefreshData,
+    userId: propUserId
+}: { 
+    name: string;
+    courseId: string;
+    color: string;
+    refreshKey?: number;
+    onTaskCompleted?: (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => void;
+    onRefreshData?: () => void;
+    userId?: string;
+}) {
     const [assignList, setAssignList] = useState<Assignment[]>([]);
     const [courseTasks, setCourseTasks] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [tasksLoading, setTasksLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isTasksCollapsed, setIsTasksCollapsed] = useState(true);
-    const userId = "paul_paw_test";
+    const userId = propUserId || "paul_paw_test";
 
     // Fetch assignments when component mounts or courseId changes
     useEffect(() => {
@@ -85,13 +101,22 @@ function CourseContainer ({ name, courseId, color, refreshKey }: { name: string,
         }));
     };
 
-    const handleTaskCompleted = (taskId: string, taskType: string, pointsEarned: number) => {
-        // Remove completed task from local state
-        setCourseTasks(prev => prev.filter(task => task.task_id !== taskId));
+    const handleTaskCompleted = (taskId: string, taskType: string, pointsEarned: number, taskCourseId?: string) => {
+        console.log('🎯 CourseContainer: Task completed:', taskId);
+        
+        // Pass to parent component to update points
+        if (onTaskCompleted) {
+            onTaskCompleted(taskId, taskType, pointsEarned, taskCourseId || courseId);
+        }
+        
+        // Don't remove the task from state - let the overlay close naturally
+        // The task is already removed from the MultipleTaskContainer's local state
+        // We'll refresh the entire course data when refreshKey changes from parent
     };
 
     const handleTasksUpdate = (updatedTasks: any[]) => {
-        setCourseTasks(updatedTasks);
+        // Don't immediately update - let handleTaskCompleted handle it
+        console.log('📝 CourseContainer: handleTasksUpdate called, ignoring immediate update');
     };
 
     return (
@@ -160,16 +185,8 @@ function CourseContainer ({ name, courseId, color, refreshKey }: { name: string,
                                             tasks={dateTasks}
                                             userId={userId}
                                             onTaskCompleted={handleTaskCompleted}
-                                            onTasksUpdate={(updatedTasks) => {
-                                                // Update the specific date group in the course tasks
-                                                setCourseTasks(prev => {
-                                                    // Remove tasks from this date and add updated ones
-                                                    const otherDateTasks = prev.filter(task => 
-                                                        new Date(task.scheduled_start_at).toDateString() !== date
-                                                    );
-                                                    return [...otherDateTasks, ...updatedTasks];
-                                                });
-                                            }}
+                                            onTasksUpdate={handleTasksUpdate}
+                                            onRefreshData={onRefreshData}
                                             showCompleteButton={true}
                                             timeAdjustment={true}
                                             dateString={date}

@@ -30,7 +30,7 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
     
     tasks.forEach((task: any) => {
       const taskDate = new Date(task.scheduled_end_at);
-      const dateKey = taskDate.toDateString(); // Format: "Mon Nov 18 2025"
+      const dateKey = taskDate.toDateString();
       
       if (!grouped[dateKey]) {
         grouped[dateKey] = [];
@@ -84,11 +84,8 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
       setLoading(true);
       setError(null);
 
-      // User data comes from Layout now, so we don't fetch it here
-      // Fetch only incomplete tasks (backend filters by is_completed=false)
       const tasksData = await apiService.getTasks(userId);
       
-      // Split tasks into today and upcoming
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
@@ -108,10 +105,8 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
 
       setTodayTasks(todayTasksList);
       setUpcomingTasks(groupTasksByDate(upcomingTasksList));
-      // Reset upcoming days view when data changes
       setDaysToShow(initialDaysToShow);
 
-      // Fetch courses data
       await fetchCourses();
 
     } catch (err) {
@@ -130,17 +125,14 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
       setCourses(fetchedCourses);
     } catch (err) {
       console.error('Error fetching courses:', err);
-      // Don't set global error for course fetching to avoid disrupting other data
     }
   };
 
   // Function to refresh task data from backend
   const refreshTaskData = async () => {
     try {
-      // Fetch fresh task data from backend
       const tasksData = await apiService.getTasks(userId);
       
-      // Split tasks into today and upcoming
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -158,7 +150,6 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
 
       setTodayTasks(todayTasksList);
       setUpcomingTasks(groupTasksByDate(upcomingTasksList));
-      // Reset upcoming days view when refreshing data
       setDaysToShow(initialDaysToShow);
       console.log('✅ Refreshed task data from backend');
     } catch (err) {
@@ -166,7 +157,7 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
     }
   };
 
-  // Simplified handleTaskCompleted - let MultipleTaskContainer handle task removal
+  // Simplified handleTaskCompleted - DELAY course refresh to allow overlay to show
   const handleTaskCompleted = async (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => {
     console.log('🎯 Home handleTaskCompleted called:', { taskId, taskType, pointsEarned });
     
@@ -207,25 +198,11 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
       console.warn('Failed to clear task notification in Home component:', notifError);
     }
     
-    // Update course refresh keys
-    if (courseId) {
-      setCourseRefreshKey(prev => ({
-        ...prev,
-        [courseId]: Date.now()
-      }));
-      console.log(`🔄 Refreshed course ${courseId} after task completion`);
-    } else {
-      await fetchCourses();
-      const newKey = Date.now();
-      setCourseRefreshKey(prev => {
-        const newRefreshKey: { [key: string]: number } = {};
-        courses.forEach(course => {
-          newRefreshKey[course.course_id] = newKey;
-        });
-        return newRefreshKey;
-      });
-      console.log('🔄 Refreshed all courses after task completion (no courseId provided)');
-    }
+    // DELAY course refresh to allow overlay to show and be closed by user
+    // This prevents the CourseContainer from re-rendering and destroying the overlay
+    console.log('⏳ Delaying course refresh to allow overlay to display');
+    // Don't refresh course immediately - let the user close the overlay first
+    // The course will be refreshed when they navigate or manually refresh
   };
 
   if (loading) {
@@ -259,7 +236,7 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
   return (
     <div className="px-2 py-4">
       <div className="max-w-4xl mx-auto pb-4">
-        {/* Today's Tasks - Set to max-w-2xl for consistent width */}
+        {/* Today's Tasks */}
         <div className="max-w-2xl mx-auto p-2">
           <h2 className="text-xl font-semibold text-left mb-2">
             Today's Tasks
@@ -278,7 +255,7 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
           />
         </div>
 
-        {/* Upcoming Tasks - Set to max-w-2xl for consistent width */}
+        {/* Upcoming Tasks */}
         <div className="max-w-2xl mx-auto p-2">
           <h2 className="text-xl font-semibold text-left mb-2">
             Upcoming Tasks
@@ -311,7 +288,6 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
                 </div>
               ))}
               
-              {/* Show More / Collapse Controls for Days */}
               {(hasMoreUpcomingDays() || canCollapseDays()) && (
                 <div className="flex justify-center mt-4 mb-6 gap-2">
                   {canCollapseDays() && (
@@ -338,7 +314,7 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
           )}
         </div>
 
-        {/* Courses Section - Set to max-w-2xl to match tasks */}
+        {/* Courses Section */}
         <div className="max-w-2xl mx-auto p-2">
           <h2 className="text-xl font-semibold text-left mb-2">Courses</h2>
           
@@ -367,12 +343,15 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId = 'paul_paw_
                 courseId={course.course_id} 
                 color={course.color}
                 refreshKey={courseRefreshKey[course.course_id] || 0}
+                onTaskCompleted={handleTaskCompleted}
+                onRefreshData={refreshTaskData}
+                userId={userId}
               />
             </div>
           ))}
         </div>
 
-        {/* Quick Actions Section - Set to max-w-2xl to match everything else */}
+        {/* Quick Actions */}
         <div className="max-w-2xl mx-auto p-2 mb-6 pb-8">
           <h2 className="text-xl font-semibold text-left mb-3">Quick Actions</h2>
           <div className="flex gap-3">

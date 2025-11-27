@@ -63,8 +63,8 @@ const Footer = () => {
       case 'settings':
       navigate('/settings');
       break;
-      case 'add-task':
-      navigate('/add-task');
+      case 'add':
+      navigate('/add');
       break;
       default:
         navigate('/');
@@ -83,9 +83,9 @@ const Footer = () => {
       label: 'To-Do'
     },
     {
-      id: 'add-task',
+      id: 'add',
       icon: addIcon,
-      label: 'Add Task',
+      label: 'Add Item',
       isSpecial: true
     },
     {
