@@ -115,7 +115,7 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
           }`}
         >
           <h1 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 mb-0.5 truncate">
-            Welcome back, <span className="text-orange-600">{user.canvas_username}</span>!
+            Welcome <span className="text-orange-600">{user.canvas_username}</span>
           </h1>
           <p className="hidden min-[400px]:block text-gray-600 text-xs italic font-light leading-snug line-clamp-2">
             {motivationalQuote}

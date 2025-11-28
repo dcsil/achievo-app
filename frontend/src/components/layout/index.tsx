@@ -101,7 +101,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
       <Header user={user} />
-      <main id="main-content" className="flex-1 overflow-y-auto">
+      <main id="main-content" className="flex-1 overflow-y-auto pb-10">
         {/* Pass user data and update function to children via React.cloneElement */}
         {React.cloneElement(children as React.ReactElement, { 
             user: user, 
