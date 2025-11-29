@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { OnboardingStepProps } from '../index';
 import Button from '../../../components/skip-button';
-import NotificationEnable from '../../../notification-enable';
+import NotificationEnable from '../../../components/notification-enable';
 
 // Extend props to accept user context from Layout
 interface NotificationStepProps extends OnboardingStepProps {

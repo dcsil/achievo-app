@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, apiService } from '../../api-contexts/user-context';
-import NotificationEnable from '../../notification-enable';
+import NotificationEnable from '../../components/notification-enable';
 import ImageUploadForm from '../../components/image-upload';
 
 interface SettingsProps {
