@@ -9,6 +9,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: credential
     steps:
       - name: Trigger Render Deploy Hook
         run: |
