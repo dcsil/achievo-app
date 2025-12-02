@@ -14,6 +14,8 @@ def test_create_and_get_user(client, test_user_id):
     """Test POST /db/users - create a new user, then GET to verify."""
     payload = {
         "user_id": test_user_id,
+        "email": f"{test_user_id}@test.com",
+        "password": "testpassword123",
         "canvas_username": f"testuser_{test_user_id}",
         "total_points": 100,
         "current_level": 1
@@ -43,6 +45,8 @@ def test_get_all_users(client, test_user_id):
     # Create a test user first
     payload = {
         "user_id": test_user_id,
+        "email": f"{test_user_id}@test.com",
+        "password": "testpassword123",
         "canvas_username": "alluserstest",
         "total_points": 50,
         "current_level": 0
@@ -81,6 +85,8 @@ def test_delete_user(client, test_user_id):
     # Create user first
     payload = {
         "user_id": test_user_id,
+        "email": f"{test_user_id}@test.com",
+        "password": "testpassword123",
         "canvas_username": "deletetest",
         "total_points": 0,
         "current_level": 0

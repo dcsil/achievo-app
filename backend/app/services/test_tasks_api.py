@@ -10,6 +10,8 @@ def test_user_id(client):
     user_id = f"test_user_{uuid.uuid4().hex[:8]}"
     payload = {
         "user_id": user_id,
+        "email": f"{user_id}@test.com",
+        "password": "testpassword123",
         "canvas_username": f"taskuser_{user_id}",
         "total_points": 100,
         "current_level": 1
