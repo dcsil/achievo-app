@@ -15,6 +15,7 @@ const SignupPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -23,6 +24,7 @@ const SignupPage: React.FC = () => {
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
   const [confirmPasswordError, setConfirmPasswordError] = useState(false);
+  const [displayNameError, setDisplayNameError] = useState(false);
   const [termsError, setTermsError] = useState(false);
   const [passwordRequirements, setPasswordRequirements] = useState<PasswordRequirements>({
     minLength: false,
@@ -52,6 +54,7 @@ const SignupPage: React.FC = () => {
     setEmailError(false);
     setPasswordError(false);
     setConfirmPasswordError(false);
+    setDisplayNameError(false);
     setTermsError(false);
 
     // Validate fields
@@ -66,6 +69,10 @@ const SignupPage: React.FC = () => {
     }
     if (!confirmPassword.trim()) {
       setConfirmPasswordError(true);
+      hasErrors = true;
+    }
+    if (!displayName.trim()) {
+      setDisplayNameError(true);
       hasErrors = true;
     }
     if (!agreeToTerms) {
@@ -98,7 +105,7 @@ const SignupPage: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, display_name: displayName }),
       });
 
       const data = await response.json();
@@ -171,6 +178,26 @@ const SignupPage: React.FC = () => {
             disabled={isLoading}
           />
           {emailError && <p className="mt-1 text-sm text-red-600">Required</p>}
+
+          <label className="block text-sm font-medium text-gray-700 mt-4">Display Name</label>
+          <input
+            type="text"
+            value={displayName}
+            onChange={(e) => {
+              setDisplayName(e.target.value);
+              if (displayNameError && e.target.value.trim()) {
+                setDisplayNameError(false);
+              }
+            }}
+            placeholder="Enter your display name"
+            className={`mt-1 block w-full rounded-full bg-white px-4 py-3 focus:outline-none ${
+              displayNameError 
+                ? 'border-2 border-red-500 focus:ring-2 focus:ring-red-300' 
+                : 'border-gray-200 focus:ring-2 focus:ring-amber-300'
+            }`}
+            disabled={isLoading}
+          />
+          {displayNameError && <p className="mt-1 text-sm text-red-600">Required</p>}
 
           <label className="block text-sm font-medium text-gray-700 mt-4">Password</label>
           <div className="relative">

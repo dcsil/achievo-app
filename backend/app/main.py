@@ -164,6 +164,7 @@ def signup():
     payload = request.get_json() or {}
     email = payload.get("email")
     password = payload.get("password")
+    display_name = payload.get("display_name")
     
     if not email:
         return jsonify({"error": "email is required"}), 400
@@ -198,11 +199,12 @@ def signup():
         # Generate user_id from email (you can modify this logic)
         user_id = email.split("@")[0] + "_" + str(uuid.uuid4())[:8]
         
-        # Create user
+        # Create user with display_name as canvas_username
         repo.create(
             user_id=user_id,
             email=email,
             password=password,
+            canvas_username=display_name,
             total_points=0,
             current_level=0,
         )
