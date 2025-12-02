@@ -2,6 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import clap from '../../assets/achievo-clap-transparent.png';
 
+interface PasswordRequirements {
+  minLength: boolean;
+  hasUppercase: boolean;
+  hasLowercase: boolean;
+  hasNumber: boolean;
+  hasSpecialChar: boolean;
+}
+
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -16,6 +24,27 @@ const SignupPage: React.FC = () => {
   const [passwordError, setPasswordError] = useState(false);
   const [confirmPasswordError, setConfirmPasswordError] = useState(false);
   const [termsError, setTermsError] = useState(false);
+  const [passwordRequirements, setPasswordRequirements] = useState<PasswordRequirements>({
+    minLength: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+  });
+
+  const validatePassword = (pwd: string): PasswordRequirements => {
+    return {
+      minLength: pwd.length >= 8,
+      hasUppercase: /[A-Z]/.test(pwd),
+      hasLowercase: /[a-z]/.test(pwd),
+      hasNumber: /[0-9]/.test(pwd),
+      hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd),
+    };
+  };
+
+  const isPasswordValid = (requirements: PasswordRequirements): boolean => {
+    return Object.values(requirements).every(req => req === true);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +74,14 @@ const SignupPage: React.FC = () => {
     }
 
     if (hasErrors) {
+      return;
+    }
+
+    // Validate password requirements
+    const requirements = validatePassword(password);
+    if (!isPasswordValid(requirements)) {
+      setError('Password does not meet all requirements');
+      setPasswordError(true);
       return;
     }
 
@@ -142,6 +179,7 @@ const SignupPage: React.FC = () => {
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
+                setPasswordRequirements(validatePassword(e.target.value));
                 if (passwordError && e.target.value.trim()) {
                   setPasswordError(false);
                 }
@@ -164,6 +202,27 @@ const SignupPage: React.FC = () => {
             </button> */}
           </div>
           {passwordError && <p className="mt-1 text-sm text-red-600">Required</p>}
+          
+          {/* Password Requirements */}
+          {password && (
+            <div className="mt-2 text-xs space-y-1">
+              <p className={passwordRequirements.minLength ? 'text-green-600' : 'text-gray-500'}>
+                {passwordRequirements.minLength ? '✓' : '○'} At least 8 characters
+              </p>
+              <p className={passwordRequirements.hasUppercase ? 'text-green-600' : 'text-gray-500'}>
+                {passwordRequirements.hasUppercase ? '✓' : '○'} At least one uppercase letter
+              </p>
+              <p className={passwordRequirements.hasLowercase ? 'text-green-600' : 'text-gray-500'}>
+                {passwordRequirements.hasLowercase ? '✓' : '○'} At least one lowercase letter
+              </p>
+              <p className={passwordRequirements.hasNumber ? 'text-green-600' : 'text-gray-500'}>
+                {passwordRequirements.hasNumber ? '✓' : '○'} At least one number
+              </p>
+              <p className={passwordRequirements.hasSpecialChar ? 'text-green-600' : 'text-gray-500'}>
+                {passwordRequirements.hasSpecialChar ? '✓' : '○'} At least one special character (!@#$%^&*...)
+              </p>
+            </div>
+          )}
 
           <label className="block text-sm font-medium text-gray-700 mt-4">Re-enter your password</label>
           <div className="relative">
