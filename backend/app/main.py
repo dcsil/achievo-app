@@ -16,7 +16,7 @@ from werkzeug.utils import secure_filename
 from app.utils.file_utils import handle_file_upload, extract_tables_from_pdf
 from dateutil.parser import parse as date_parse
 from app.services.read_timetable import extract_timetable_courses, generate_tasks_for_courses
-from app.services.read_syllabi import extract_tasks_assignments_from_pdf, generate_assignment_microtasks
+# from app.services.read_syllabi import extract_tasks_assignments_from_pdf, generate_assignment_microtasks
 
 from database.users_repository import UsersRepository
 from database.tasks_repository import TasksRepository
@@ -163,12 +163,16 @@ def signup():
     payload = request.get_json() or {}
     email = payload.get("email")
     password = payload.get("password")
+    display_name = payload.get("display_name")
     
     if not email:
         return jsonify({"error": "email is required"}), 400
     
     if not password:
         return jsonify({"error": "password is required"}), 400
+    
+    if not display_name:
+        return jsonify({"error": "display_name is required"}), 400
     
     try:
         repo = UsersRepository()
@@ -181,11 +185,12 @@ def signup():
         # Generate user_id from email (you can modify this logic)
         user_id = email.split("@")[0] + "_" + str(uuid.uuid4())[:8]
         
-        # Create user
+        # Create user with display_name as canvas_username
         repo.create(
             user_id=user_id,
             email=email,
             password=password,
+            canvas_username=display_name,
             total_points=0,
             current_level=0,
         )
@@ -1157,69 +1162,69 @@ def process_timetable():
         return jsonify({"error": str(e)}), 500
 
 # ---------- SYLLABI ROUTES ----------
-@app.route("/api/syllabi/process", methods=["POST"])
-def process_syllabi():
-    """
-    Process uploaded syllabi PDF and return assignments with micro-tasks and exam/quiz tasks.
-    Requires PDF file upload and optional course_id and user_id parameters.
+# @app.route("/api/syllabi/process", methods=["POST"])
+# def process_syllabi():
+#     """
+#     Process uploaded syllabi PDF and return assignments with micro-tasks and exam/quiz tasks.
+#     Requires PDF file upload and optional course_id and user_id parameters.
 
-    testing:
-    curl -X POST http://127.0.0.1:5000/api/syllabi/process \
-        -F "file=@backend/app/storage/uploads/dummy.pdf" \
-        -F "course_id=course_123" \
-        -F "user_id=paul_paw_test" \
-        -F 'busy_intervals=[{"start": "2025-11-13T09:00:00", "end": "2025-11-13T14:00:00"}]'
-    """
-    try:
-        # Handle file upload
-        filepath, error_response = handle_file_upload(request, UPLOAD_FOLDER)
-        if error_response:
-            return error_response
+#     testing:
+#     curl -X POST http://127.0.0.1:5000/api/syllabi/process \
+#         -F "file=@backend/app/storage/uploads/dummy.pdf" \
+#         -F "course_id=course_123" \
+#         -F "user_id=paul_paw_test" \
+#         -F 'busy_intervals=[{"start": "2025-11-13T09:00:00", "end": "2025-11-13T14:00:00"}]'
+#     """
+#     try:
+#         # Handle file upload
+#         filepath, error_response = handle_file_upload(request, UPLOAD_FOLDER)
+#         if error_response:
+#             return error_response
         
-        # Get parameters from form data
-        course_id = request.form.get("course_id")
-        user_id = request.form.get("user_id", "paul_paw_test")
+#         # Get parameters from form data
+#         course_id = request.form.get("course_id")
+#         user_id = request.form.get("user_id", "paul_paw_test")
         
-        # Extract assignments and tasks from PDF using AI
-        extracted_data = extract_tasks_assignments_from_pdf(filepath)
+#         # Extract assignments and tasks from PDF using AI
+#         extracted_data = extract_tasks_assignments_from_pdf(filepath)
         
-        # Add IDs to the extracted data
-        from app.services.read_syllabi import add_ids_to_extracted_data, generate_assignment_microtasks_with_ids
-        data_with_ids = add_ids_to_extracted_data(extracted_data, user_id=user_id, course_id=course_id)
+#         # Add IDs to the extracted data
+#         from app.services.read_syllabi import add_ids_to_extracted_data, generate_assignment_microtasks_with_ids
+#         data_with_ids = add_ids_to_extracted_data(extracted_data, user_id=user_id, course_id=course_id)
         
-        # Get busy intervals from form data (optional)
-        busy_intervals_json = request.form.get("busy_intervals", "[]")
-        try:
-            busy_intervals = json.loads(busy_intervals_json)
-        except json.JSONDecodeError:
-            busy_intervals = []
+#         # Get busy intervals from form data (optional)
+#         busy_intervals_json = request.form.get("busy_intervals", "[]")
+#         try:
+#             busy_intervals = json.loads(busy_intervals_json)
+#         except json.JSONDecodeError:
+#             busy_intervals = []
         
-        # Generate micro-tasks for assignments with proper IDs
-        assignments_with_micro = generate_assignment_microtasks_with_ids(
-            data_with_ids["assignments"], 
-            busy_intervals,
-            default_micro_task_count=3,
-            user_id=user_id
-        )
+#         # Generate micro-tasks for assignments with proper IDs
+#         assignments_with_micro = generate_assignment_microtasks_with_ids(
+#             data_with_ids["assignments"], 
+#             busy_intervals,
+#             default_micro_task_count=3,
+#             user_id=user_id
+#         )
         
-        try:
-            os.remove(filepath)
-        except:
-            pass
+#         try:
+#             os.remove(filepath)
+#         except:
+#             pass
         
-        return jsonify({
-            "status": "success",
-            "course_id": course_id,
-            "assignments_found": len(assignments_with_micro["assignments"]),
-            "tasks_found": len(data_with_ids["tasks"]),
-            "total_micro_tasks": sum(len(a["micro_tasks"]) for a in assignments_with_micro["assignments"]),
-            "assignments": assignments_with_micro["assignments"],
-            "tasks": data_with_ids["tasks"]
-        }), 200
+#         return jsonify({
+#             "status": "success",
+#             "course_id": course_id,
+#             "assignments_found": len(assignments_with_micro["assignments"]),
+#             "tasks_found": len(data_with_ids["tasks"]),
+#             "total_micro_tasks": sum(len(a["micro_tasks"]) for a in assignments_with_micro["assignments"]),
+#             "assignments": assignments_with_micro["assignments"],
+#             "tasks": data_with_ids["tasks"]
+#         }), 200
         
-    except Exception as e:
-        print(f"Error processing syllabi: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+#     except Exception as e:
+#         print(f"Error processing syllabi: {str(e)}")
+#         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
