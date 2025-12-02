@@ -21,4 +21,4 @@
 
 ### To test front end:
 
-- run ``npm test:coverage``
+- run ``npm run test:coverage``
