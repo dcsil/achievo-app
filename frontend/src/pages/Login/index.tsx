@@ -40,18 +40,14 @@ const LoginPage: React.FC = () => {
     try {
       const data = await apiService.login(email, password);
 
-      // Success - set user ID in extension storage if running in extension
       if (isExtensionEnvironment()) {
         setUserId(data.user.user_id).catch(err => {
           console.error('Failed to set user ID in extension:', err);
         });
       }
       
-      // Store user data in localStorage
       localStorage.setItem('user', JSON.stringify(data.user));
       
-      // Navigate to home page
-      console.log('Login successful', data.user);
       navigate('/home');
     } catch (err) {
       console.error('Login error:', err);
