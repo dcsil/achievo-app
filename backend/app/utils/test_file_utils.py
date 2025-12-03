@@ -37,9 +37,10 @@ def test_handle_file_upload_no_file(app):
         filepath, error = file_utils.handle_file_upload(request, upload_folder=app.config['UPLOAD_FOLDER'])
         assert filepath is None
         assert error is not None
+        # Error is a tuple of (response, status_code)
         resp, code = error
         assert code == 400
-        assert 'No file uploaded' in resp.get_json()['error']
+        assert 'No file provided' in resp.get_json()['error']
 
 
 def test_handle_file_upload_invalid_extension(app):
@@ -50,6 +51,7 @@ def test_handle_file_upload_invalid_extension(app):
         filepath, error = file_utils.handle_file_upload(request, upload_folder=app.config['UPLOAD_FOLDER'])
         assert filepath is None
         assert error is not None
+        # Error is a tuple of (response, status_code)
         resp, code = error
         assert code == 400
-        assert 'Invalid file' in resp.get_json()['error']
+        assert 'File must be a PDF' in resp.get_json()['error']
