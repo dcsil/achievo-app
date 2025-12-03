@@ -40,7 +40,7 @@ def test_parse_time_range():
     assert start.hour == 9 and end.hour == 10
 
 def test_extract_timetable_courses(monkeypatch):
-    # Mock the file existence check
+    # Mock the file existence check in read_timetable module
     def mock_exists(path):
         return True
     
@@ -53,8 +53,9 @@ def test_extract_timetable_courses(monkeypatch):
             ]
         ]
     
-    monkeypatch.setattr(os.path, "exists", mock_exists)
-    monkeypatch.setattr("app.utils.file_utils.extract_tables_from_pdf", mock_extract_tables_from_pdf)
+    # Mock both os.path.exists in read_timetable and the extract function
+    monkeypatch.setattr("app.services.read_timetable.os.path.exists", mock_exists)
+    monkeypatch.setattr("app.services.read_timetable.extract_tables_from_pdf", mock_extract_tables_from_pdf)
     
     # Use a dummy path since we're mocking the file existence
     courses = read_timetable.extract_timetable_courses("dummy.pdf", "user1", "2025 Fall")
