@@ -1,3 +1,5 @@
+import '@testing-library/jest-dom';
+
 const mockRender = jest.fn();
 jest.mock('react-dom/client', () => {
   return {

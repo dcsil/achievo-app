@@ -87,10 +87,10 @@ describe('Settings Component', () => {
       expect(screen.getByText('⚙️ Settings')).toBeInTheDocument();
       expect(screen.getByText('Customize your Achievo experience')).toBeInTheDocument();
       expect(screen.getByText('👤 Account & Profile')).toBeInTheDocument();
-      expect(screen.getByText('🚀 Guide (dummy)')).toBeInTheDocument();
+      expect(screen.getByText('🚀 Guide (Dummy)')).toBeInTheDocument();
       expect(screen.getByText('🔔 Notifications')).toBeInTheDocument();
-      expect(screen.getByText('🎨 Personalization (dummy)')).toBeInTheDocument();
-      expect(screen.getByText('🔧 Account Management (dummy)')).toBeInTheDocument();
+      expect(screen.getByText('🎨 Personalization (Dummy)')).toBeInTheDocument();
+      expect(screen.getByText('🔧 Account Management (Dummy)')).toBeInTheDocument();
     });
 
     it('should display user profile information', () => {
