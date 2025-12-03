@@ -34,6 +34,7 @@ jobs:
         run: npm run test:coverage
         env:
           CI: true
+          REACT_APP_API_ENVIRONMENT: local
 
       - name: Display coverage summary
         working-directory: ./frontend

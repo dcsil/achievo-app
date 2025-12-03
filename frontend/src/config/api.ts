@@ -1,4 +1,4 @@
-const ENVIRONMENT = 'local'; // <-- Change this line to 'production' when deploying
+const ENVIRONMENT = (typeof process !== 'undefined' && process.env?.REACT_APP_API_ENVIRONMENT) || 'production'; // toggle between 'local' or 'production'
 
 const API_CONFIG = {
   environment: ENVIRONMENT,

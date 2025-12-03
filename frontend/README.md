@@ -1,5 +1,13 @@
 # README for Frontend (To be updated later)
 
+## Environment Configuration
+
+### Local Development:
+- Set `ENVIRONMENT = 'local'` in `src/config/api.ts`
+
+### Production Deployment:
+- Set `ENVIRONMENT = 'production'` in `src/config/api.ts`
+
 ### To run the Chrome Extension:
 
 - Run the backend
