@@ -4,7 +4,6 @@ import { apiService, User } from '../../api-contexts/user-context';
 import { getCourses, CourseForUI } from '../../api-contexts/get-courses';
 import { getAssignments, Assignment } from '../../api-contexts/get-assignments';
 
-// Updated task types with proper categories
 const TASK_TYPES = [
   { value: 'assignment', label: '📝 Assignment/Tutorial/Quiz', description: 'Academic assignment or homework', defaultPoints: 30 },
   { value: 'study', label: '📚 Study/Review Session', description: 'Study time for exams or review', defaultPoints: 30 },
@@ -48,7 +47,6 @@ export const AddTaskComponent: React.FC<AddTaskComponentProps> = ({ userId, onSu
     }
   }, [userId]);
 
-  // Load assignments when a course is selected
   useEffect(() => {
     if (formData.course_id) {
       loadAssignments(formData.course_id);
@@ -143,7 +141,6 @@ export const AddTaskComponent: React.FC<AddTaskComponentProps> = ({ userId, onSu
 
   const getCurrentTime = (): string => {
     const now = new Date();
-    // Add 10 minute buffer and round up to nearest 5 minutes
     now.setMinutes(now.getMinutes() + 10);
     const minutes = Math.ceil(now.getMinutes() / 5) * 5;
     now.setMinutes(minutes);
