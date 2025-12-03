@@ -34,10 +34,11 @@ describe('CanvasStep', () => {
 
     // Courses appear
     expect(screen.getByText(/detected the following courses/i)).toBeInTheDocument();
-    expect(screen.getByText('The Business of Software')).toBeInTheDocument();
-    expect(screen.getByText('Capstone Design Project')).toBeInTheDocument();
-    expect(screen.getByText('Ethics and Data')).toBeInTheDocument();
-    expect(screen.getByText('Theory of Statistical Practice')).toBeInTheDocument();
+    expect(screen.getByText('Data and Society: Whats Behind the Numbers?')).toBeInTheDocument();
+    expect(screen.getByText('Introduction to Language')).toBeInTheDocument();
+    expect(screen.getByText('The Design of Interactive Computational Media')).toBeInTheDocument();
+    expect(screen.getByText('Neural Networks and Deep Learning')).toBeInTheDocument();
+    expect(screen.getByText('Statistical Methods for Machine Learning II')).toBeInTheDocument();
   });
 
   it('toggles course selection and confirms courses calls onNext', () => {
@@ -46,7 +47,7 @@ describe('CanvasStep', () => {
     fireEvent.click(screen.getByRole('button', { name: /connect canvas/i }));
 
     // All courses are selected by default; toggle one off and back on
-    const courseCard = screen.getByText('The Business of Software').closest('div')!;
+    const courseCard = screen.getByText('Data and Society: Whats Behind the Numbers?').closest('div')!;
     fireEvent.click(courseCard); // deselect
     fireEvent.click(courseCard); // reselect
 
