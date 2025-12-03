@@ -41,7 +41,6 @@ class AssignmentsRepository:
         if due_date:
             query = query.eq("due_date", due_date)
         if title:
-            # Supabase supports ilike for case-insensitive pattern
             query = query.ilike("title", f"%{title}%")
         if course_id:
             query = query.eq("course_id", course_id)
