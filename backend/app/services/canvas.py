@@ -47,7 +47,6 @@ def get_assignments(course_id):
 
 # Example usage:
 if __name__ == "__main__":
-    # Get all courses
     courses = get_courses()
     print(f"Total courses found: {len(courses)}")
     for course in courses:
@@ -65,7 +64,7 @@ if __name__ == "__main__":
                 if "all_dates" in assignment and assignment["all_dates"]:
                     for date in assignment["all_dates"]:
                         print(f"    Override due at: {date['due_at']} (for: {date['title']})")
-                # Print submission status
+
                 submission = assignment.get("submission")
                 if submission:
                     print(f"  Submission status: {submission.get('workflow_state')}")
