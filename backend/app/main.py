@@ -601,7 +601,7 @@ def complete_db_task(task_id):
                 total_points += completion_points
 
                 if user_id:
-                    users_repo.update_points(user_id, completion_points)
+                    users_repo.update_points(user_id, total_points)
                 
                 if description == "Submit Assignment" and len(uncompleted_tasks) > 0:
                     # set all other tasks for this assignment to completed, but don't award points
