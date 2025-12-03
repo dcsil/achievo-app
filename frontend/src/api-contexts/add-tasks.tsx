@@ -1,4 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react';
+import { getApiBaseUrl } from '../config/api';
 
 export interface Task {
   task_id: string;
@@ -14,7 +15,9 @@ export interface Task {
 }
 
 class TasksApiService {
-  private baseUrl = 'http://127.0.0.1:5000';
+  private get baseUrl() {
+    return getApiBaseUrl();
+  }
 
   async createTask(taskData: Omit<Task, 'is_completed'> & { is_completed?: boolean }): Promise<{ status: string; task_id: string }> {
     const response = await fetch(`${this.baseUrl}/db/tasks`, {

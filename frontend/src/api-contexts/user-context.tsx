@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://127.0.0.1:5000';
+import { getApiBaseUrl } from '../config/api';
 
 export interface User {
   user_id: string;
@@ -11,10 +11,8 @@ export interface User {
 }
 
 class ApiService {
-  private baseUrl: string;
-
-  constructor(baseUrl: string = API_BASE_URL) {
-    this.baseUrl = baseUrl;
+  private get baseUrl(): string {
+    return getApiBaseUrl();
   }
 
   private async fetchWithErrorHandling<T>(

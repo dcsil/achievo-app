@@ -1,4 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react';
+import { getApiBaseUrl } from '../config/api';
 
 // Interfaces for timetable data
 export interface Course {
@@ -46,7 +47,9 @@ export interface TimetableProcessResult {
 
 // API service for timetable operations
 class TimetableApiService {
-  private baseUrl = 'http://127.0.0.1:5000';
+  private get baseUrl() {
+    return getApiBaseUrl();
+  }
 
   async processTimetable(file: File, userId?: string, term?: string): Promise<TimetableProcessResult> {
     const formData = new FormData();

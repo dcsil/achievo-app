@@ -1,4 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react';
+import { getApiBaseUrl } from '../config/api';
 
 export interface Assignment {
   assignment_id: string;
@@ -11,7 +12,9 @@ export interface Assignment {
 }
 
 class AssignmentsApiService {
-  private baseUrl = 'http://127.0.0.1:5000';
+  private get baseUrl() {
+    return getApiBaseUrl();
+  }
 
   async createAssignment(
     assignmentData: Omit<Assignment, 'is_complete' | 'completion_points'> & { 

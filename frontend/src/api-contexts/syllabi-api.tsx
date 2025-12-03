@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../config/api';
 import { Task, Assignment } from './get-assignments';
 
 export interface SyllabiResult {
@@ -32,7 +33,7 @@ export async function processSyllabus(
       formData.append('busy_intervals', JSON.stringify(busyIntervals));
     }
 
-    const response = await fetch('http://127.0.0.1:5000/api/syllabi/process', {
+    const response = await fetch(`${getApiBaseUrl()}/api/syllabi/process`, {
       method: 'POST',
       body: formData,
     });
@@ -74,7 +75,7 @@ export async function saveAssignmentsToDatabase(assignments: Assignment[]): Prom
   try {
     const results = await Promise.all(
       assignments.map(async (assignment) => {
-        const response = await fetch('http://127.0.0.1:5000/db/assignments', {
+        const response = await fetch(`${getApiBaseUrl()}/db/assignments`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -103,7 +104,7 @@ export async function saveTasksToDatabase(tasks: Task[]): Promise<void> {
   try {
     const results = await Promise.all(
       tasks.map(async (task) => {
-        const response = await fetch('http://127.0.0.1:5000/db/tasks', {
+        const response = await fetch(`${getApiBaseUrl()}/db/tasks`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
