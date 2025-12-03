@@ -56,18 +56,6 @@ jest.mock('./pages/Add', () => ({
   },
 }));
 
-jest.mock('./pages/UploadTimetable', () => {
-  return function MockUploadTimetable() {
-    return <div data-testid="upload-timetable-page">Upload Timetable Page</div>;
-  };
-});
-
-jest.mock('./pages/UploadSyllabi', () => {
-  return function MockUploadSyllabi() {
-    return <div data-testid="upload-syllabi-page">Upload Syllabi Page</div>;
-  };
-});
-
 jest.mock('./components/layout', () => {
   return function MockLayout({ children }: { children: React.ReactNode }) {
     return <div data-testid="layout">{children}</div>;
@@ -178,16 +166,6 @@ describe('App Component', () => {
       expect(screen.getByTestId('add-page')).toBeInTheDocument();
     });
 
-    it('renders Upload Timetable page on /upload-timetable path', () => {
-      renderWithRouter('/upload-timetable');
-      expect(screen.getByTestId('upload-timetable-page')).toBeInTheDocument();
-    });
-
-    it('renders Upload Syllabi page on /upload-syllabi path', () => {
-      renderWithRouter('/upload-syllabi');
-      expect(screen.getByTestId('upload-syllabi-page')).toBeInTheDocument();
-    });
-
     it('redirects unknown routes to landing page', () => {
       renderWithRouter('/unknown-route');
       expect(screen.getByTestId('landing-page')).toBeInTheDocument();
@@ -228,18 +206,6 @@ describe('App Component', () => {
       renderWithRouter('/add');
       expect(screen.getByTestId('layout')).toBeInTheDocument();
       expect(screen.getByTestId('add-page')).toBeInTheDocument();
-    });
-
-    it('wraps Upload Timetable page with Layout', () => {
-      renderWithRouter('/upload-timetable');
-      expect(screen.getByTestId('layout')).toBeInTheDocument();
-      expect(screen.getByTestId('upload-timetable-page')).toBeInTheDocument();
-    });
-
-    it('wraps Upload Syllabi page with Layout', () => {
-      renderWithRouter('/upload-syllabi');
-      expect(screen.getByTestId('layout')).toBeInTheDocument();
-      expect(screen.getByTestId('upload-syllabi-page')).toBeInTheDocument();
     });
 
     it('does not wrap Landing page with Layout', () => {
