@@ -25,7 +25,6 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId }) => {
   const initialDaysToShow = 3;
   const daysPerIncrement = 3;
 
-  // Helper function to group tasks by date
   const groupTasksByDate = (tasks: any[]) => {
     const grouped: { [key: string]: any[] } = {};
     
@@ -42,12 +41,10 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId }) => {
     return grouped;
   };
 
-  // Helper function to get total count of upcoming tasks
   const getTotalUpcomingTasksCount = (groupedTasks: { [key: string]: any[] }) => {
     return Object.values(groupedTasks).reduce((total, tasks) => total + tasks.length, 0);
   };
 
-  // Helper function to get displayed upcoming days
   const getDisplayedUpcomingDays = () => {
     const sortedDays = Object.entries(upcomingTasks)
       .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime());
@@ -55,22 +52,18 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId }) => {
     return sortedDays.slice(0, daysToShow);
   };
 
-  // Helper function to check if there are more days to show
   const hasMoreUpcomingDays = () => {
     return Object.keys(upcomingTasks).length > daysToShow;
   };
 
-  // Helper function to check if we can collapse days view
   const canCollapseDays = () => {
     return daysToShow > initialDaysToShow;
   };
 
-  // Function to show more days
   const handleShowMoreDays = () => {
     setDaysToShow(prev => Math.min(prev + daysPerIncrement, Object.keys(upcomingTasks).length));
   };
 
-  // Function to collapse days view
   const handleCollapseDays = () => {
     setDaysToShow(initialDaysToShow);
   };
@@ -131,24 +124,20 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId }) => {
     }
   };
 
-  // Separate function to refresh courses data
   const fetchCourses = async () => {
     if (!userId) return;
     
     try {
       const fetchedCourses = await getCourses(userId);
-      console.log('Fetched courses:', fetchedCourses);
       setCourses(fetchedCourses);
     } catch (err) {
       console.error('Error fetching courses:', err);
     }
   };
 
-  // Function to refresh task data from backend
   const refreshTaskData = async () => {
     if (!userId) return;
     try {
-      console.log('🔄 Home: Refreshing task data from backend');
       const tasksData = await apiService.getTasks(userId);
       
       const today = new Date();
@@ -169,25 +158,19 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId }) => {
       setTodayTasks(todayTasksList);
       setUpcomingTasks(groupTasksByDate(upcomingTasksList));
       
-      // Trigger course container refresh by updating the global refresh key
       setGlobalRefreshKey(prev => prev + 1);
       
-      console.log('✅ Home: Refreshed task data and triggered course refresh');
     } catch (err) {
       console.error('Failed to refresh task data:', err);
     }
   };
 
-  // Simplified handleTaskCompleted - DELAY refresh to allow modal to show
   const handleTaskCompleted = async (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => {
-    console.log('🎯 Home handleTaskCompleted called:', { taskId, taskType, pointsEarned, courseId });
     
-    // Update user points
     if (user && updateUserPoints) {
       updateUserPoints(user.total_points + pointsEarned);
     }
     
-    // Refresh user data from backend
     if (!userId) return;
     try {
       const updatedUser = await apiService.getUser(userId);
@@ -211,8 +194,6 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId }) => {
                 console.warn(`⚠️ Failed to clear alarm for task ${taskId}`);
               }
             });
-          } else {
-            console.log(`ℹ️ No alarm found for task ${taskId} - already cleared or not set`);
           }
         });
       }
@@ -220,15 +201,11 @@ const Home: React.FC<HomeProps> = ({ user, updateUserPoints, userId }) => {
       console.warn('Failed to clear task notification in Home component:', notifError);
     }
     
-    // Clear any existing refresh timer
     if (refreshTimerRef.current) {
       clearTimeout(refreshTimerRef.current);
     }
     
-    // DELAY refresh to allow modal to show and user to close it
-    console.log('⏳ Home: Scheduling refresh in 3 seconds to allow modal display');
     refreshTimerRef.current = setTimeout(() => {
-      console.log('⏰ Home: Timer fired - refreshing all data');
       refreshTaskData();
     }, 3000); // 3 seconds for user to see and close modal
   };

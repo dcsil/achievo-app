@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import clap from '../../assets/achievo-clap-transparent.png';
+import { apiService } from '../../api-contexts/user-context';
 
 interface PasswordRequirements {
   minLength: boolean;
@@ -100,48 +101,17 @@ const SignupPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, display_name: displayName }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'Signup failed. Please try again.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Success - now login to get user data
-      console.log('Signup successful', data);
+      // Use the apiService signup method which handles both signup and login
+      const data = await apiService.signup(email, password, displayName);
       
-      // Immediately login after successful signup
-      const loginResponse = await fetch('http://127.0.0.1:5000/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      console.log('Signup successful', data);
 
-      const loginData = await loginResponse.json();
-
-      if (!loginResponse.ok) {
-        setError('Signup successful but login failed. Please try logging in manually.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Store user data from login response
-      localStorage.setItem('user', JSON.stringify(loginData.user));
+      // Store user data from signup/login response
+      localStorage.setItem('user', JSON.stringify(data.user));
       navigate('/onboarding');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Signup error:', err);
-      setError('Network error. Please check your connection and try again.');
+      setError(err.message || 'Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 
-// Course interface
 export interface Course {
   course_id: string;
   user_id: string;
@@ -14,7 +13,6 @@ export interface Course {
   date_imported_at?: string;
 }
 
-// API service for adding course operations
 class AddCoursesApiService {
   private baseUrl = 'http://127.0.0.1:5000';
 
@@ -76,7 +74,6 @@ export const AddCoursesProvider: React.FC<AddCoursesProviderProps> = ({ children
   );
 };
 
-// Hook to use the context
 export const useAddCourses = (): AddCoursesContextType => {
   const context = useContext(AddCoursesContext);
   if (!context) {
@@ -85,5 +82,4 @@ export const useAddCourses = (): AddCoursesContextType => {
   return context;
 };
 
-// Export the API service instance for direct use
 export const addCoursesApiService = new AddCoursesApiService();

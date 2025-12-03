@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiService } from '../../api-contexts/user-context';
 import WelcomeStep from './steps/WelcomeStep';
 import InterestsStep from './steps/InterestsStep';
 import CanvasStep from './steps/CanvasStep';
@@ -51,12 +52,9 @@ const Onboarding: React.FC<OnboardingProps> = ({
   const refreshUserData = async () => {
     try {
       const userId = getUserId();
-      const response = await fetch(`http://127.0.0.1:5000/db/users?user_id=${userId}`);
-      if (response.ok) {
-        const updatedUser = await response.json();
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        console.log('User data refreshed from backend');
-      }
+      const updatedUser = await apiService.getUser(userId);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      console.log('User data refreshed from backend');
     } catch (error) {
       console.error('Failed to refresh user data:', error);
     }
