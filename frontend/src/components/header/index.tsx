@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../../api-contexts/user-context';
 import paul from '../../assets/paul_paw.png';
-import canvasSyncIcon from '../../assets/canvas-sync.png'; // Add your sync icon
+import canvasSyncIcon from '../../assets/canvas-sync.png'; 
 
 interface HeaderProps {
   user: User | null;
@@ -14,7 +14,7 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
 
   const hasUnreadNotifications = true;
   const motivationalQuote = "Success is the sum of small efforts repeated day in and day out.";
-  const isCanvasSynced = true; // Will be pulled from your sync status
+  const isCanvasSynced = true; 
   
   const notifications = [
     {
@@ -135,10 +135,7 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
                 isCompact ? 'w-7 h-7 sm:w-8 sm:h-8' : 'w-8 h-8 sm:w-9 sm:h-9'
               }`}
             >
-              {/* You can replace this with your PNG image */}
               <img src={canvasSyncIcon} alt="Canvas Sync" className="w-5 h-5 sm:w-6 sm:h-6" />
-              
-              {/* Temporary emoji - replace with your image */}
             </div>
             
             {/* Tooltip */}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
@@ -17,7 +17,6 @@ import { useCustomCursor } from './utils/use-custom-cursor';
 import { initializeActivityTracking, isExtensionEnvironment } from './utils/extensionUtils';
 
 
-// Create a wrapper component to access useLocation
 function AppContent() {
   const [allFigures, setAllFigures] = useState([]);
   const location = useLocation();

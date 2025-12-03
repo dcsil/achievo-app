@@ -71,5 +71,4 @@ class CoursesRepository:
             )
             .execute()
         )
-        # If no exception is raised, consider it success
         return True

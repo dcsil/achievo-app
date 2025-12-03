@@ -1,6 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 
-// Assignment interface based on your backend structure
 export interface Assignment {
   assignment_id: string;
   course_id: string;
@@ -11,7 +10,6 @@ export interface Assignment {
   actual_completion_date?: string;
 }
 
-// API service for assignments
 class AssignmentsApiService {
   private baseUrl = 'http://127.0.0.1:5000';
 
@@ -29,7 +27,7 @@ class AssignmentsApiService {
       body: JSON.stringify({
         ...assignmentData,
         is_complete: assignmentData.is_complete || false,
-        completion_points: assignmentData.completion_points || 30, // Default 30 points for assignments
+        completion_points: assignmentData.completion_points || 30, 
       }),
     });
 
@@ -72,7 +70,6 @@ interface AssignmentsContextType {
 
 const AssignmentsContext = createContext<AssignmentsContextType | undefined>(undefined);
 
-// Provider component
 interface AssignmentsProviderProps {
   children: ReactNode;
 }
@@ -87,7 +84,6 @@ export const AssignmentsProvider: React.FC<AssignmentsProviderProps> = ({ childr
   );
 };
 
-// Hook to use the context
 export const useAssignments = (): AssignmentsContextType => {
   const context = useContext(AssignmentsContext);
   if (!context) {
@@ -96,5 +92,4 @@ export const useAssignments = (): AssignmentsContextType => {
   return context;
 };
 
-// Export the API service instance for direct use
 export const assignmentsApiService = new AssignmentsApiService();

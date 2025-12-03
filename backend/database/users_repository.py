@@ -13,7 +13,6 @@ class UsersRepository:
             client
             .table(self.table)
             .select(
-                # Skip pgsodium decryption for now - can be added back later when needed
                 "user_id,email,canvas_username,canvas_domain,profile_picture,total_points,current_level,last_activity_at,password"
             )
             .execute()
@@ -40,7 +39,6 @@ class UsersRepository:
             "password": password,
             "canvas_username": canvas_username,
             "canvas_domain": canvas_domain,
-            # Do not select/return api key elsewhere; DB handles encryption at-rest.
             "canvas_api_key": canvas_api_key,
             "profile_picture": profile_picture,
             "total_points": total_points,
@@ -61,7 +59,6 @@ class UsersRepository:
             client
             .table(self.table)
             .select(
-                # Skip pgsodium decryption for now - can be added back later when needed
                 "user_id,email,canvas_username,canvas_domain,profile_picture,total_points,current_level,last_activity_at,password"
             )
             .eq("user_id", user_id)
@@ -88,7 +85,6 @@ class UsersRepository:
     def update_points(self, user_id: str, points_delta: int) -> bool:
         """Increment user's total_points by points_delta (can be negative)."""
         client = DBClient.connect()
-        # Fetch current points first
         user = self.fetch_by_id(user_id)
         if not user:
             return False
@@ -113,7 +109,6 @@ class UsersRepository:
         """Update user information. Only updates provided fields."""
         client = DBClient.connect()
         
-        # Build update payload with only provided fields
         update_payload = {}
         if canvas_username is not None:
             update_payload["canvas_username"] = canvas_username
@@ -124,7 +119,6 @@ class UsersRepository:
         if profile_picture is not None:
             update_payload["profile_picture"] = profile_picture
             
-        # Return False if no fields to update
         if not update_payload:
             return False
             
@@ -141,5 +135,4 @@ class UsersRepository:
         """Delete a user by user_id."""
         client = DBClient.connect()
         res = client.table(self.table).delete().eq("user_id", user_id).execute()
-        # Supabase returns deleted rows (if configured) or empty list
         return bool(res.data)

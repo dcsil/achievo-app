@@ -1,4 +1,3 @@
-// src/components/rewards/collection-item/index.tsx
 import React from 'react';
 
 export interface CollectibleItem {

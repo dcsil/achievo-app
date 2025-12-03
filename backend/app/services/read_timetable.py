@@ -5,7 +5,6 @@ import sys
 import os
 import random
 
-# Allow running as a script directly
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from app.utils.file_utils import extract_tables_from_pdf
@@ -105,10 +104,8 @@ def extract_timetable_courses(pdf_path, user_id, term):
     courses = {}
     date_imported_at = datetime.now().isoformat()
     
-    # Define available colors
     colors = ['blue', 'red', 'yellow', 'green', 'purple', 'pink', 'indigo', 'orange']
 
-    # Use utility function to extract tables from PDF
     tables = extract_tables_from_pdf(pdf_path)
 
     for table in tables:
@@ -120,7 +117,7 @@ def extract_timetable_courses(pdf_path, user_id, term):
                     if not code_part:
                         continue
                     course_code = code_part.split()[0]
-                    meeting_day = header[i]   # E.g. "Tuesday"
+                    meeting_day = header[i]  
                     
                     # Initialize course entry if not present
                     if course_code not in courses:
@@ -138,13 +135,11 @@ def extract_timetable_courses(pdf_path, user_id, term):
                             "meeting_sessions": []  # Keep for internal use
                         }
                     
-                    # Add meeting session if not already present
                     session = {
                         "day": meeting_day,
                         "time": time_label
                     }
                     
-                    # Check if this session already exists
                     session_exists = any(
                         s["day"] == meeting_day and s["time"] == time_label 
                         for s in courses[course_code]["meeting_sessions"]
@@ -179,9 +174,8 @@ def parse_time_range(time_str):
     Handles 12-hour format without AM/PM like "9:00 - 12:00" or "6:00 - 8:00"
     Determines AM/PM based on logical sequence and typical class hours.
     """
-    print(f"Parsing time string: '{time_str}'")  # Debug output
+    print(f"Parsing time string: '{time_str}'")  
     
-    # Split by dash and clean up whitespace
     parts = time_str.split('-')
     if len(parts) != 2:
         raise ValueError(f"Invalid time format: {time_str}")
@@ -189,10 +183,9 @@ def parse_time_range(time_str):
     start_str = parts[0].strip()
     end_str = parts[1].strip()
     
-    print(f"Start: '{start_str}', End: '{end_str}'")  # Debug output
+    print(f"Start: '{start_str}', End: '{end_str}'")  
     
     try:
-        # Parse as basic time first
         start_dt = datetime.strptime(start_str, "%H:%M")
         end_dt = datetime.strptime(end_str, "%H:%M")
         
@@ -228,7 +221,7 @@ def parse_time_range(time_str):
         print(f"Error parsing times: {e}")
         raise ValueError(f"Could not parse time range: {time_str}")
     
-    print(f"Parsed times - Start: {start_time}, End: {end_time}")  # Debug output
+    print(f"Parsed times - Start: {start_time}, End: {end_time}")  
     
     return start_time, end_time
 
@@ -260,13 +253,13 @@ def generate_tasks_for_courses(courses, user_id, assignment_id, start_date, end_
             time_str = session["time"]
             
             if not time_str:
-                continue  # Skip if no time information
+                continue 
                 
             weekday_num = get_weekday_number(day)
             try:
                 start_time, end_time = parse_time_range(time_str)
             except Exception:
-                continue  # skip if can't parse
+                continue  
                 
             for current_date in daterange(start_date, end_date):
                 if (

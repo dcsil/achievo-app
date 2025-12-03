@@ -20,8 +20,6 @@ const SignupPage: React.FC = () => {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
   const [confirmPasswordError, setConfirmPasswordError] = useState(false);
@@ -101,12 +99,8 @@ const SignupPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Use the apiService signup method which handles both signup and login
       const data = await apiService.signup(email, password, displayName);
       
-      console.log('Signup successful', data);
-
-      // Store user data from signup/login response
       localStorage.setItem('user', JSON.stringify(data.user));
       navigate('/onboarding');
     } catch (err: any) {
@@ -189,14 +183,6 @@ const SignupPage: React.FC = () => {
               }`}
               disabled={isLoading}
             />
-            {/* <button 
-              type="button" 
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-5 top-3 text-gray-400 hover:text-gray-600 transition-colors"
-              disabled={isLoading}
-            >
-                {showPassword ? "hide" : "show"}
-            </button> */}
           </div>
           {passwordError && <p className="mt-1 text-sm text-red-600">Required</p>}
           
@@ -240,14 +226,6 @@ const SignupPage: React.FC = () => {
               }`}
               disabled={isLoading}
             />
-            {/* <button 
-              type="button" 
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-5 top-3 text-gray-400 hover:text-gray-600 transition-colors"
-              disabled={isLoading}
-            >
-                {showPassword ? "hide" : "show"}
-            </button> */}
           </div>
           {confirmPasswordError && <p className="mt-1 text-sm text-red-600">Required</p>}
 

@@ -56,7 +56,6 @@ export const AddAssignmentComponent: React.FC<AddAssignmentComponentProps> = ({ 
 
   const getCurrentTime = (): string => {
     const now = new Date();
-    // Add 10 minute buffer and round up to nearest 5 minutes
     now.setMinutes(now.getMinutes() + 10);
     const minutes = Math.ceil(now.getMinutes() / 5) * 5;
     now.setMinutes(minutes);
