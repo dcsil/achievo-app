@@ -32,7 +32,7 @@ def test_create_blind_box_series(client, monkeypatch):
 
 def test_create_blind_box_series_missing_fields(client):
     """Test POST /db/blind-box-series - missing required fields."""
-    payload = {"series_id": "s1"}  # Missing name
+    payload = {"series_id": "s1"}  
     
     resp = client.post("/db/blind-box-series", json=payload)
     assert resp.status_code == 400

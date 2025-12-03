@@ -1,10 +1,25 @@
-## Database setup (Supabase) and local testing
+# Database Module
 
-This folder targets Supabase (managed PostgreSQL). We have a schema file and the repositories use the Supabase Python client.
+This folder contains the database layer for the Achievo backend, using Supabase (managed PostgreSQL) as the database service.
 
-Key files:
-- `supabase_schema_simple.sql` — single, minimal schema (tables + FKs only)
-- `db_client.py` — creates a Supabase client using `SUPABASE_URL` and `SUPABASE_KEY`
+## Architecture
+
+The database layer follows a **repository pattern** with:
+- **Schema file**: `supabase_schema.sql` - Complete database schema with tables and relationships
+- **Client factory**: `db_client.py` - Creates Supabase client instances using environment variables
+- **Repositories**: `*_repository.py` files - Data access objects (DAOs) that encapsulate all database queries for each entity (table)
+
+## Key Files
+
+- `supabase_schema.sql` - PostgreSQL schema with all tables, foreign keys, and constraints
+- `db_client.py` - Supabase client factory using `SUPABASE_URL` and `SUPABASE_KEY`
+- `users_repository.py` - User CRUD operations and authentication
+- `courses_repository.py` - Course management
+- `assignments_repository.py` - Assignment operations
+- `tasks_repository.py` - Task CRUD and filtering
+- `blind_box_series_repository.py` - Blind box series management
+- `blind_box_figures_repository.py` - Figure management
+- `user_blind_boxes_repository.py` - User purchases and inventory
 
 ### Prerequisites
 
@@ -13,20 +28,21 @@ Key files:
   - `python-dotenv`
   - `flask`, `flask-cors`
 
+## Setup
+
 ### 1) Install dependencies
 
-From repo root:
+From the backend directory:
 
 ```bash
-cd backend
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2) Configure environment variables (.env)
+### 2) Configure environment variables
 
-`db_client.py` will load a `.env` from `backend/.env` or from your environment. Define:
+Create a `.env` file in the `backend/` directory with:
 
 ```
 SUPABASE_URL=https://<project>.supabase.co
@@ -35,79 +51,73 @@ SUPABASE_KEY=<anon-or-service-role-key>
 
 ### 3) Create the schema in Supabase
 
-In the Supabase SQL Editor, run the queries in `supabase_schema_simple.sql`
+In the Supabase SQL Editor, copy and paste the contents of `supabase_schema.sql` and execute it.
 
-Tables created:
-- `users`, `courses`, `assignments`, `tasks`, `blind_box_series`, `blind_box_figures`, `user_blind_boxes`
+**Tables created:**
+- `users` - User accounts with email, password, Canvas integration, points, and levels
+- `courses` - User's courses 
+- `assignments` - Course assignments with due dates and completion tracking
+- `tasks` - Individual tasks **(can be standalone or linked to assignments)**
+- `blind_box_series` - Collectible series with cost and release info
+- `blind_box_figures` - Individual figures with rarity and drop weights
+- `user_blind_boxes` - User's purchased blind boxes and awarded figures
 
-### 4) Run the backend API locally
+**Key relationships:**
+- Courses belong to users 
+- Assignments belong to courses 
+- Tasks reference users, assignments, and courses
+- Blind box figures belong to series 
+- User purchases reference users, series, and figures
 
-From repo root:
+### 4) Start the backend server
 
-```bash
-python backend/app/main.py
+See the main backend README for instructions on running the Flask API server. The repositories are used by the API endpoints defined in `app/main.py`.
+
+## Repository Pattern Usage
+
+Each repository file provides methods for database operations. Example:
+
+```python
+from database.users_repository import UsersRepository
+
+# Initialize repository
+users_repo = UsersRepository()
+
+# Fetch a user
+user = users_repo.fetch_by_id("test_user")
+
+# Update user points
+users_repo.update_points("test_user", 150)
+
+# Create a new user
+users_repo.create({
+    "user_id": "new_user",
+    "email": "newuser@example.com",
+    "canvas_username": "newuser",
+    "total_points": 0,
+    "current_level": 1
+})
 ```
 
-The server starts at http://127.0.0.1:5000.
+## Common Operations
 
-### 5) Sanity check endpoints
+### Adding a New Table
 
-Create a user:
+1. Add table definition to `supabase_schema.sql`
+2. Create a corresponding `*_repository.py` file with CRUD methods
+3. Run the schema update in Supabase SQL Editor
+4. Import and use the repository in `app/main.py`
 
-```bash
-curl -X POST http://127.0.0.1:5000/db/users \
-  -H 'Content-Type: application/json' \
-  -d '{"user_id":"user_456","canvas_username":"alice_canvas","total_points":0,"current_level":0}'
-```
+### Modifying Existing Tables
 
-Create a course for that user:
+1. Update schema in `supabase_schema.sql`
+2. Apply ALTER TABLE commands in Supabase (or drop/recreate for dev)
+3. Update corresponding repository methods if needed
+4. Update API endpoints and tests accordingly
 
-```bash
-curl -X POST http://127.0.0.1:5000/db/courses \
-  -H 'Content-Type: application/json' \
-  -d '{"course_id":"COURSE123","user_id":"user_456","course_name":"Intro to Systems"}'
-```
+## Troubleshooting
 
-Create an assignment and a task:
+**Connection errors**: Verify `SUPABASE_URL` and `SUPABASE_KEY` in `.env`
 
-```bash
-curl -X POST http://127.0.0.1:5000/db/assignments \
-  -H 'Content-Type: application/json' \
-  -d '{"assignment_id":"A1","course_id":"COURSE123","title":"Read Chapter 1","due_date":"2025-11-20T00:00:00Z","completion_points":50}'
+**Foreign key violations**: Ensure parent records exist before creating child records (e.g., create user before creating courses)
 
-curl -X POST http://127.0.0.1:5000/db/tasks \
-  -H 'Content-Type: application/json' \
-  -d '{"task_id":"T1","user_id":"user_456","description":"Outline notes","type":"study","assignment_id":"A1","course_id":"COURSE123","reward_points":10}'
-```
-
-Blind box sample flow:
-
-```bash
-curl -X POST http://127.0.0.1:5000/db/blind-box-series \
-  -H 'Content-Type: application/json' \
-  -d '{"series_id":"S1","name":"Study Buddies","description":"Cute helpers","cost_points":50}'
-
-curl -X POST http://127.0.0.1:5000/db/blind-box-figures \
-  -H 'Content-Type: application/json' \
-  -d '{"figure_id":"F1","series_id":"S1","name":"Coffee Cat","rarity":"common","weight":5}'
-
-curl -X POST http://127.0.0.1:5000/db/blind-boxes/purchase \
-  -H 'Content-Type: application/json' \
-  -d '{"user_id":"user_456","series_id":"S1"}'
-```
-
-### Reruns and resets
-
-To drop tables in Supabase for a clean reset:
-
-```sql
-DROP TABLE IF EXISTS user_blind_boxes;
-DROP TABLE IF EXISTS blind_box_figures;
-DROP TABLE IF EXISTS blind_box_series;
-DROP TABLE IF EXISTS tasks;
-DROP TABLE IF EXISTS assignments;
-DROP TABLE IF EXISTS courses;
-DROP TABLE IF EXISTS users;
-```
-
-Re-run the schema script afterwards.

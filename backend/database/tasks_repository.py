@@ -140,7 +140,6 @@ class TasksRepository:
         # For tasks linked to assignments, allow setting is_last_task; otherwise leave as NULL
         if assignment_id is not None:
             payload["is_last_task"] = is_last_task if is_last_task is not None else False
-        # Remove None keys to avoid RLS or schema issues
         clean_payload = {k: v for k, v in payload.items() if v is not None}
         client = DBClient.connect()
         _ = client.table(self.table).insert(clean_payload).execute()
