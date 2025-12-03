@@ -150,8 +150,6 @@ def _compute_level_progress(total_points: int, current_level: int) -> Dict:
         "points_required_for_next": max(next_min - total_points, 0),
     }
 
-UPLOAD_FOLDER = "backend/app/storage/uploads"
-
 app = Flask(__name__)
 CORS(app)
 
