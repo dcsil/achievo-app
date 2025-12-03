@@ -263,7 +263,8 @@ describe('Onboarding', () => {
       
       await waitFor(() => {
         expect(fetch).toHaveBeenCalledWith(
-          expect.stringContaining('/db/users?user_id=test_user')
+          expect.stringContaining('/db/users?user_id=test_user'),
+          undefined // fetch options may be undefined
         );
       });
     });
