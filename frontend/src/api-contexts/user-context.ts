@@ -8,6 +8,7 @@ export interface User {
   total_points: number;
   current_level: number;
   last_activity_at?: string;
+  email?: string;
 }
 
 class ApiService {

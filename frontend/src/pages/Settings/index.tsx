@@ -18,14 +18,13 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
   
   const navigate = useNavigate();
 
-  // Initialize profile state with user data
   const [profile, setProfile] = useState({
     profilePicture: user?.profile_picture || '/default-profile.png',
     canvasUsername: user?.canvas_username || '',
     canvasDomain: user?.canvas_domain || '',
-    canvasApiKey: '', // Don't show existing API key for security
-    email: 'paul.paw@example.com', // Placeholder - not stored in User model yet
-    bio: 'Computer Science student passionate about productivity and achievements!', // Placeholder
+    canvasApiKey: '', 
+    email: 'paul.paw@example.com', 
+    bio: 'Computer Science student passionate about productivity and achievements!', 
   });
 
   const [originalProfile, setOriginalProfile] = useState(profile);
@@ -111,17 +110,14 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
   };
 
   const handleUploadImage = async () => {
-    // Make upload local-only: convert selected file to data URL and set as profile preview.
     if (!selectedImageFile) return;
 
     setIsUploadingImage(true);
     try {
       const dataUrl = await readFileAsDataUrl(selectedImageFile);
 
-      // Do NOT persist to backend yet. Persist will happen on Save.
       setProfile(prev => ({ ...prev, profilePicture: dataUrl }));
 
-      // Clear temporary file selection but keep preview until Save or Cancel
       setSelectedImageFile(null);
     } catch (err) {
       console.error('Failed to read profile image:', err);
@@ -139,11 +135,9 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
 
     setSaving(true);
     try {
-      // Only save profile changes if we're editing profile
       if (isEditing) {
         const updates: any = {};
         
-        // Only include fields that have changed
         if (profile.canvasUsername !== originalProfile.canvasUsername) {
           updates.canvas_username = profile.canvasUsername;
         }
@@ -161,12 +155,10 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
           await apiService.updateUser(user.user_id, updates);
           setOriginalProfile(profile);
           
-          // Update the user state in parent component to refresh header
           if (updateUserProfile) {
             updateUserProfile(updates);
           }
 
-          // After successful save, update localStorage with new user data
           if (userId) {
             try {
               const updatedUser = await apiService.getUser(userId);
@@ -194,7 +186,6 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
   };
 
   const handleCancel = () => {
-    // Reset profile changes if cancelled
     setProfile(originalProfile);
     setSelectedImageFile(null);
     setIsUploadingImage(false);
@@ -203,7 +194,6 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
 
   const handleResetData = () => {
     if (window.confirm('Are you sure you want to reset all your progress? This action cannot be undone.')) {
-      // Reset user data logic here
       console.log('Resetting user data...');
       alert('Data reset successfully!');
     }
@@ -211,7 +201,6 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
 
   const handleDeleteAccount = () => {
     if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      // Delete account logic here
       console.log('Deleting account...');
       alert('Account deletion initiated. You will be contacted via email.');
     }
