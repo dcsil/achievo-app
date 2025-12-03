@@ -153,7 +153,15 @@ def _compute_level_progress(total_points: int, current_level: int) -> Dict:
 app = Flask(__name__)
 CORS(app)
 
-UPLOAD_FOLDER = "backend/app/storage/uploads"
+# Fix: Use absolute path for upload folder
+def get_upload_folder():
+    """Get the absolute path for upload folder"""
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    upload_dir = os.path.join(current_dir, 'storage', 'uploads')
+    os.makedirs(upload_dir, exist_ok=True)
+    return upload_dir
+
+UPLOAD_FOLDER = get_upload_folder()
 
 # ---------- AUTH ROUTES ----------
 @app.route("/auth/signup", methods=["POST"])
@@ -1136,18 +1144,21 @@ def process_timetable():
         
         # Get user_id and term from form data
         user_id = request.form.get("user_id", "paul_paw_test")
-        term = request.form.get("term", "2025 Fall")  # Use user-selected term
+        term = request.form.get("term", "2025 Fall")
         assignment_id = None
         
-        print(f"Processing timetable for user: {user_id}, term: {term}")  # Debug
-        print(f"File path: {filepath}")  # Debug file path
+        print(f"Processing timetable for user: {user_id}, term: {term}")
+        print(f"Upload folder: {UPLOAD_FOLDER}")
+        print(f"File path: {filepath}")
         
-        # Convert relative path to absolute path if needed
+        # Ensure we have absolute path
         if not os.path.isabs(filepath):
             filepath = os.path.abspath(filepath)
         
         # Verify file exists before processing
         if not os.path.exists(filepath):
+            print(f"File not found at: {filepath}")
+            print(f"Directory contents: {os.listdir(os.path.dirname(filepath)) if os.path.exists(os.path.dirname(filepath)) else 'Directory does not exist'}")
             return jsonify({"error": f"Uploaded file not found at: {filepath}"}), 404
         
         # Get schedule config for the selected term
@@ -1275,5 +1286,6 @@ def process_syllabi():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    # Ensure upload folder exists
+    print(f"Upload folder: {UPLOAD_FOLDER}")
     app.run(debug=True, port=5000)
