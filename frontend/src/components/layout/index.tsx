@@ -23,10 +23,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      // Get user from localStorage
       const storedUser = localStorage.getItem('user');
       if (!storedUser) {
-        // No user logged in, redirect to login
         console.warn('No user found in localStorage, redirecting to login');
         navigate('/login');
         return;
@@ -42,7 +40,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
-  // Function to update user points (can be called by child components)
   const updateUserPoints = (newPoints: number) => {
     if (user) {
       setUser({
@@ -52,7 +49,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
-  // Function to update user profile data (can be called by child components)
   const updateUserProfile = (updates: Partial<User>) => {
     if (user) {
       setUser({
@@ -102,7 +98,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
       <Header user={user} />
       <main id="main-content" className="flex-1 overflow-y-auto pb-10">
-        {/* Pass user data and update function to children via React.cloneElement */}
         {React.cloneElement(children as React.ReactElement, { 
             user: user, 
             updateUserPoints: updateUserPoints,
