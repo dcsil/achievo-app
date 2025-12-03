@@ -184,13 +184,27 @@ All endpoints are served at **http://127.0.0.1:5000** by default.
 #### POST `/auth/signup`
 Create a new user account.
 
+**Password Requirements:**
+- At least 8 characters long
+- Contains at least one uppercase letter
+- Contains at least one lowercase letter
+- Contains at least one number
+- Contains at least one special character (!@#$%^&*()_+-=[]{};':"\|,.<>/?)
+
 **Request Body:**
 ```json
 {
   "email": "user@example.com",
-  "password": "securepassword",
-  "canvas_username": "username"
+  "password": "SecurePass123!",
+  "display_name": "User Name"
 }
+```
+
+**Example:**
+```bash
+curl -X POST http://127.0.0.1:5000/auth/signup \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"newuser@example.com","password":"SecurePass123!","display_name":"New User"}'
 ```
 
 #### POST `/auth/login`
@@ -200,14 +214,26 @@ Authenticate user and return user data.
 ```json
 {
   "email": "user@example.com",
-  "password": "password"
+  "password": "SecurePass123!"
 }
+```
+
+**Example:**
+```bash
+curl -X POST http://127.0.0.1:5000/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"newuser@example.com","password":"SecurePass123!"}'
 ```
 
 ### User Endpoints
 
 #### GET `/db/users`
 List all users (admin/testing purposes).
+
+**Example:**
+```bash
+curl http://127.0.0.1:5000/db/users
+```
 
 #### POST `/db/users`
 Create a new user.
@@ -217,17 +243,42 @@ Create a new user.
 {
   "user_id": "unique_id",
   "email": "user@example.com",
+  "password": "SecurePass123!",
   "canvas_username": "canvas_user",
+  "canvas_domain": "example.instructure.com",
+  "canvas_api_key": "optional_api_key",
+  "profile_picture": "optional_url",
   "total_points": 0,
-  "current_level": 1
+  "current_level": 0
 }
+```
+
+**Note:** `user_id`, `email`, and `password` are required fields.
+
+**Example:**
+```bash
+curl -X POST http://127.0.0.1:5000/db/users \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"test_user","email":"test@example.com","password":"SecurePass123!","canvas_username":"test_user","total_points":0,"current_level":0}'
 ```
 
 #### PUT `/db/users/<user_id>`
 Update user information (points, level, etc.).
 
+**Example:**
+```bash
+curl -X PUT http://127.0.0.1:5000/db/users/test_user \
+  -H 'Content-Type: application/json' \
+  -d '{"total_points":150,"current_level":2}'
+```
+
 #### DELETE `/db/users/<user_id>`
 Delete a user.
+
+**Example:**
+```bash
+curl -X DELETE http://127.0.0.1:5000/db/users/test_user
+```
 
 #### GET `/db/users/<user_id>/figures`
 Get user's collected blind box figures with pagination and filters.
@@ -271,6 +322,15 @@ Get tasks for a user with optional filters.
 - `course_id` - Filter by course
 - `is_completed` (bool) - Filter by completion status
 
+**Example:**
+```bash
+# Get all tasks for a user
+curl "http://127.0.0.1:5000/db/tasks?user_id=test_user"
+
+# Get incomplete tasks for a specific course
+curl "http://127.0.0.1:5000/db/tasks?user_id=test_user&course_id=CSC301&is_completed=false"
+```
+
 #### GET `/db/tasks/combined`
 Get tasks combined with assignment details and completion metadata.
 
@@ -278,24 +338,49 @@ Get tasks combined with assignment details and completion metadata.
 - `user_id` (required)
 - `is_completed` (bool, optional)
 
+**Example:**
+```bash
+curl "http://127.0.0.1:5000/db/tasks/combined?user_id=test_user&is_completed=false"
+```
+
 #### POST `/db/tasks`
 Create a new task.
 
 **Request Body:**
 ```json
 {
+  "task_id": "unique_task_id",
   "user_id": "user_id",
   "description": "Complete reading chapter 5",
+  "type": "reading",
   "scheduled_start_at": "2025-12-05T14:00:00Z",
   "scheduled_end_at": "2025-12-05T16:00:00Z",
-  "task_type": "reading",
   "course_id": "COURSE123",
-  "assignment_id": "ASSIGN456"
+  "assignment_id": "ASSIGN456",
+  "is_completed": false,
+  "reward_points": 10,
+  "is_last_task": false
 }
+```
+
+**Note:** `task_id`, `user_id`, `description`, and `type` are required fields.
+
+**Example:**
+```bash
+curl -X POST http://127.0.0.1:5000/db/tasks \
+  -H 'Content-Type: application/json' \
+  -d '{"task_id":"TASK123","user_id":"test_user","description":"Complete project proposal","type":"assignment","assignment_id":"A1","course_id":"CSC301","scheduled_end_at":"2025-12-10T23:59:00Z"}'
 ```
 
 #### PUT `/db/tasks/<task_id>`
 Update a task.
+
+**Example:**
+```bash
+curl -X PUT http://127.0.0.1:5000/db/tasks/TASK123 \
+  -H 'Content-Type: application/json' \
+  -d '{"description":"Updated task description","is_completed":true}'
+```
 
 #### POST `/db/tasks/<task_id>/complete`
 Mark a task as complete and award points.
@@ -317,8 +402,20 @@ Mark a task as complete and award points.
 }
 ```
 
+**Example:**
+```bash
+curl -X POST http://127.0.0.1:5000/db/tasks/TASK123/complete \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"test_user"}'
+```
+
 #### DELETE `/db/tasks/<task_id>`
 Delete a task.
+
+**Example:**
+```bash
+curl -X DELETE http://127.0.0.1:5000/db/tasks/TASK123
+```
 
 ### Assignment Endpoints
 
@@ -328,8 +425,22 @@ Get assignments with optional course filter.
 **Query Parameters:**
 - `course_id` (optional)
 
+**Example:**
+```bash
+# Get all assignments
+curl http://127.0.0.1:5000/db/assignments
+
+# Get assignments for a specific course
+curl "http://127.0.0.1:5000/db/assignments?course_id=CSC301"
+```
+
 #### GET `/db/assignments/<assignment_id>`
 Get a specific assignment by ID.
+
+**Example:**
+```bash
+curl http://127.0.0.1:5000/db/assignments/A1
+```
 
 #### POST `/db/assignments`
 Create a new assignment.
@@ -346,11 +457,30 @@ Create a new assignment.
 }
 ```
 
+**Example:**
+```bash
+curl -X POST http://127.0.0.1:5000/db/assignments \
+  -H 'Content-Type: application/json' \
+  -d '{"assignment_id":"A1","course_id":"CSC301","title":"Final Project","due_date":"2025-12-15T23:59:00Z","completion_points":200}'
+```
+
 #### PUT `/db/assignments/<assignment_id>`
 Update an assignment.
 
+**Example:**
+```bash
+curl -X PUT http://127.0.0.1:5000/db/assignments/A1 \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"Final Project - Updated","is_complete":true}'
+```
+
 #### DELETE `/db/assignments/<assignment_id>`
 Delete an assignment.
+
+**Example:**
+```bash
+curl -X DELETE http://127.0.0.1:5000/db/assignments/A1
+```
 
 #### GET `/db/assignments/progress`
 Get assignment progress for a user with task completion details.
@@ -376,10 +506,24 @@ Get assignment progress for a user with task completion details.
 ]
 ```
 
+**Example:**
+```bash
+# Get progress for all assignments for a user
+curl "http://127.0.0.1:5000/db/assignments/progress?user_id=test_user"
+
+# Get progress filtered by course
+curl "http://127.0.0.1:5000/db/assignments/progress?user_id=test_user&course_id=CSC301"
+```
+
 ### Course Endpoints
 
 #### GET `/db/courses`
 List all courses.
+
+**Example:**
+```bash
+curl http://127.0.0.1:5000/db/courses
+```
 
 #### POST `/db/courses`
 Create a new course.
@@ -388,11 +532,22 @@ Create a new course.
 ```json
 {
   "course_id": "CSC301",
+  "user_id": "user_id",
   "course_name": "Introduction to Software Engineering",
+  "course_code": "CSC301H1",
+  "canvas_course_id": "optional_canvas_id",
   "term": "2025 Fall",
-  "color": "blue",
-  "date_imported_at": "2025-12-03T10:00:00Z"
+  "color": "blue"
 }
+```
+
+**Note:** `course_id`, `user_id`, and `course_name` are required fields.
+
+**Example:**
+```bash
+curl -X POST http://127.0.0.1:5000/db/courses \
+  -H 'Content-Type: application/json' \
+  -d '{"course_id":"CSC301","user_id":"test_user","course_name":"Software Engineering","term":"2025 Fall","color":"blue"}'
 ```
 
 #### GET `/db/courses/progress`
@@ -417,6 +572,11 @@ Get progress summary for all courses for a user.
 ]
 ```
 
+**Example:**
+```bash
+curl "http://127.0.0.1:5000/db/courses/progress?user_id=test_user"
+```
+
 ### Blind Box & Gamification Endpoints
 
 #### GET `/db/blind-box-series`
@@ -435,11 +595,28 @@ List all available blind box series.
 ]
 ```
 
+**Example:**
+```bash
+curl http://127.0.0.1:5000/db/blind-box-series
+```
+
 #### POST `/db/blind-box-series`
 Create a new blind box series (admin).
 
+**Example:**
+```bash
+curl -X POST http://127.0.0.1:5000/db/blind-box-series \
+  -H 'Content-Type: application/json' \
+  -d '{"series_id":"S1","name":"Study Buddies","description":"Cute study companions","cost_points":50}'
+```
+
 #### DELETE `/db/blind-box-series/<series_id>`
 Delete a blind box series (admin).
+
+**Example:**
+```bash
+curl -X DELETE http://127.0.0.1:5000/db/blind-box-series/S1
+```
 
 #### GET `/db/blind-box-series/affordable`
 Get blind box series that a user can afford.
@@ -462,17 +639,43 @@ Get blind box series that a user can afford.
 }
 ```
 
+**Example:**
+```bash
+curl "http://127.0.0.1:5000/db/blind-box-series/affordable?user_id=test_user"
+```
+
 #### GET `/db/blind-box-figures`
 List all figures, optionally filtered by series.
 
 **Query Parameters:**
 - `series_id` (optional)
 
+**Example:**
+```bash
+# Get all figures
+curl http://127.0.0.1:5000/db/blind-box-figures
+
+# Get figures from a specific series
+curl "http://127.0.0.1:5000/db/blind-box-figures?series_id=S1"
+```
+
 #### POST `/db/blind-box-figures`
 Create a new blind box figure (admin).
 
+**Example:**
+```bash
+curl -X POST http://127.0.0.1:5000/db/blind-box-figures \
+  -H 'Content-Type: application/json' \
+  -d '{"figure_id":"F1","series_id":"S1","name":"Coffee Cat","rarity":"common","weight":5.0}'
+```
+
 #### DELETE `/db/blind-box-figures/<figure_id>`
 Delete a blind box figure (admin).
+
+**Example:**
+```bash
+curl -X DELETE http://127.0.0.1:5000/db/blind-box-figures/F1
+```
 
 #### POST `/db/blind-boxes/purchase`
 Purchase a blind box and receive a random figure.
@@ -502,14 +705,37 @@ Purchase a blind box and receive a random figure.
 }
 ```
 
+**Example:**
+```bash
+# Purchase a specific series
+curl -X POST http://127.0.0.1:5000/db/blind-boxes/purchase \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"test_user","series_id":"S1"}'
+
+# Purchase a random affordable series
+curl -X POST http://127.0.0.1:5000/db/blind-boxes/purchase \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"test_user"}'
+```
+
 #### DELETE `/db/user-blind-boxes/<purchase_id>`
 Delete a user's blind box purchase (admin/cleanup).
+
+**Example:**
+```bash
+curl -X DELETE http://127.0.0.1:5000/db/user-blind-boxes/PURCHASE123
+```
 
 #### GET `/db/blind-boxes/preview`
 Preview affordable series and user points (convenience endpoint).
 
 **Query Parameters:**
 - `user_id` (required)
+
+**Example:**
+```bash
+curl "http://127.0.0.1:5000/db/blind-boxes/preview?user_id=test_user"
+```
 
 ### Dashboard & Aggregation Endpoints
 
@@ -560,6 +786,11 @@ Get consolidated dashboard data in a single request.
 }
 ```
 
+**Example:**
+```bash
+curl "http://127.0.0.1:5000/db/dashboard?user_id=test_user"
+```
+
 ### File Processing Endpoints
 
 #### POST `/api/timetable/process`
@@ -581,6 +812,16 @@ Upload and process a timetable PDF to extract courses and generate recurring cla
   "courses": [...],
   "tasks": [...]
 }
+```
+
+**Example:**
+```bash
+curl -X POST http://127.0.0.1:5000/api/timetable/process \
+  -F "file=@/path/to/timetable.pdf" \
+  -F "user_id=test_user" \
+  -F "term=2025 Fall" \
+  -F "start_date=2025-09-01" \
+  -F "end_date=2025-12-15"
 ```
 
 **Note**: Syllabus processing endpoint (`/api/syllabi/process`) is currently commented out but available in code for AI-based assignment extraction.
