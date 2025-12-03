@@ -29,10 +29,10 @@ function CourseContainer ({
     const [isTasksCollapsed, setIsTasksCollapsed] = useState(true);
     const userId = propUserId || "paul_paw_test";
     
-    // Track if a task completion is in progress
+    // track if a task completion is in progress
     const isTaskCompletingRef = useRef(false);
 
-    // Fetch assignments when component mounts or courseId changes
+    // fetch assignments when component mounts or courseId changes
     useEffect(() => {
         const fetchAssignments = async () => {
             try {
@@ -53,32 +53,26 @@ function CourseContainer ({
         }
     }, [courseId, name, refreshKey]);
 
-    // Fetch course tasks that are not in any assignment
+    // fetch course tasks that are not in any assignment
     useEffect(() => {
         const fetchCourseTasks = async () => {
-            // Don't fetch if we're in the middle of a task completion FROM THIS COMPONENT
             if (isTaskCompletingRef.current) {
-                console.log('⏸️ CourseContainer: Skipping fetch - task completion in progress');
                 return;
             }
             
             try {
                 setTasksLoading(true);
-                console.log('🔄 CourseContainer: Fetching course tasks for', courseId);
-                // Get all tasks for the user
+                
                 const allTasks = await apiService.getTasks(userId);
                 
-                // Filter tasks that belong to this course and are not completed
                 const courseSpecificTasks = allTasks.filter((task: any) => 
                     task.course_id === courseId && 
                     !task.is_completed
                 );
                 
-                console.log(`✅ CourseContainer: Found ${courseSpecificTasks.length} incomplete tasks for course ${courseId}`);
                 setCourseTasks(courseSpecificTasks);
             } catch (err) {
                 console.error('Error fetching course tasks:', err);
-                // Don't set error for tasks to avoid disrupting assignments display
             } finally {
                 setTasksLoading(false);
             }
@@ -90,7 +84,6 @@ function CourseContainer ({
     }, [courseId, refreshKey, userId]);
 
 
-    // Helper function to group tasks by date
     const groupTasksByDate = (tasks: any[]) => {
         const grouped: { [date: string]: any[] } = {};
         
@@ -102,7 +95,6 @@ function CourseContainer ({
             grouped[dateKey].push(task);
         });
         
-        // Sort dates
         const sortedDates = Object.keys(grouped).sort((a, b) => 
             new Date(a).getTime() - new Date(b).getTime()
         );
@@ -114,22 +106,14 @@ function CourseContainer ({
     };
 
     const handleTaskCompleted = (taskId: string, taskType: string, pointsEarned: number, taskCourseId?: string) => {
-        console.log('🎯 CourseContainer: Task completed:', taskId);
         
-        // Mark that task completion is in progress to prevent premature refetch
         isTaskCompletingRef.current = true;
         
-        // Pass to parent component - parent will handle the refresh
         if (onTaskCompleted) {
             onTaskCompleted(taskId, taskType, pointsEarned, taskCourseId || courseId);
         }
-        
-        // Parent (Home) will refresh after modal closes, which will update refreshKey
-        // and trigger our useEffect to re-fetch tasks
-    };
 
-    // REMOVED handleTasksUpdate - don't update local state immediately
-    // Let the modal show first, then refresh from server after modal closes
+    };
 
     return (
         <div className={`flex flex-col rounded-lg bg-gradient-to-bl from-${color}-100 to-${color}-200 p-3 pt-5`}>
