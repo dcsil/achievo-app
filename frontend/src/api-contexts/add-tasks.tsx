@@ -1,6 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 
-// Task interface based on your backend structure
 export interface Task {
   task_id: string;
   user_id: string;
@@ -14,7 +13,6 @@ export interface Task {
   reward_points: number;
 }
 
-// API service for tasks
 class TasksApiService {
   private baseUrl = 'http://127.0.0.1:5000';
 
@@ -119,14 +117,12 @@ class TasksApiService {
   }
 }
 
-// Context
 interface TasksContextType {
   tasksApi: TasksApiService;
 }
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
 
-// Provider component
 interface TasksProviderProps {
   children: ReactNode;
 }
@@ -141,7 +137,6 @@ export const TasksProvider: React.FC<TasksProviderProps> = ({ children }) => {
   );
 };
 
-// Hook to use the context
 export const useTasks = (): TasksContextType => {
   const context = useContext(TasksContext);
   if (!context) {
@@ -150,5 +145,4 @@ export const useTasks = (): TasksContextType => {
   return context;
 };
 
-// Export the API service instance for direct use
 export const tasksApiService = new TasksApiService();
