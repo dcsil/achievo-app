@@ -9,8 +9,6 @@ import Rewards from './pages/Rewards';
 import Settings from './pages/Settings';
 import ToDo from './pages/ToDo';
 import { AddPage } from './pages/Add';
-import UploadTimetable from './pages/UploadTimetable';
-import UploadSyllabi from './pages/UploadSyllabi';
 import Layout from './components/layout';
 import { BlindBoxSeriesProvider } from './api-contexts/blindbox/get-blindbox-series';
 import { BlindBoxFiguresProvider } from './api-contexts/blindbox/get-blindbox-figures';
