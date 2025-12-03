@@ -15,15 +15,12 @@ function AssignmentProgressContainer ({ assignments, color }: { assignments: Ass
 
     const [assignList, setAssignList] = useState(assignments);
 
-    // Calculate progress percentage for each assignment based on task completion
     const getAssignmentProgress = (assignment: Assignment) => {
-        // If assignment has tasks, calculate based on completed vs total tasks
         if (assignment.task_count && assignment.task_count > 0) {
             const completedCount = assignment.completed_task_count || 0;
             return Math.round((completedCount / assignment.task_count) * 100);
         }
         
-        // For assignments with no tasks, use assignment completion status
         return assignment.is_complete ? 100 : 0;
     };
 

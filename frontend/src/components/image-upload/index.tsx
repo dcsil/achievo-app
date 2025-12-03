@@ -55,6 +55,7 @@ const ImageUploadForm: React.FC<ImageUploadFormProps> = ({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
+          data-testid="image-upload-dropzone"
         >
           <div className="space-y-4">
             <div className="flex justify-center">

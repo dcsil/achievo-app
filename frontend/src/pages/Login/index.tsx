@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import clap from '../../assets/achievo-clap-transparent.png';
 import { setUserId, isExtensionEnvironment } from '../../utils/extensionUtils';
+import { apiService } from '../../api-contexts/user-context';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,7 +21,6 @@ const LoginPage: React.FC = () => {
     setEmailError(false);
     setPasswordError(false);
 
-    // Validate fields
     let hasErrors = false;
     if (!email.trim()) {
       setEmailError(true);
@@ -38,21 +38,7 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'Login failed. Please try again.');
-        setIsLoading(false);
-        return;
-      }
+      const data = await apiService.login(email, password);
 
       // Success - set user ID in extension storage if running in extension
       if (isExtensionEnvironment()) {
@@ -69,7 +55,11 @@ const LoginPage: React.FC = () => {
       navigate('/home');
     } catch (err) {
       console.error('Login error:', err);
-      setError('Network error. Please check your connection and try again.');
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Network error. Please check your connection and try again.');
+      }
     } finally {
       setIsLoading(false);
     }

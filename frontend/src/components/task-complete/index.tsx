@@ -37,7 +37,7 @@ const TaskComplete: React.FC<TaskCompleteProps> = ({
     fullCompletedTitle = `Task: ${taskCompleted}`;
   }
 
-  // Fetch updated user data when overlay opens
+  // fetch updated user data when overlay opens
   useEffect(() => {
     if (isOpen && userId) {
       fetchUpdatedTotal();
@@ -58,11 +58,9 @@ const TaskComplete: React.FC<TaskCompleteProps> = ({
 
   const handleFinish = () => {
     onClose();
-    // Refresh data after closing overlay
     if (onRefreshData) {
       onRefreshData();
     }
-    // Reset state when closed
     setNewTotal(null);
   };
 
