@@ -71,8 +71,6 @@ function AppContent() {
         <Route path="/todo" element={<Layout><ToDo /></Layout>} />
         <Route path="/settings" element={<Layout><Settings /></Layout>} />
         <Route path="/add" element={<Layout><AddPage /></Layout>} />
-        <Route path="/upload-timetable" element={<Layout><UploadTimetable /></Layout>} />
-        <Route path="/upload-syllabi" element={<Layout><UploadSyllabi /></Layout>} /> 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
