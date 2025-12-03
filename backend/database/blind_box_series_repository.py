@@ -40,7 +40,6 @@ class BlindBoxSeriesRepository:
             "release_date": release_date,
             "image": image,
         }
-        # Remove None values
         clean_payload = {k: v for k, v in payload.items() if v is not None}
         _ = client.table(self.table).insert(clean_payload).execute()
         return True
