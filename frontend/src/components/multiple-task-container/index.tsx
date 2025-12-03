@@ -1,4 +1,3 @@
-// TaskContainer component - updated with backend integration
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { apiService } from '../../api-contexts/user-context';
