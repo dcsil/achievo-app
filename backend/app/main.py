@@ -343,7 +343,6 @@ def put_db_user(user_id):
         )
         
         if updated:
-            # Return updated user data
             user = repo.fetch_by_id(user_id)
             return jsonify({
                 "status": "updated", 
@@ -452,11 +451,9 @@ def get_combined_tasks():
 
         repo = TasksRepository()
 
-        # Fetch both incomplete and completed tasks
         incomplete_tasks = repo.fetch_by_user(user_id=user_id, is_completed=False)
         completed_tasks = repo.fetch_by_user(user_id=user_id, is_completed=True)
 
-        # Combine all tasks for processing
         all_tasks = incomplete_tasks + completed_tasks
 
         # Extract available courses
@@ -1137,7 +1134,6 @@ def process_timetable():
         if error_response:
             return error_response
         
-        # Get user_id from form data or use default
         user_id = request.form.get("user_id", "paul_paw_test")
         
         from app.services.read_timetable import term, assignment_id, start_date, end_date, breaks, holidays
@@ -1188,30 +1184,24 @@ def process_syllabi():
         -F 'busy_intervals=[{"start": "2025-11-13T09:00:00", "end": "2025-11-13T14:00:00"}]'
     """
     try:
-        # Handle file upload
         filepath, error_response = handle_file_upload(request, UPLOAD_FOLDER)
         if error_response:
             return error_response
         
-        # Get parameters from form data
         course_id = request.form.get("course_id")
         user_id = request.form.get("user_id", "paul_paw_test")
         
-        # Extract assignments and tasks from PDF using AI
         extracted_data = extract_tasks_assignments_from_pdf(filepath)
         
-        # Add IDs to the extracted data
         from app.services.read_syllabi import add_ids_to_extracted_data, generate_assignment_microtasks_with_ids
         data_with_ids = add_ids_to_extracted_data(extracted_data, user_id=user_id, course_id=course_id)
         
-        # Get busy intervals from form data (optional)
         busy_intervals_json = request.form.get("busy_intervals", "[]")
         try:
             busy_intervals = json.loads(busy_intervals_json)
         except json.JSONDecodeError:
             busy_intervals = []
         
-        # Generate micro-tasks for assignments with proper IDs
         assignments_with_micro = generate_assignment_microtasks_with_ids(
             data_with_ids["assignments"], 
             busy_intervals,
