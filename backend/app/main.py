@@ -1134,14 +1134,33 @@ def process_timetable():
         if error_response:
             return error_response
         
+        # Get user_id and term from form data
         user_id = request.form.get("user_id", "paul_paw_test")
+        term = request.form.get("term", "2025 Fall")  # Use user-selected term
+        assignment_id = None
         
-        from app.services.read_timetable import term, assignment_id, start_date, end_date, breaks, holidays
+        print(f"Processing timetable for user: {user_id}, term: {term}")  # Debug
+        
+        # Get schedule config for the selected term
+        from app.services.read_timetable import get_term_schedule
+        schedule_config = get_term_schedule(term)
+        original_start_date = schedule_config["original_start_date"]
+        current_date = datetime.now().date()
+        start_date = max(original_start_date.date(), current_date)
+        start_date = datetime.combine(start_date, datetime.min.time())
+        end_date = schedule_config["end_date"]
+        breaks = schedule_config["breaks"]
+        holidays = schedule_config["holidays"]
+        
+        print(f"Using schedule: {start_date} to {end_date} for term {term}")  # Debug
         
         courses = extract_timetable_courses(filepath, user_id, term)
+        print(f"Extracted {len(courses)} courses")  # Debug
+        
         tasks = generate_tasks_for_courses(
             courses, user_id, assignment_id, start_date, end_date, breaks, holidays
         )
+        print(f"Generated {len(tasks)} tasks")  # Debug
         
         try:
             os.remove(filepath)

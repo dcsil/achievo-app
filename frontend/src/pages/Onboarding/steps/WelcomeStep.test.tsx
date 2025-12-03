@@ -149,12 +149,18 @@ describe('WelcomeStep', () => {
       fireEvent.click(processBtn);
     });
 
-    // Summary appears
+    // Check processing results
     expect(screen.getByText('✅ Processing Complete!')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument(); // Courses Found
+    expect(screen.getByText('3')).toBeInTheDocument(); // Tasks Generated
     expect(screen.getByText('Courses Found')).toBeInTheDocument();
     expect(screen.getByText('Tasks Generated')).toBeInTheDocument();
     expect(screen.getByText('Term')).toBeInTheDocument();
-    expect(screen.getByText('Fall 2025')).toBeInTheDocument();
+    
+    // Use getAllByText to get all instances, then check the one in the results
+    const fallTermElements = screen.getAllByText('Fall 2025');
+    expect(fallTermElements).toHaveLength(2); // One in dropdown, one in results
+    expect(fallTermElements[1]).toBeInTheDocument(); // The one in results
 
     // Courses & Generated Tasks section
     expect(screen.getByText('📚 Courses & Generated Tasks')).toBeInTheDocument();
@@ -188,8 +194,8 @@ describe('WelcomeStep', () => {
   it('shows error when a non-PDF file is selected', () => {
     setup();
     const fileInput = screen.getByLabelText('file-input') as HTMLInputElement;
-    const badFile = new File(['dummy'], 'image.png', { type: 'image/png' });
-    fireEvent.change(fileInput, { target: { files: [badFile] } });
+
+    const badFile = new File(['dummy'], 'image.png', { type: 'image/png' });    fireEvent.change(fileInput, { target: { files: [badFile] } });
     // assert via role="alert" to be resilient
     expect(screen.getByRole('alert')).toHaveTextContent(/please select a pdf file/i);
   });

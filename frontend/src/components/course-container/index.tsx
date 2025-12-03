@@ -27,6 +27,11 @@ function CourseContainer ({
     const [tasksLoading, setTasksLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isTasksCollapsed, setIsTasksCollapsed] = useState(true);
+    const [tasksToShow, setTasksToShow] = useState(3);
+    
+    const initialTasksToShow = 3;
+    const tasksPerIncrement = 3;
+
     const userId = propUserId || "paul_paw_test";
     
     // track if a task completion is in progress
@@ -115,6 +120,34 @@ function CourseContainer ({
 
     };
 
+    const getDisplayedTaskGroups = () => {
+        const groupedTasks = groupTasksByDate(courseTasks);
+        return groupedTasks.slice(0, tasksToShow);
+    };
+
+    const hasMoreTaskGroups = () => {
+        const groupedTasks = groupTasksByDate(courseTasks);
+        return groupedTasks.length > tasksToShow;
+    };
+
+    const canCollapseTaskGroups = () => {
+        return tasksToShow > initialTasksToShow;
+    };
+
+    const handleShowMoreTaskGroups = () => {
+        const groupedTasks = groupTasksByDate(courseTasks);
+        setTasksToShow(prev => Math.min(prev + tasksPerIncrement, groupedTasks.length));
+    };
+
+    const handleCollapseTaskGroups = () => {
+        setTasksToShow(initialTasksToShow);
+    };
+
+    // Reset tasksToShow when refreshKey changes
+    useEffect(() => {
+        setTasksToShow(initialTasksToShow);
+    }, [refreshKey, courseId]);
+
     return (
         <div className={`flex flex-col rounded-lg bg-gradient-to-bl from-${color}-100 to-${color}-200 p-3 pt-5`}>
             <div className="mb-4">
@@ -175,7 +208,7 @@ function CourseContainer ({
                         
                         {!isTasksCollapsed && (
                             <div>
-                                {groupTasksByDate(courseTasks).map(({ date, tasks: dateTasks }) => (
+                                {getDisplayedTaskGroups().map(({ date, tasks: dateTasks }) => (
                                     <div key={`${courseId}-${date}`} className="mb-3">
                                         <MultipleTaskContainer 
                                             tasks={dateTasks}
@@ -188,6 +221,29 @@ function CourseContainer ({
                                         />
                                     </div>
                                 ))}
+                                
+                                {(hasMoreTaskGroups() || canCollapseTaskGroups()) && (
+                                    <div className="flex justify-center mt-3 gap-2">
+                                        {canCollapseTaskGroups() && (
+                                            <button
+                                                onClick={handleCollapseTaskGroups}
+                                                className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex items-center gap-1"
+                                            >
+                                                <span>▲</span>
+                                                Collapse
+                                            </button>
+                                        )}
+                                        {hasMoreTaskGroups() && (
+                                            <button
+                                                onClick={handleShowMoreTaskGroups}
+                                                className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex items-center gap-1"
+                                            >
+                                                <span>▼</span>
+                                                Show {Math.min(tasksPerIncrement, groupTasksByDate(courseTasks).length - tasksToShow)} More
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
