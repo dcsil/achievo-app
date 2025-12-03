@@ -1,284 +1,635 @@
+# Achievo Backend
 
-## Backend Setup
+A Flask-based REST API backend for the Achievo student productivity and gamification app. Provides endpoints for user management, task/assignment tracking, course management, and a blind box rewards system.
 
-### 1. Install dependencies
+## Tech Stack
 
-```
-cd src/backend
-python -m venv venv
+- **Framework**: Flask with Flask-CORS
+- **Database**: Supabase (PostgreSQL)
+- **AI/ML**: Google Gemini API for PDF extraction
+- **Testing**: pytest with coverage reporting
+- **PDF Processing**: pdfplumber for table extraction
+- **External APIs**: Canvas LMS integration
+
+## Prerequisites
+
+- Python 3.8+
+- Supabase URL & key
+- Google Gemini API key
+- Canvas LMS API token (optional, for Canvas integration)
+
+## Setup
+
+### 0. (Optional) Create & Run Virtual Environment
+```bash
+cd backend
+python3 -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
+```
+
+### 1. Install Dependencies
+
+From the backend directory:
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Environment variables
+### 2. Environment Configuration
 
-Copy .env.example → .env and add your Gemini API key:
+Copy `.env.example` to `.env` and configure the following variables:
 
-```
-GEMINI_API_KEY=your_api_key_here
-```
+```bash
+# Google Gemini API (for PDF syllabus extraction)
+GOOGLE_API_KEY=your_google_api_key_here
 
-### 3. Run the backend
+# Supabase Database
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your_supabase_anon_key_here
 
-```
-cd src/backend
-python -m app.main
-```
-
-This starts a Flask server on http://127.0.0.1:5000.
-
-
-### 4. Test locally
-
-	•	Place a sample syllabus.pdf in src/backend/app/storage/uploads/.
-	•	Use curl or Postman:
-
-```
-curl -X POST http://127.0.0.1:5000/extract/events \
-  -F "file=@backend/app/storage/uploads/dummy.pdf"
+# Canvas LMS Integration (optional)
+CANVAS_TOKEN=your_canvas_token_here
 ```
 
-You should see Gemini return extracted tasks/events in Json format.
+**Note**: The Gemini API is used for intelligent extraction of tasks and assignments from course syllabi PDFs.
 
-### 5. Run unit tests
+### 3. Database Setup
 
-Unit tests are written using [pytest](https://docs.pytest.org/). To run all backend unit tests:
+The application uses Supabase as the database. See `database/README.md` for detailed schema setup instructions.
 
-1. Install test dependencies (if not already, including coverage):
+Tables include:
+- `users` - User profiles with points and levels
+- `courses` - Course information
+- `assignments` - Course assignments with due dates
+- `tasks` - Individual tasks (can be standalone or linked to assignments)
+- `blind_box_series` - Collectible blind box series
+- `blind_box_figures` - Individual collectible figures
+- `user_blind_boxes` - User's purchased and opened blind boxes
 
-```
-pip install pytest pytest-cov flask werkzeug
-```
+### 4. Run the Backend
 
-2. From the backend directory, run (with coverage):
+From the backend directory:
 
-```
-pytest --cov=app app/utils/test_file_utils.py
-```
-
-Or, from the project root (with coverage):
-
-```
-pytest --cov=backend/app backend/app/utils/test_file_utils.py
-```
-
-This will show a coverage report in the terminal. You can add more tests in the `app/utils/` directory as needed.
-All tests should pass. You can add more tests in the `app/utils/` directory as needed.
-
-
-## Gamification API Reference
-
-This section documents the gamification-related endpoints added for the frontend. All endpoints are served by the Flask app on http://127.0.0.1:5000 unless configured otherwise.
-
-Notes
-- All responses are JSON. Errors follow the shape: { "error": "message" } with an appropriate HTTP status code.
-- Example requests below use curl with explicit JSON bodies to avoid quoting issues.
-
-### 1) List Blind Box Series
-- Method/Path: GET /db/blind-box-series
-- Purpose: Return all available blind box series.
-
-Example
-```
-curl -X GET http://127.0.0.1:5000/db/blind-box-series
+```bash
+cd app
+python3 main.py
 ```
 
-Sample response
+The Flask server will start at **http://127.0.0.1:5000**
+
+### 5. Testing
+
+The project uses pytest with comprehensive test coverage.
+
+#### Run All Tests
+
+From the backend directory:
+
+```bash
+pytest
+```
+
+#### Run Tests with Coverage
+
+```bash
+pytest --cov=app --cov-report=html
+```
+
+#### Run Specific Test Files
+
+```bash
+# Test file utilities
+pytest app/utils/test_file_utils.py
+
+# Test tasks API
+pytest app/services/test_tasks_api.py
+
+# Test all API endpoints
+pytest app/services/test_*.py
+```
+
+#### Test Configuration
+
+- **pytest.ini**: Configures test discovery and coverage options
+- **conftest.py**: Shared fixtures for Flask app and test client
+- Test files follow the pattern `test_*.py` in `app/services/` and `app/utils/`
+
+All tests should pass before committing changes.
+
+## Project Structure
+
+```
+backend/
+├── app/
+│   ├── main.py              # Flask application with all API routes
+│   ├── services/            # Business logic and API tests
+│   │   ├── canvas.py        # Canvas LMS API integration
+│   │   ├── read_syllabi.py  # Gemini-based syllabus PDF extraction
+│   │   ├── read_timetable.py # Timetable PDF processing
+│   │   └── test_*.py        # API endpoint tests
+│   ├── utils/               # Utility functions
+│   │   ├── file_utils.py    # File upload and PDF processing
+│   │   └── test_file_utils.py # Unit tests for file utilities
+│   └── storage/uploads/     # Uploaded file storage for dummy data
+├── database/                # Database layer
+│   ├── db_client.py         # Supabase client factory
+│   ├── *_repository.py      # Data access objects (DAOs), one for each table
+│   ├── supabase_schema.sql  # Database schema
+│   └── README.md            # Database-specific setup guide
+├── conftest.py              # Pytest shared fixtures
+├── pytest.ini               # Pytest configuration
+├── requirements.txt         # Python dependencies
+├── README.md                # Overall backend setup guide
+└── .env                     # Environment variables (not in git)
+```
+
+## Key Features
+
+### 1. Task & Assignment Management
+- Create, update, delete tasks and assignments
+- Link tasks to assignments for micro-task breakdown
+- Track completion status and due dates
+- Support for various task types (study, assignment, reading, exercise, etc.)
+
+### 2. Course Management
+- Import courses from Canvas LMS
+- Extract courses from timetable PDFs
+- Track course progress based on completed assignments/tasks
+- Color-coded course organization
+
+### 3. Gamification System
+- **Points & Levels**: Users earn points by completing tasks/assignments
+- **Blind Box Rewards**: Purchase collectible figures with earned points
+- **Rarity System**: Figures have different rarity levels (common, rare, epic, legendary)
+- **Progress Tracking**: Visual progress indicators for courses and overall level
+
+### 4. PDF Processing
+- **Timetable Extraction**: Automatically parse timetable PDFs to create courses and recurring class tasks
+- **Syllabus Extraction** (commented): AI-powered extraction of assignments from syllabi using Gemini
+
+### 5. Canvas Integration
+- Fetch courses and assignments from Canvas LMS
+- Sync assignment due dates and details
+
+## API Reference
+
+All endpoints are served at **http://127.0.0.1:5000** by default.
+
+### Response Format
+- **Success**: JSON data with appropriate 2xx status code
+- **Error**: `{"error": "message"}` with appropriate error status code
+
+### Authentication Endpoints
+
+#### POST `/auth/signup`
+Create a new user account.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword",
+  "canvas_username": "username"
+}
+```
+
+#### POST `/auth/login`
+Authenticate user and return user data.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password"
+}
+```
+
+### User Endpoints
+
+#### GET `/db/users`
+List all users (admin/testing purposes).
+
+#### POST `/db/users`
+Create a new user.
+
+**Request Body:**
+```json
+{
+  "user_id": "unique_id",
+  "email": "user@example.com",
+  "canvas_username": "canvas_user",
+  "total_points": 0,
+  "current_level": 1
+}
+```
+
+#### PUT `/db/users/<user_id>`
+Update user information (points, level, etc.).
+
+#### DELETE `/db/users/<user_id>`
+Delete a user.
+
+#### GET `/db/users/<user_id>/figures`
+Get user's collected blind box figures with pagination and filters.
+
+**Query Parameters:**
+- `limit` (int, default: 50) - Number of results per page
+- `offset` (int, default: 0) - Pagination offset
+- `rarity` (string, optional) - Filter by rarity
+- `series_id` (string, optional) - Filter by series
+
+**Example:**
+```bash
+curl "http://127.0.0.1:5000/db/users/paul_paw_test/figures?limit=10&rarity=rare"
+```
+
+#### GET `/db/users/<user_id>/progress`
+Get user's level progression information.
+
+**Response:**
+```json
+{
+  "user_id": "paul_paw_test",
+  "total_points": 500,
+  "current_level": 3,
+  "next_level": 4,
+  "next_level_points": 900,
+  "progress_percent": 55,
+  "points_into_level": 220,
+  "points_required_for_next": 400
+}
+```
+
+### Task Endpoints
+
+#### GET `/db/tasks`
+Get tasks for a user with optional filters.
+
+**Query Parameters (all optional except user_id):**
+- `user_id` (required) - User ID
+- `assignment_id` - Filter by assignment
+- `course_id` - Filter by course
+- `is_completed` (bool) - Filter by completion status
+
+#### GET `/db/tasks/combined`
+Get tasks combined with assignment details and completion metadata.
+
+**Query Parameters:**
+- `user_id` (required)
+- `is_completed` (bool, optional)
+
+#### POST `/db/tasks`
+Create a new task.
+
+**Request Body:**
+```json
+{
+  "user_id": "user_id",
+  "description": "Complete reading chapter 5",
+  "scheduled_start_at": "2025-12-05T14:00:00Z",
+  "scheduled_end_at": "2025-12-05T16:00:00Z",
+  "task_type": "reading",
+  "course_id": "COURSE123",
+  "assignment_id": "ASSIGN456"
+}
+```
+
+#### PUT `/db/tasks/<task_id>`
+Update a task.
+
+#### POST `/db/tasks/<task_id>/complete`
+Mark a task as complete and award points.
+
+**Request Body:**
+```json
+{
+  "user_id": "user_id"
+}
+```
+
+**Response:**
+```json
+{
+  "status": "completed",
+  "points_earned": 10,
+  "new_total_points": 510,
+  "level_up": false
+}
+```
+
+#### DELETE `/db/tasks/<task_id>`
+Delete a task.
+
+### Assignment Endpoints
+
+#### GET `/db/assignments`
+Get assignments with optional course filter.
+
+**Query Parameters:**
+- `course_id` (optional)
+
+#### GET `/db/assignments/<assignment_id>`
+Get a specific assignment by ID.
+
+#### POST `/db/assignments`
+Create a new assignment.
+
+**Request Body:**
+```json
+{
+  "assignment_id": "ASSIGN123",
+  "course_id": "COURSE456",
+  "title": "Final Essay",
+  "due_date": "2025-12-15T23:59:00Z",
+  "completion_points": 200,
+  "weight": 30
+}
+```
+
+#### PUT `/db/assignments/<assignment_id>`
+Update an assignment.
+
+#### DELETE `/db/assignments/<assignment_id>`
+Delete an assignment.
+
+#### GET `/db/assignments/progress`
+Get assignment progress for a user with task completion details.
+
+**Query Parameters:**
+- `user_id` (required)
+- `course_id` (optional)
+
+**Response:**
 ```json
 [
-	{ "series_id": "S1", "name": "Study Buddies", "description": "Cute helpers", "cost_points": 50, "release_date": "2025-11-01" }
+  {
+    "assignment_id": "A1",
+    "course_id": "COURSE123",
+    "title": "Essay",
+    "due_date": "2025-11-20",
+    "completion_points": 200,
+    "is_complete": false,
+    "task_count": 5,
+    "completed_task_count": 3,
+    "percent_complete": 60
+  }
 ]
 ```
 
-### 2) Affordable Series for a User
-- Method/Path: GET /db/blind-box-series/affordable?user_id=USER
-- Purpose: Return series the user can afford given their current points and echo user_points.
+### Course Endpoints
 
-Example
-```
-curl -X GET "http://127.0.0.1:5000/db/blind-box-series/affordable?user_id=paul_paw_test"
-```
+#### GET `/db/courses`
+List all courses.
 
-Sample response
+#### POST `/db/courses`
+Create a new course.
+
+**Request Body:**
 ```json
 {
-	"user_id": "paul_paw_test",
-	"user_points": 500,
-	"affordable_series": [
-		{ "series_id": "S1", "name": "Study Buddies", "description": "Cute helpers", "cost_points": 50, "release_date": "2025-11-01" }
-	]
+  "course_id": "CSC301",
+  "course_name": "Introduction to Software Engineering",
+  "term": "2025 Fall",
+  "color": "blue",
+  "date_imported_at": "2025-12-03T10:00:00Z"
 }
 ```
 
-### 3) Purchase Preview
-- Method/Path: GET /db/blind-boxes/preview?user_id=USER
-- Purpose: Convenience preview with current user_points and affordable_series.
+#### GET `/db/courses/progress`
+Get progress summary for all courses for a user.
 
-Example
-```
-curl -X GET "http://127.0.0.1:5000/db/blind-boxes/preview?user_id=paul_paw_test"
-```
+**Query Parameters:**
+- `user_id` (required)
 
-Sample response
-```json
-{
-	"user_id": "paul_paw_test",
-	"user_points": 500,
-	"affordable_series": [
-		{ "series_id": "S1", "name": "Study Buddies", "description": "Cute helpers", "cost_points": 50, "release_date": "2025-11-01" }
-	]
-}
-```
-
-### 4) User Inventory (Figures)
-- Method/Path: GET /db/users/{user_id}/figures
-- Query params: limit (int, default 50), offset (int, default 0), rarity (string), series_id (string)
-- Purpose: Paginated, filterable list of awarded figures for the user.
-
-Example
-```
-curl -X GET "http://127.0.0.1:5000/db/users/paul_paw_test/figures?limit=10&offset=0&rarity=rare"
-```
-
-Sample response
-```json
-{
-	"total": 3,
-	"limit": 10,
-	"offset": 0,
-	"results": [
-		{
-			"purchase_id": "...",
-			"user_id": "paul_paw_test",
-			"series_id": "S1",
-			"purchased_at": "2025-11-12T12:00:00",
-			"opened_at": "2025-11-12T12:00:00",
-			"awarded_figure_id": "F3",
-			"figure_name": "Phoenix Coach",
-			"figure_rarity": "rare",
-			"series_name": "Study Buddies"
-		}
-	]
-}
-```
-
-### 5) Assignment Progress (per user, optional course filter)
-- Method/Path: GET /db/assignments/progress?user_id=USER[&course_id=COURSE]
-- Purpose: Return assignments augmented with task_count, completed_task_count, and percent_complete for that user.
-
-Example
-```
-curl -X GET "http://127.0.0.1:5000/db/assignments/progress?user_id=paul_paw_test&course_id=COURSE123"
-```
-
-Sample response
+**Response:**
 ```json
 [
-	{
-		"assignment_id": "A1",
-		"course_id": "COURSE123",
-		"title": "Essay",
-		"due_date": "2025-11-20",
-		"completion_points": 200,
-		"is_complete": false,
-		"task_count": 2,
-		"completed_task_count": 1,
-		"percent_complete": 50
-	}
+  {
+    "course_id": "COURSE123",
+    "course_name": "Intro to Testing",
+    "color": "blue",
+    "assignment_count": 5,
+    "completed_assignment_count": 2,
+    "task_count": 20,
+    "completed_task_count": 15,
+    "overall_percent": 62
+  }
 ]
 ```
 
-### 6) Course Progress Roll-up
-- Method/Path: GET /db/courses/progress?user_id=USER
-- Purpose: Per-course roll-up of assignment and task completion with overall_percent.
+### Blind Box & Gamification Endpoints
 
-Example
-```
-curl -X GET "http://127.0.0.1:5000/db/courses/progress?user_id=paul_paw_test"
-```
+#### GET `/db/blind-box-series`
+List all available blind box series.
 
-Sample response
+**Response:**
 ```json
 [
-	{
-		"course_id": "COURSE123",
-		"course_name": "Intro to Testing",
-		"color": "blue",
-		"assignment_count": 1,
-		"completed_assignment_count": 0,
-		"task_count": 2,
-		"completed_task_count": 1,
-		"overall_percent": 50
-	}
+  {
+    "series_id": "S1",
+    "name": "Study Buddies",
+    "description": "Cute study helpers",
+    "cost_points": 50,
+    "release_date": "2025-11-01"
+  }
 ]
 ```
 
-### 7) User Level Progress
-- Method/Path: GET /db/users/{user_id}/progress
-- Purpose: Return current level, next level points, and progress percent calculated from total_points.
+#### POST `/db/blind-box-series`
+Create a new blind box series (admin).
 
-Example
-```
-curl -X GET http://127.0.0.1:5000/db/users/paul_paw_test/progress
-```
+#### DELETE `/db/blind-box-series/<series_id>`
+Delete a blind box series (admin).
 
-Sample response
+#### GET `/db/blind-box-series/affordable`
+Get blind box series that a user can afford.
+
+**Query Parameters:**
+- `user_id` (required)
+
+**Response:**
 ```json
 {
-	"user_id": "paul_paw_test",
-	"total_points": 500,
-	"current_level": 3,
-	"next_level": 4,
-	"next_level_points": 900,
-	"progress_percent": 0,
-	"points_into_level": 0,
-	"points_required_for_next": 400
+  "user_id": "paul_paw_test",
+  "user_points": 500,
+  "affordable_series": [
+    {
+      "series_id": "S1",
+      "name": "Study Buddies",
+      "cost_points": 50
+    }
+  ]
 }
 ```
 
-### 8) Dashboard (Batch)
-- Method/Path: GET /db/dashboard?user_id=USER
-- Purpose: Single call returning user, tasks (today/upcoming), per-course progress, and level progress.
+#### GET `/db/blind-box-figures`
+List all figures, optionally filtered by series.
 
-Example
-```
-curl -X GET "http://127.0.0.1:5000/db/dashboard?user_id=paul_paw_test"
-```
+**Query Parameters:**
+- `series_id` (optional)
 
-Sample response (abridged)
+#### POST `/db/blind-box-figures`
+Create a new blind box figure (admin).
+
+#### DELETE `/db/blind-box-figures/<figure_id>`
+Delete a blind box figure (admin).
+
+#### POST `/db/blind-boxes/purchase`
+Purchase a blind box and receive a random figure.
+
+**Request Body:**
 ```json
 {
-	"user": { "user_id": "paul_paw_test", "canvas_username": "Paul", "total_points": 500, "current_level": 3 },
-	"tasks": {
-		"today": [ { "task_id": "T1", "description": "Outline essay", "scheduled_end_at": "2025-11-12T00:00:00Z" } ],
-		"upcoming": [ { "task_id": "T2", "description": "Write first draft", "scheduled_end_at": "2025-11-13T00:00:00Z" } ]
-	},
-	"courses": [ { "course_id": "COURSE123", "overall_percent": 50 } ],
-	"level_progress": { "current_level": 3, "next_level": 4, "progress_percent": 0 }
+  "user_id": "paul_paw_test",
+  "series_id": "S1"  // optional - random affordable series if omitted
 }
 ```
 
-### Related (existing) Blind Box Purchase
-- Method/Path: POST /db/blind-boxes/purchase
-- Body: { "user_id": "...", "series_id": "..." } (omit series_id to buy a random affordable series)
-- Purpose: Deduct points, award a random figure from the series, and record purchase.
-
-Example
-```
-curl -X POST http://127.0.0.1:5000/db/blind-boxes/purchase \
-	-H "Content-Type: application/json" \
-	-d '{"user_id":"paul_paw_test","series_id":"S1"}'
-```
-
-Sample response
+**Response:**
 ```json
 {
-	"status": "purchased",
-	"purchase_id": "...",
-	"series_id": "S1",
-	"series_name": "Study Buddies",
-	"cost_points": 50,
-	"awarded_figure": { "figure_id": "F1", "name": "Cat Mentor", "rarity": "common" },
-	"remaining_points": 450
+  "status": "purchased",
+  "purchase_id": "uuid",
+  "series_id": "S1",
+  "series_name": "Study Buddies",
+  "cost_points": 50,
+  "awarded_figure": {
+    "figure_id": "F1",
+    "name": "Cat Mentor",
+    "rarity": "common"
+  },
+  "remaining_points": 450
 }
 ```
+
+#### DELETE `/db/user-blind-boxes/<purchase_id>`
+Delete a user's blind box purchase (admin/cleanup).
+
+#### GET `/db/blind-boxes/preview`
+Preview affordable series and user points (convenience endpoint).
+
+**Query Parameters:**
+- `user_id` (required)
+
+### Dashboard & Aggregation Endpoints
+
+#### GET `/db/dashboard`
+Get consolidated dashboard data in a single request.
+
+**Query Parameters:**
+- `user_id` (required)
+
+**Response:**
+```json
+{
+  "user": {
+    "user_id": "paul_paw_test",
+    "canvas_username": "Paul",
+    "total_points": 500,
+    "current_level": 3
+  },
+  "tasks": {
+    "today": [
+      {
+        "task_id": "T1",
+        "description": "Study for midterm",
+        "scheduled_end_at": "2025-12-03T18:00:00Z",
+        "is_completed": false
+      }
+    ],
+    "upcoming": [
+      {
+        "task_id": "T2",
+        "description": "Submit assignment",
+        "scheduled_end_at": "2025-12-05T23:59:00Z"
+      }
+    ]
+  },
+  "courses": [
+    {
+      "course_id": "COURSE123",
+      "course_name": "Software Engineering",
+      "overall_percent": 75
+    }
+  ],
+  "level_progress": {
+    "current_level": 3,
+    "next_level": 4,
+    "progress_percent": 55
+  }
+}
+```
+
+### File Processing Endpoints
+
+#### POST `/api/timetable/process`
+Upload and process a timetable PDF to extract courses and generate recurring class tasks.
+
+**Form Data:**
+- `file` (PDF file) - Timetable PDF
+- `user_id` (string) - User ID
+- `term` (string) - e.g., "2025 Fall"
+- `start_date` (ISO date) - Term start date
+- `end_date` (ISO date) - Term end date
+
+**Response:**
+```json
+{
+  "status": "success",
+  "courses_created": 5,
+  "tasks_created": 120,
+  "courses": [...],
+  "tasks": [...]
+}
+```
+
+**Note**: Syllabus processing endpoint (`/api/syllabi/process`) is currently commented out but available in code for AI-based assignment extraction.
+
+## Points & Leveling System
+
+### Earning Points
+- Completing tasks: 10 points per task
+- Completing assignments: Points based on `completion_points` field
+- Manual point adjustments via user update endpoint
+
+### Level Progression
+Levels are based on total points accumulated:
+- Level 1: 0-99 points
+- Level 2: 100-299 points  
+- Level 3: 300-599 points
+- Level 4: 600-999 points
+- Level 5+: Continues scaling
+
+Progress percentage is calculated within the current level range.
+
+## Development Notes
+
+### Adding New Endpoints
+1. Define route in `app/main.py`
+2. Create/update repository in `database/` if needed
+3. Add tests in `app/services/test_*_api.py`
+4. Update this README
+
+### Common Issues
+
+**Import Errors**: Ensure you're running from the correct directory and the virtual environment is activated.
+
+**Database Connection**: Verify `.env` has correct `SUPABASE_URL` and `SUPABASE_KEY`.
+
+**File Upload Issues**: Check that `backend/app/storage/uploads/` directory exists and has write permissions.
+
+**Test Failures**: Run `pytest -v` for verbose output. Ensure test database is properly configured.
+
+## Related Documentation
+
+- **Database Setup**: See `database/README.md` for schema details
+- **Supabase Schema**: See `database/supabase_schema.sql` for table definitions
+- **Frontend Integration**: Check frontend README for API consumption patterns
+
+## Contributing
+
+1. Create a feature branch from `main`
+2. Make changes and add tests
+3. Run `pytest` to ensure all tests pass
+4. Update this README if adding new features or endpoints
+5. Submit a pull request
