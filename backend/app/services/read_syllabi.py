@@ -133,36 +133,34 @@ Output Format:
 def add_ids_to_extracted_data(extracted_data: dict, user_id: str = "paul_paw_test", course_id: str = None) -> dict:
     """Add unique IDs to assignments and tasks extracted from PDF."""
     
-    # Process assignments - add assignment_id and user_id
     assignments_with_ids = []
     for assignment in extracted_data.get("assignments", []):
         assignment_with_id = {
             "assignment_id": str(uuid.uuid4()),
             "user_id": user_id,
-            "course_id": course_id,  # Use provided course_id
+            "course_id": course_id,  
             "title": assignment.get("title"),
             "due_date": assignment.get("due_date"),
-            "completion_points": assignment.get("weight", 0) * 10 if assignment.get("weight") else 10,  # Convert weight to points
+            "completion_points": assignment.get("weight", 0) * 10 if assignment.get("weight") else 10,  
             "is_complete": False,
-            **assignment  # Include original fields
+            **assignment  
         }
         assignments_with_ids.append(assignment_with_id)
     
-    # Process tasks - add task_id, user_id, and type
     tasks_with_ids = []
     for task in extracted_data.get("tasks", []):
         task_with_id = {
             "task_id": str(uuid.uuid4()),
             "user_id": user_id,
             "description": task.get("title"),
-            "type": "exam",  # Since these are exam/quiz tasks
-            "assignment_id": None,  # Standalone tasks
-            "course_id": course_id,  # Use provided course_id
+            "type": "exam",  
+            "assignment_id": None,  
+            "course_id": course_id,  
             "scheduled_start_at": task.get("scheduled_start_at"),
             "scheduled_end_at": task.get("scheduled_end_at"),
             "is_completed": False,
-            "reward_points": task.get("weight", 0) if task.get("weight") else 10,  # Convert weight to points
-            **task  # Include original fields
+            "reward_points": task.get("weight", 0) if task.get("weight") else 10,  
+            **task 
         }
         tasks_with_ids.append(task_with_id)
     
@@ -276,7 +274,6 @@ All micro-tasks must fit between "{prev_due_date}" and "{curr_due_date}", never 
 
         micro_tasks_raw = json.loads(response.text)
         
-        # Add IDs and metadata to micro-tasks
         micro_tasks_with_ids = []
         for micro_task in micro_tasks_raw:
             micro_task_with_id = {
@@ -285,12 +282,12 @@ All micro-tasks must fit between "{prev_due_date}" and "{curr_due_date}", never 
                 "description": micro_task.get("title"),
                 "type": "assignment",
                 "assignment_id": assignment_id,
-                "course_id": assignment.get("course_id"),  # Inherit from assignment
+                "course_id": assignment.get("course_id"),  
                 "scheduled_start_at": micro_task.get("scheduled_start_at"),
                 "scheduled_end_at": micro_task.get("scheduled_end_at"),
                 "is_completed": False,
-                "reward_points": 10,  # Default micro-task points
-                **micro_task  # Include original fields
+                "reward_points": 10,  
+                **micro_task  
             }
             micro_tasks_with_ids.append(micro_task_with_id)
         
@@ -299,15 +296,14 @@ All micro-tasks must fit between "{prev_due_date}" and "{curr_due_date}", never 
 
     return {"assignments": assignments_with_micro}
 
-# Example workflow (replace busy and pdf_path as needed):
 if __name__ == "__main__":
-    # Step 1: Extract base assignments (ignore tasks below for microdeadline purposes)
+
     output = extract_tasks_assignments_from_pdf(pdf_path)
     print(json.dumps(output, indent=2))
     base_assignments = output["assignments"]
-    # Step 2: For each assignment, generate micro-tasks
+
     result = generate_assignment_microtasks(base_assignments, busy, default_micro_task_count=3)
     print(json.dumps(result, indent=2))
-    # Step 2: For each assignment, generate micro-tasks
+
     result = generate_assignment_microtasks(base_assignments, busy, default_micro_task_count=3)
     print(json.dumps(result, indent=2))
