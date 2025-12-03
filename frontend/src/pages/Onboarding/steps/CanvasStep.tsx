@@ -9,10 +9,11 @@ const CanvasStep: React.FC<OnboardingStepProps> = ({ onNext, onBack, onSkip }) =
 
   // Dummy courses data
   const detectedCourses = [
-    { id: 'CSC454', name: 'The Business of Software' },
-    { id: 'CSC491', name: 'Capstone Design Project' },
-    { id: 'PHL277', name: 'Ethics and Data' },
-    { id: 'STA355', name: 'Theory of Statistical Practice' }
+    { id: 'HPS246', name: 'Data and Society: Whats Behind the Numbers?' },
+    { id: 'LIN200', name: 'Introduction to Language' },
+    { id: 'CSC318', name: 'The Design of Interactive Computational Media' },
+    { id: 'CSC413', name: 'Neural Networks and Deep Learning' },
+    { id: 'STA414', name: 'Statistical Methods for Machine Learning II' }
   ];
 
   const handlePermission = () => {

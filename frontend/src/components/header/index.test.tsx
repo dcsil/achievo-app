@@ -179,8 +179,8 @@ describe('Header Component', () => {
       const bellButton = screen.getByLabelText('Notifications');
       fireEvent.click(bellButton);
 
-      expect(screen.getByText('Canvas marked Assignment 2 for CSC454 as complete! Reward: 30 points')).toBeInTheDocument();
-      expect(screen.getByText('Assignment 3 has been added for CSC454')).toBeInTheDocument();
+      expect(screen.getByText('Canvas marked Assignment 0 for HPS246 as complete! Reward: 30 points')).toBeInTheDocument();
+      expect(screen.getByText('Assignment 1 has been added for HPS246')).toBeInTheDocument();
     });
 
     it('displays notification timestamps', () => {
@@ -189,9 +189,9 @@ describe('Header Component', () => {
       const bellButton = screen.getByLabelText('Notifications');
       fireEvent.click(bellButton);
 
-      expect(screen.getByText('2h ago')).toBeInTheDocument();
-      expect(screen.getByText('5h ago')).toBeInTheDocument();
-      expect(screen.getByText('1d ago')).toBeInTheDocument();
+      expect(screen.getByText('0 min ago')).toBeInTheDocument();
+      expect(screen.getByText('1 min ago')).toBeInTheDocument();
+      expect(screen.getByText('2 min ago')).toBeInTheDocument();
     });
 
     it('displays view all notifications button', () => {

@@ -21,24 +21,24 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
       id: 1,
       type: 'completion',
       title: '✅ Assignment Completed',
-      description: 'Canvas marked Assignment 2 for CSC454 as complete! Reward: 30 points',
-      timestamp: '2h ago',
+      description: 'Canvas marked Assignment 0 for HPS246 as complete! Reward: 30 points',
+      timestamp: '0 min ago',
       isRead: false
     },
     {
       id: 2,
       type: 'new_assignment',
       title: '📝 New Assignment Added',
-      description: 'Assignment 3 has been added for CSC454',
-      timestamp: '5h ago',
+      description: 'Assignment 1 has been added for HPS246',
+      timestamp: '1 min ago',
       isRead: false
     },
     {
       id: 3,
       type: 'deadline_update',
       title: '⏰ Deadline Updated',
-      description: 'Assignment 3 deadline has been updated to 11/31 11:59PM',
-      timestamp: '1d ago',
+      description: 'Assignment 0 deadline has been updated to 11/31 11:59PM',
+      timestamp: '2 min ago',
       isRead: true
     }
   ];
