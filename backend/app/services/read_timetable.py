@@ -11,21 +11,147 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 from app.utils.file_utils import extract_tables_from_pdf
 
 user_id = "paul_paw_test"
-term = "2025 Fall"
 assignment_id = None
 pdf_path = "backend/app/storage/uploads/timetable.pdf"
 
-original_start_date = date_parse("2025-09-02")
+def detect_term_from_pdf(pdf_path):
+    """
+    Detect the academic term from PDF content.
+    Looks for term indicators in the extracted text.
+    Defaults to Winter 2026 if no term is detected.
+    """
+    try:
+        from app.utils.file_utils import extract_tables_from_pdf
+        tables = extract_tables_from_pdf(pdf_path)
+        
+        # Convert all table content to text for searching
+        pdf_text = ""
+        for table in tables:
+            for row in table:
+                for cell in row:
+                    if cell:
+                        pdf_text += str(cell).lower() + " "
+        
+        print(f"PDF text for term detection: {pdf_text[:200]}...")  # Debug output
+        
+        # Look for explicit term mentions in title first (most reliable)
+        if "2026 winter timetable" in pdf_text:
+            return "2026 Winter"
+        elif "2025 fall timetable" in pdf_text:
+            return "2025 Fall"
+        elif "winter timetable" in pdf_text and "2026" in pdf_text:
+            return "2026 Winter"
+        elif "fall timetable" in pdf_text and "2025" in pdf_text:
+            return "2025 Fall"
+        
+        # Look for term indicators with course code patterns
+        # CSC318H1 S indicates Winter semester (S = Winter/Spring)
+        # CSC318H1 F indicates Fall semester
+        has_fall_courses = " f " in pdf_text or "h1 f" in pdf_text
+        has_winter_courses = " s " in pdf_text or "h1 s" in pdf_text
+        
+        # Check for year indicators
+        has_2025 = "2025" in pdf_text
+        has_2026 = "2026" in pdf_text
+        
+        # Determine term based on course suffixes and year
+        if has_winter_courses and has_2026:
+            return "2026 Winter"
+        elif has_winter_courses and not has_fall_courses:
+            return "2026 Winter"  # Default to 2026 Winter if we see S courses
+        elif has_fall_courses and has_2025:
+            return "2025 Fall"
+        elif has_fall_courses and not has_winter_courses:
+            return "2025 Fall"
+        elif "winter" in pdf_text and "2026" in pdf_text:
+            return "2026 Winter"
+        elif "fall" in pdf_text and "2025" in pdf_text:
+            return "2025 Fall"
+        elif "winter" in pdf_text:
+            return "2026 Winter"
+        elif "fall" in pdf_text:
+            return "2025 Fall"
+        else:
+            # Default to Winter 2026 if we can't determine (updated default)
+            print("No clear term detected in PDF, defaulting to Winter 2026")
+            return "2026 Winter"
+            
+    except Exception as e:
+        print(f"Error detecting term from PDF: {e}")
+        # Default to Winter 2026 if PDF reading fails
+        return "2026 Winter"
+
+def get_term_schedule(term_str: str):
+    """
+    Return schedule config (start/end dates, breaks, holidays) for a given term string.
+    Supported: 'Fall' and 'Winter' terms. Adjust dates as needed per academic calendar.
+    """
+    # Clean the term string and extract meaningful parts
+    clean_term = term_str.strip().lower()
+    
+    # Fall term example: Sep–Dec 2025
+    if 'fall' in clean_term:
+        original_start_date = date_parse("2025-09-02")
+        end_date = date_parse("2025-12-02")
+        breaks = [
+            # Fall Reading Week
+            (date_parse("2025-10-27"), date_parse("2025-10-31")),
+        ]
+        holidays = [
+            # Thanksgiving (Canada)
+            date_parse("2025-10-13"),
+        ]
+    # Winter term example: Jan–Apr 2026
+    elif 'winter' in clean_term:
+        original_start_date = date_parse("2026-01-06")
+        end_date = date_parse("2026-04-10")
+        breaks = [
+            # Winter Reading Week (typical mid-Feb)
+            (date_parse("2026-02-16"), date_parse("2026-02-20")),
+        ]
+        holidays = [
+            # Family Day (Canada)
+            date_parse("2026-02-16"),
+            # Good Friday (Canada)
+            date_parse("2026-04-03"),
+        ]
+    else:
+        # Fallback: Default to Winter 2026 schedule
+        original_start_date = date_parse("2026-01-06")
+        end_date = date_parse("2026-04-10")
+        breaks = [
+            (date_parse("2026-02-16"), date_parse("2026-02-20")),
+        ]
+        holidays = [
+            date_parse("2026-02-16"),
+            date_parse("2026-04-03"),
+        ]
+
+    return {
+        "original_start_date": original_start_date,
+        "end_date": end_date,
+        "breaks": breaks,
+        "holidays": holidays,
+    }
+
+# Detect term from PDF and get corresponding schedule - make this available at module level
+try:
+    if os.path.exists(pdf_path):
+        term = detect_term_from_pdf(pdf_path)
+    else:
+        term = "2026 Winter"
+except Exception as e:
+    print(f"Error during module-level term detection: {e}")
+    term = "2026 Winter"
+
+schedule_config = get_term_schedule(term)
+original_start_date = schedule_config["original_start_date"]
 current_date = datetime.now().date()
 start_date = max(original_start_date.date(), current_date)
-start_date = datetime.combine(start_date, datetime.min.time())  # Convert back to datetime
-end_date = date_parse("2025-12-02")
-breaks = [
-    (date_parse("2025-10-27"), date_parse("2025-10-31")),
-]
-holidays = [
-    date_parse("2025-10-13"),
-]
+start_date = datetime.combine(start_date, datetime.min.time())
+end_date = schedule_config["end_date"]
+breaks = schedule_config["breaks"]
+holidays = schedule_config["holidays"]
 
 def extract_timetable_courses(pdf_path, user_id, term):
     """
@@ -62,7 +188,9 @@ def extract_timetable_courses(pdf_path, user_id, term):
                             "date_imported_at": date_imported_at,
                             "term": term,
                             "color": random.choice(colors),
-                            "meeting_sessions": []
+                            "meeting_days": [],
+                            "meeting_times": [],
+                            "meeting_sessions": []  # Keep for internal use
                         }
                     
                     # Add meeting session if not already present
@@ -79,6 +207,11 @@ def extract_timetable_courses(pdf_path, user_id, term):
                     
                     if not session_exists:
                         courses[course_code]["meeting_sessions"].append(session)
+                        # Also add to frontend-expected arrays
+                        if meeting_day not in courses[course_code]["meeting_days"]:
+                            courses[course_code]["meeting_days"].append(meeting_day)
+                        if time_label and time_label not in courses[course_code]["meeting_times"]:
+                            courses[course_code]["meeting_times"].append(time_label)
     
     return list(courses.values())
 
@@ -216,9 +349,38 @@ def generate_tasks_for_courses(courses, user_id, assignment_id, start_date, end_
                     tasks.append(task)
     return tasks
 
+# Export functions and variables for use in other modules
+__all__ = [
+    'detect_term_from_pdf',
+    'get_term_schedule', 
+    'extract_timetable_courses',
+    'parse_time_range',
+    'generate_tasks_for_courses',
+    'term',
+    'user_id',
+    'assignment_id',
+    'start_date',
+    'end_date',
+    'breaks',
+    'holidays'
+]
+
 # Example usage
 if __name__ == "__main__":
-    course_list = extract_timetable_courses(pdf_path, user_id, term)
+    # Detect term from PDF and get appropriate schedule
+    detected_term = detect_term_from_pdf(pdf_path)
+    print(f"Detected term: {detected_term}")
+    
+    schedule_config = get_term_schedule(detected_term)
+    original_start_date = schedule_config["original_start_date"]
+    current_date = datetime.now().date()
+    start_date = max(original_start_date.date(), current_date)
+    start_date = datetime.combine(start_date, datetime.min.time())
+    end_date = schedule_config["end_date"]
+    breaks = schedule_config["breaks"]
+    holidays = schedule_config["holidays"]
+    
+    course_list = extract_timetable_courses(pdf_path, user_id, detected_term)
     tasks = generate_tasks_for_courses(course_list, user_id, assignment_id, start_date, end_date, breaks, holidays)
     num = 0
     for t in tasks:
@@ -226,9 +388,3 @@ if __name__ == "__main__":
             print(t)
             num+=1
     print(f"Total PHLtasks generated: {num}" )
-    # print(f"Total tasks generated: {len(tasks)}" )
-    # for course in course_list:
-    #     print(course)
-    # print(f"Total tasks generated: {len(tasks)}" )
-    # for course in course_list:
-    #     print(course)
