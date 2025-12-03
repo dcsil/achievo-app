@@ -2,7 +2,7 @@ const ENVIRONMENT = (typeof process !== 'undefined' && process.env?.REACT_APP_AP
 
 const API_CONFIG = {
   environment: ENVIRONMENT,
-  
+
   baseUrls: {
     local: 'http://127.0.0.1:5000',
     production: 'https://achievo-app.onrender.com'

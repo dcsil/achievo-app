@@ -138,8 +138,8 @@ async function isUserActive() {
     const result = await chrome.storage.local.get(['isExtensionActive', 'lastActiveTime']);
     const { isExtensionActive, lastActiveTime } = result;
 
-    // Consider user inactive if extension hasn't been used for 10 minutes
-    const inactiveThreshold = 1 * 60 * 1000; // 10 minutes in milliseconds
+    // Consider user inactive if extension hasn't been used for 1 minutes
+    const inactiveThreshold = 1 * 60 * 1000; // 1 minutes in milliseconds
     const isRecentlyActive = (Date.now() - (lastActiveTime || 0)) < inactiveThreshold;
     
     // Only check if side panel is open in the FOCUSED window (not background windows)
