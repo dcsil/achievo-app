@@ -10,6 +10,7 @@ import Button from '../../../components/skip-button';
 
 const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
   const [file, setFile] = useState<File | null>(null);
+  const [selectedTerm, setSelectedTerm] = useState<string>('2025 Fall');
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState<TimetableProcessResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,13 +49,18 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
       return;
     }
 
+    if (!selectedTerm) {
+      setError('Please select a term');
+      return;
+    }
+
     setIsUploading(true);
     setError('');
     setResult(null);
     setSaveSuccess(false);
 
     try {
-      const response = await timetableApiService.processTimetable(file, userId);
+      const response = await timetableApiService.processTimetable(file, userId, selectedTerm);
       setResult(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process timetable');
@@ -135,6 +141,21 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
 
       {/* Upload Section */}
       <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        {/* Term Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Select Academic Term
+          </label>
+          <select
+            value={selectedTerm}
+            onChange={(e) => setSelectedTerm(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="2025 Fall">Fall 2025</option>
+            <option value="2026 Winter">Winter 2026</option>
+          </select>
+        </div>
+
         <PdfUploadForm
           courses={[]}
           selectedCourseId=""

@@ -16,81 +16,21 @@ pdf_path = "backend/app/storage/uploads/timetable.pdf"
 
 def detect_term_from_pdf(pdf_path):
     """
-    Detect the academic term from PDF content.
-    Looks for term indicators in the extracted text.
-    Defaults to Winter 2026 if no term is detected.
+    Legacy function kept for backward compatibility.
+    Returns default term - actual term should be provided by user selection.
     """
-    try:
-        from app.utils.file_utils import extract_tables_from_pdf
-        tables = extract_tables_from_pdf(pdf_path)
-        
-        # Convert all table content to text for searching
-        pdf_text = ""
-        for table in tables:
-            for row in table:
-                for cell in row:
-                    if cell:
-                        pdf_text += str(cell).lower() + " "
-        
-        print(f"PDF text for term detection: {pdf_text[:200]}...")  # Debug output
-        
-        # Look for explicit term mentions in title first (most reliable)
-        if "2026 winter timetable" in pdf_text:
-            return "2026 Winter"
-        elif "2025 fall timetable" in pdf_text:
-            return "2025 Fall"
-        elif "winter timetable" in pdf_text and "2026" in pdf_text:
-            return "2026 Winter"
-        elif "fall timetable" in pdf_text and "2025" in pdf_text:
-            return "2025 Fall"
-        
-        # Look for term indicators with course code patterns
-        # CSC318H1 S indicates Winter semester (S = Winter/Spring)
-        # CSC318H1 F indicates Fall semester
-        has_fall_courses = " f " in pdf_text or "h1 f" in pdf_text
-        has_winter_courses = " s " in pdf_text or "h1 s" in pdf_text
-        
-        # Check for year indicators
-        has_2025 = "2025" in pdf_text
-        has_2026 = "2026" in pdf_text
-        
-        # Determine term based on course suffixes and year
-        if has_winter_courses and has_2026:
-            return "2026 Winter"
-        elif has_winter_courses and not has_fall_courses:
-            return "2026 Winter"  # Default to 2026 Winter if we see S courses
-        elif has_fall_courses and has_2025:
-            return "2025 Fall"
-        elif has_fall_courses and not has_winter_courses:
-            return "2025 Fall"
-        elif "winter" in pdf_text and "2026" in pdf_text:
-            return "2026 Winter"
-        elif "fall" in pdf_text and "2025" in pdf_text:
-            return "2025 Fall"
-        elif "winter" in pdf_text:
-            return "2026 Winter"
-        elif "fall" in pdf_text:
-            return "2025 Fall"
-        else:
-            # Default to Winter 2026 if we can't determine (updated default)
-            print("No clear term detected in PDF, defaulting to Winter 2026")
-            return "2026 Winter"
-            
-    except Exception as e:
-        print(f"Error detecting term from PDF: {e}")
-        # Default to Winter 2026 if PDF reading fails
-        return "2026 Winter"
+    return "2025 Fall"  # Default fallback
 
 def get_term_schedule(term_str: str):
     """
     Return schedule config (start/end dates, breaks, holidays) for a given term string.
-    Supported: 'Fall' and 'Winter' terms. Adjust dates as needed per academic calendar.
+    Supported: 'Fall 2025' and 'Winter 2026' terms.
     """
     # Clean the term string and extract meaningful parts
     clean_term = term_str.strip().lower()
     
-    # Fall term example: Sep–Dec 2025
-    if 'fall' in clean_term:
+    # Fall 2025 term: Sep–Dec 2025
+    if 'fall' in clean_term and '2025' in clean_term:
         original_start_date = date_parse("2025-09-02")
         end_date = date_parse("2025-12-02")
         breaks = [
@@ -101,8 +41,8 @@ def get_term_schedule(term_str: str):
             # Thanksgiving (Canada)
             date_parse("2025-10-13"),
         ]
-    # Winter term example: Jan–Apr 2026
-    elif 'winter' in clean_term:
+    # Winter 2026 term: Jan–Apr 2026
+    elif 'winter' in clean_term and '2026' in clean_term:
         original_start_date = date_parse("2026-01-06")
         end_date = date_parse("2026-04-10")
         breaks = [
@@ -115,8 +55,18 @@ def get_term_schedule(term_str: str):
             # Good Friday (Canada)
             date_parse("2026-04-03"),
         ]
+    # Fallback based on term keyword
+    elif 'fall' in clean_term:
+        original_start_date = date_parse("2025-09-02")
+        end_date = date_parse("2025-12-02")
+        breaks = [
+            (date_parse("2025-10-27"), date_parse("2025-10-31")),
+        ]
+        holidays = [
+            date_parse("2025-10-13"),
+        ]
     else:
-        # Fallback: Default to Winter 2026 schedule
+        # Default to Winter 2026 schedule
         original_start_date = date_parse("2026-01-06")
         end_date = date_parse("2026-04-10")
         breaks = [
@@ -134,15 +84,10 @@ def get_term_schedule(term_str: str):
         "holidays": holidays,
     }
 
-# Detect term from PDF and get corresponding schedule - make this available at module level
-try:
-    if os.path.exists(pdf_path):
-        term = detect_term_from_pdf(pdf_path)
-    else:
-        term = "2026 Winter"
-except Exception as e:
-    print(f"Error during module-level term detection: {e}")
-    term = "2026 Winter"
+# Remove automatic term detection at module level
+# term = detect_term_from_pdf(pdf_path)  # Remove this
+# Use default term that will be overridden by API calls
+term = "2025 Fall"  # Default
 
 schedule_config = get_term_schedule(term)
 original_start_date = schedule_config["original_start_date"]
