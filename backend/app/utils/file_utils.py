@@ -11,13 +11,20 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def handle_file_upload(request, upload_folder=UPLOAD_FOLDER):
+    """Handle file upload with proper path management"""
     if "file" not in request.files:
         return None, (jsonify({"error": "No file uploaded"}), 400)
     file = request.files["file"]
     if file and allowed_file(file.filename):
+        # Ensure upload folder exists and use absolute path
+        abs_upload_folder = os.path.abspath(upload_folder)
+        os.makedirs(abs_upload_folder, exist_ok=True)
+        
+        # Save file with absolute path
         filename = secure_filename(file.filename)
-        filepath = os.path.join(upload_folder, filename)
+        filepath = os.path.join(abs_upload_folder, filename)
         file.save(filepath)
+        
         return filepath, None
     return None, (jsonify({"error": "Invalid file"}), 400)
 

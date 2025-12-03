@@ -1140,6 +1140,15 @@ def process_timetable():
         assignment_id = None
         
         print(f"Processing timetable for user: {user_id}, term: {term}")  # Debug
+        print(f"File path: {filepath}")  # Debug file path
+        
+        # Convert relative path to absolute path if needed
+        if not os.path.isabs(filepath):
+            filepath = os.path.abspath(filepath)
+        
+        # Verify file exists before processing
+        if not os.path.exists(filepath):
+            return jsonify({"error": f"Uploaded file not found at: {filepath}"}), 404
         
         # Get schedule config for the selected term
         from app.services.read_timetable import get_term_schedule
@@ -1162,10 +1171,12 @@ def process_timetable():
         )
         print(f"Generated {len(tasks)} tasks")  # Debug
         
+        # Clean up uploaded file
         try:
             os.remove(filepath)
-        except:
-            pass
+            print(f"Cleaned up file: {filepath}")
+        except Exception as cleanup_error:
+            print(f"Warning: Could not clean up file {filepath}: {cleanup_error}")
         
         return jsonify({
             "status": "success",
@@ -1184,6 +1195,9 @@ def process_timetable():
             }
         }), 200
         
+    except FileNotFoundError as e:
+        print(f"File not found error: {str(e)}")
+        return jsonify({"error": f"File not found: {str(e)}"}), 404
     except Exception as e:
         print(f"Error processing timetable: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -1207,6 +1221,14 @@ def process_syllabi():
         if error_response:
             return error_response
         
+        # Convert relative path to absolute path if needed
+        if not os.path.isabs(filepath):
+            filepath = os.path.abspath(filepath)
+        
+        # Verify file exists before processing
+        if not os.path.exists(filepath):
+            return jsonify({"error": f"Uploaded file not found at: {filepath}"}), 404
+        
         course_id = request.form.get("course_id")
         user_id = request.form.get("user_id", "paul_paw_test")
         
@@ -1228,10 +1250,12 @@ def process_syllabi():
             user_id=user_id
         )
         
+        # Clean up uploaded file
         try:
             os.remove(filepath)
-        except:
-            pass
+            print(f"Cleaned up file: {filepath}")
+        except Exception as cleanup_error:
+            print(f"Warning: Could not clean up file {filepath}: {cleanup_error}")
         
         return jsonify({
             "status": "success",
@@ -1243,6 +1267,9 @@ def process_syllabi():
             "tasks": data_with_ids["tasks"]
         }), 200
         
+    except FileNotFoundError as e:
+        print(f"File not found error: {str(e)}")
+        return jsonify({"error": f"File not found: {str(e)}"}), 404
     except Exception as e:
         print(f"Error processing syllabi: {str(e)}")
         return jsonify({"error": str(e)}), 500

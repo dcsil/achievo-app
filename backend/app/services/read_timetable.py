@@ -11,7 +11,19 @@ from app.utils.file_utils import extract_tables_from_pdf
 
 user_id = "paul_paw_test"
 assignment_id = None
-pdf_path = "backend/app/storage/uploads/timetable.pdf"
+
+# Fix: Use absolute path based on current file location
+def get_upload_path(filename):
+    """Get the absolute path for uploaded files"""
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Go up to backend directory, then to storage/uploads
+    backend_dir = os.path.join(current_dir, '..', '..')
+    upload_dir = os.path.join(backend_dir, 'app', 'storage', 'uploads')
+    
+    # Create directory if it doesn't exist
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    return os.path.join(upload_dir, filename)
 
 def detect_term_from_pdf(pdf_path):
     """
@@ -101,6 +113,10 @@ def extract_timetable_courses(pdf_path, user_id, term):
     """
     Extract course information from timetable PDF.
     """
+    # Verify file exists before processing
+    if not os.path.exists(pdf_path):
+        raise FileNotFoundError(f"PDF file not found: {pdf_path}")
+    
     courses = {}
     date_imported_at = datetime.now().isoformat()
     
@@ -305,8 +321,17 @@ __all__ = [
 
 # Example usage
 if __name__ == "__main__":
+    # Use absolute path for testing
+    test_pdf_path = get_upload_path("timetable.pdf")
+    
+    # Check if file exists before processing
+    if not os.path.exists(test_pdf_path):
+        print(f"Test file not found at: {test_pdf_path}")
+        print("Please ensure the PDF file exists in the uploads directory.")
+        sys.exit(1)
+    
     # Detect term from PDF and get appropriate schedule
-    detected_term = detect_term_from_pdf(pdf_path)
+    detected_term = detect_term_from_pdf(test_pdf_path)
     print(f"Detected term: {detected_term}")
     
     schedule_config = get_term_schedule(detected_term)
@@ -318,7 +343,7 @@ if __name__ == "__main__":
     breaks = schedule_config["breaks"]
     holidays = schedule_config["holidays"]
     
-    course_list = extract_timetable_courses(pdf_path, user_id, detected_term)
+    course_list = extract_timetable_courses(test_pdf_path, user_id, detected_term)
     tasks = generate_tasks_for_courses(course_list, user_id, assignment_id, start_date, end_date, breaks, holidays)
     num = 0
     for t in tasks:
