@@ -4,9 +4,9 @@ interface BlindBoxFigure {
   figure_id: string;
   series_id: string;
   name: string;
-  rarity?: 'common' | 'rare' | 'secret'; // Updated to include secret
+  rarity?: 'common' | 'rare' | 'secret'; 
   weight?: number;
-  image?: string; // Supabase image URL
+  image?: string; // image url
 }
 
 interface BlindBoxFiguresContextType {
