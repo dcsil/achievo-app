@@ -73,7 +73,7 @@ function AppContent() {
         <Route path="/add" element={<Layout><AddPage /></Layout>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </div>
+    </div> 
   );
 }
 
