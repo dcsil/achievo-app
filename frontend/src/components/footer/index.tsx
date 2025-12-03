@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-// Import your custom icons here
 import dashboardIcon from '../../assets/icons/dashboard.svg';
 import todoIcon from '../../assets/icons/todo.svg';
 import addIcon from '../../assets/icons/add.svg';
@@ -15,7 +14,6 @@ const Footer = () => {
   const [showLabels, setShowLabels] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Update active tab based on current route
   useEffect(() => {
     const path = location.pathname;
     if (path === '/' || path === '/home') {
