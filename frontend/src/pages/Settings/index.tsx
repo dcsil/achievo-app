@@ -49,7 +49,7 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
         canvasUsername: user.canvas_username || '',
         canvasDomain: user.canvas_domain || '',
         canvasApiKey: '',
-        email: 'paul.paw@example.com', // Placeholder
+        email: 'dummy-email@example.com', // Placeholder
         bio: 'Computer Science student passionate about productivity and achievements!', // Placeholder
       };
       setProfile(newProfile);
@@ -330,7 +330,7 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email (placeholder)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email (Placeholder)</label>
                 {isEditing ? (
                   <input
                     type="email"
@@ -349,7 +349,7 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Bio (placeholder)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Bio (Placeholder)</label>
                 {isEditing ? (
                   <textarea
                     value={profile.bio}
@@ -372,7 +372,7 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
 
         {/* Onboarding Setup */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">🚀 Guide (dummy)</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">🚀 Guide (Dummy)</h2>
           <p className="text-gray-600 mb-4">
             Revisit any step from your initial setup to update your preferences or reconnect accounts.
           </p>
@@ -408,7 +408,7 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
 
         {/* App Preferences */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">🎨 Personalization (dummy)</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">🎨 Personalization (Dummy)</h2>
           
           <div className="space-y-4">
             <div>
@@ -457,7 +457,7 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
 
         {/* Account Management */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">🔧 Account Management (dummy)</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">🔧 Account Management (Dummy)</h2>
           
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
