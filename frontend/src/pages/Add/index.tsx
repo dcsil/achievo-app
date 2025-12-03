@@ -6,9 +6,9 @@ import { apiService, User } from '../../api-contexts/user-context';
 type ViewMode = 'task' | 'assignment';
 
 interface AddPageProps {
-  userId?: string; // Passed from Layout
-  user?: User | null; // Passed from Layout
-  updateUserPoints?: (newPoints: number) => void; // Passed from Layout
+  userId?: string; 
+  user?: User | null; 
+  updateUserPoints?: (newPoints: number) => void; 
 }
 
 export const AddPage: React.FC<AddPageProps> = ({ 
@@ -21,14 +21,12 @@ export const AddPage: React.FC<AddPageProps> = ({
   const [user, setUser] = useState<User | null>(propUser || null);
   const [loading, setLoading] = useState(false);
 
-  // Update local user state when prop changes
   useEffect(() => {
     if (propUser) {
       setUser(propUser);
     }
   }, [propUser]);
 
-  // Only fetch user if not provided by Layout
   useEffect(() => {
     if (!propUserId && !propUser) {
       setLoading(true);
@@ -55,9 +53,6 @@ export const AddPage: React.FC<AddPageProps> = ({
   const handleSuccess = () => {
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
-    
-    // If updateUserPoints function is available, you can call it here
-    // after a task/assignment is created to update the points in real-time
   };
 
   if (loading) {
@@ -113,8 +108,6 @@ export const AddPage: React.FC<AddPageProps> = ({
             </button>
           </div>
         </div>
-
-        {/* Success Message - Constrained to same width as components */}
         {showSuccess && (
           <div className="max-w-2xl mx-auto mb-6 p-4 bg-green-100 text-green-800 rounded-lg border border-green-300 animate-fade-in">
             <div className="flex items-center">
@@ -127,8 +120,6 @@ export const AddPage: React.FC<AddPageProps> = ({
             </div>
           </div>
         )}
-
-        {/* Component Display - Components should handle their own max-width internally */}
         <div className="max-w-2xl mx-auto">
           {viewMode === 'task' ? (
             <AddTaskComponent userId={propUserId} onSuccess={handleSuccess} />
