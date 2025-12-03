@@ -29,7 +29,6 @@ export const useCustomCursor = (figures: Figure[]) => {
 
   // Create cursor with higher resolution
   const createCursor = async (imageUrl: string): Promise<string | null> => {
-    // Check cache first
     if (cursorCache.has(imageUrl)) {
       return cursorCache.get(imageUrl)!;
     }
@@ -50,24 +49,20 @@ export const useCustomCursor = (figures: Figure[]) => {
 
       img.onload = () => {
         try {
-          // Use higher resolution - browsers support up to 128x128 on most systems
-          const maxSize = 48; // Increased from 28 to 48 for better quality
+          const maxSize = 48; 
           const aspectRatio = img.width / img.height;
           
           let canvasWidth, canvasHeight;
           let drawWidth, drawHeight;
           
           if (aspectRatio > 1) {
-            // Wider than tall
             drawWidth = maxSize;
             drawHeight = maxSize / aspectRatio;
           } else {
-            // Taller than wide or square
             drawHeight = maxSize;
             drawWidth = maxSize * aspectRatio;
           }
           
-          // Canvas size should be just big enough to contain the image
           canvasWidth = Math.ceil(drawWidth);
           canvasHeight = Math.ceil(drawHeight);
           
@@ -75,7 +70,6 @@ export const useCustomCursor = (figures: Figure[]) => {
           canvasWidth = Math.max(canvasWidth, 24);
           canvasHeight = Math.max(canvasHeight, 24);
           
-          // Increased maximum size for better quality
           canvasWidth = Math.min(canvasWidth, 64);
           canvasHeight = Math.min(canvasHeight, 64);
 
@@ -100,29 +94,23 @@ export const useCustomCursor = (figures: Figure[]) => {
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
 
-          // Clear canvas with transparency
           ctx.clearRect(0, 0, canvasWidth, canvasHeight);
           
-          // Center the image in the canvas
           const x = (canvasWidth - drawWidth) / 2;
           const y = (canvasHeight - drawHeight) / 2;
           
-          // Optional: Add a more subtle drop shadow for better contrast
           ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
           ctx.shadowBlur = 2;
           ctx.shadowOffsetX = 1;
           ctx.shadowOffsetY = 1;
           
-          // Draw the image with proper aspect ratio and crisp edges
           ctx.drawImage(img, x, y, drawWidth, drawHeight);
           
-          // Reset shadow
           ctx.shadowColor = 'transparent';
           ctx.shadowBlur = 0;
           ctx.shadowOffsetX = 0;
           ctx.shadowOffsetY = 0;
           
-          // Use maximum quality PNG encoding
           const dataUrl = canvas.toDataURL('image/png', 1.0);
           setCursorCache(prev => new Map(prev).set(imageUrl, dataUrl));
           
@@ -177,7 +165,6 @@ export const useCustomCursor = (figures: Figure[]) => {
           // Use center hotspot - adjusted for larger cursor size
           const cursorStyle = `url("${cursorDataUrl}") 24 24, auto`;
           
-          // Apply via CSS with higher specificity and image-rendering optimization
           const style = document.createElement('style');
           style.id = 'global-custom-cursor';
           style.textContent = `

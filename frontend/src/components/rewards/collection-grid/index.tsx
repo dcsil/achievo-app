@@ -22,20 +22,17 @@ const CollectionGrid: React.FC<CollectionGridProps> = ({
   onEquipCursor, 
   onUnequipCursor 
 }) => {
-  // Sort items by ID to ensure consistent ordering (1-9, then 10)
   const sortedItems = [...items].sort((a, b) => {
     const aNum = parseInt(a.id) || 0;
     const bNum = parseInt(b.id) || 0;
     return aNum - bNum;
   });
 
-  // Items 1-9 go in the regular grid
   const regularItems = sortedItems.filter(item => {
     const itemNum = parseInt(item.id) || 0;
     return itemNum >= 1 && itemNum <= 9;
   });
 
-  // Item 10 is the secret item
   const secretItem = sortedItems.find(item => {
     const itemNum = parseInt(item.id) || 0;
     return itemNum === 10;
@@ -73,7 +70,6 @@ const CollectionGrid: React.FC<CollectionGridProps> = ({
         </span>
       </div>
 
-      {/* 3x3 Grid - Responsive sizing */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-12">
         {regularItems.map((item) => {
           const owned = isOwned(item.id);
@@ -92,7 +88,7 @@ const CollectionGrid: React.FC<CollectionGridProps> = ({
                 }
                 ${isEquipped ? 'ring-2 sm:ring-4 ring-yellow-400 ring-offset-1 sm:ring-offset-2' : ''}
               `}
-              style={{ height: '180px' }} // Reduced height for mobile
+              style={{ height: '180px' }} 
             >
               {/* Image Container */}
               <div className={`flex items-center justify-center mb-2 ${owned ? '' : 'opacity-30'}`} style={{ height: '70px' }}>

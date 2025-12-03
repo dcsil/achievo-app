@@ -24,11 +24,11 @@ const Rewards: React.FC<RewardsProps> = ({ user, userId, updateUserPoints }) => 
   const [revealedItem, setRevealedItem] = useState<CollectibleItem | null>(null);
   const [showReveal, setShowReveal] = useState(false);
 
-  // Get Series 2
+  // Obtain Series 2 (since there is only one series)
+  // In future expansion, we will fetch directly based on series ID
   const series2 = series.find(s => s.series_id === 'S2') || series[0];
   const blindboxCost = series2?.cost_points || 100;
 
-  // Convert backend figures to CollectibleItem format - ONLY Series 2 figures
   const collectibleItems: CollectibleItem[] = figures
     .filter(fig => fig.series_id === 'S2')
     .map(fig => ({
@@ -38,15 +38,11 @@ const Rewards: React.FC<RewardsProps> = ({ user, userId, updateUserPoints }) => 
       rarity: (fig.rarity || 'common') as 'secret' | 'rare' | 'common'
     }));
 
-  // Remove all the debug logging and just keep the simple cursor functions:
-
-  // Save figures to localStorage ONLY when they change
   useEffect(() => {
     if (collectibleItems.length > 0) {
       const existingFigures = localStorage.getItem('cursor_figures');
       const newFigures = JSON.stringify(collectibleItems);
       
-      // Only update if different to prevent unnecessary events
       if (existingFigures !== newFigures) {
         localStorage.setItem('cursor_figures', newFigures);
         window.dispatchEvent(new CustomEvent('figures-updated'));
@@ -67,7 +63,6 @@ const Rewards: React.FC<RewardsProps> = ({ user, userId, updateUserPoints }) => 
 
   const equippedCursorId = localStorage.getItem('equipped_cursor');
 
-  // Get user's owned figure IDs - ONLY Series 2 figures
   const ownedFigureIds = userFigures
     .filter(uf => {
       const figure = figures.find(f => f.figure_id === uf.awarded_figure_id);
