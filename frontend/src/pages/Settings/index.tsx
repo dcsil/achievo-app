@@ -33,9 +33,9 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
 
   const onboardingSteps = [
     { id: 0, name: 'Timetable', description: 'Upload timetable', icon: ':calendar_spiral:' },
-    { id: 1, name: 'Interests', description: 'Set your break activity preferences', icon: ':dart:' },
-    { id: 2, name: 'Canvas', description: 'Connect your Canvas account', icon: ':link:' },
-    { id: 3, name: 'Syllabi', description: 'Upload course syllabi', icon: ':books:' }  ];
+    { id: 1, name: 'Interests (Dummy)', description: 'Set your break activity preferences', icon: ':dart:' },
+    { id: 2, name: 'Canvas (Dummy)', description: 'Connect your Canvas account', icon: ':link:' },
+    { id: 3, name: 'Syllabi (Dummy)', description: 'Upload course syllabi', icon: ':books:' }  ];
 
   const handleRedoStep = (stepIndex: number) => {
     navigate(`/onboarding?fromSettings=true&targetStep=${stepIndex}&standalone=true`);
@@ -372,7 +372,7 @@ const Settings: React.FC<SettingsProps> = ({ user, updateUserPoints, updateUserP
 
         {/* Onboarding Setup */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">🚀 Guide (Dummy)</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">🚀 Guide </h2>
           <p className="text-gray-600 mb-4">
             Revisit any step from your initial setup to update your preferences or reconnect accounts.
           </p>

@@ -1,3 +1,5 @@
+import { getApiBaseUrl } from '../config/api';
+
 export interface Task {
   task_id: string;
   user_id: string;
@@ -24,7 +26,7 @@ export interface Assignment {
 
 export async function getAssignment(assignmentId: string): Promise<Assignment> {
   try {
-    const response = await fetch(`http://127.0.0.1:5000/db/assignments/${assignmentId}`, {
+    const response = await fetch(`${getApiBaseUrl()}/db/assignments/${assignmentId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -45,7 +47,7 @@ export async function getAssignment(assignmentId: string): Promise<Assignment> {
 
 async function getTasksForAssignment(assignmentId: string, userId: string = "paul_paw_test"): Promise<Task[]> {
   try {
-    const response = await fetch(`http://127.0.0.1:5000/db/tasks?user_id=${userId}&assignment_id=${assignmentId}`, {
+    const response = await fetch(`${getApiBaseUrl()}/db/tasks?user_id=${userId}&assignment_id=${assignmentId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -66,7 +68,7 @@ async function getTasksForAssignment(assignmentId: string, userId: string = "pau
 
 export async function getAssignments(courseId: string, userId: string = "paul_paw_test"): Promise<Assignment[]> {
   try {
-    const response = await fetch(`http://127.0.0.1:5000/db/assignments?course_id=${courseId}`, {
+    const response = await fetch(`${getApiBaseUrl()}/db/assignments?course_id=${courseId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -110,7 +112,7 @@ export async function getAssignments(courseId: string, userId: string = "paul_pa
 
 export async function getAllAssignments(userId: string = "paul_paw_test"): Promise<Assignment[]> {
   try {
-    const response = await fetch(`http://127.0.0.1:5000/db/assignments`, {
+    const response = await fetch(`${getApiBaseUrl()}/db/assignments`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

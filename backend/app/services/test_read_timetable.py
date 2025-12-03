@@ -1,4 +1,5 @@
 import pytest
+import os
 from datetime import datetime
 from app.services import read_timetable
 
@@ -39,6 +40,10 @@ def test_parse_time_range():
     assert start.hour == 9 and end.hour == 10
 
 def test_extract_timetable_courses(monkeypatch):
+    # Mock the file existence check in read_timetable module
+    def mock_exists(path):
+        return True
+    
     # Patch extract_tables_from_pdf to return a mock table
     def mock_extract_tables_from_pdf(pdf_path):
         return [
@@ -47,7 +52,12 @@ def test_extract_timetable_courses(monkeypatch):
                 ["MATH101", "MATH101\n09:00 - 10:00", "MATH101\n09:00 - 10:00"]
             ]
         ]
-    monkeypatch.setattr(read_timetable, "extract_tables_from_pdf", mock_extract_tables_from_pdf)
+    
+    # Mock both os.path.exists in read_timetable and the extract function
+    monkeypatch.setattr("app.services.read_timetable.os.path.exists", mock_exists)
+    monkeypatch.setattr("app.services.read_timetable.extract_tables_from_pdf", mock_extract_tables_from_pdf)
+    
+    # Use a dummy path since we're mocking the file existence
     courses = read_timetable.extract_timetable_courses("dummy.pdf", "user1", "2025 Fall")
     assert isinstance(courses, list)
     assert courses[0]["course_code"] == "MATH101"

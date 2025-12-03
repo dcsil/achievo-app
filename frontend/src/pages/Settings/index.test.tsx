@@ -87,7 +87,7 @@ describe('Settings Component', () => {
       expect(screen.getByText('⚙️ Settings')).toBeInTheDocument();
       expect(screen.getByText('Customize your Achievo experience')).toBeInTheDocument();
       expect(screen.getByText('👤 Account & Profile')).toBeInTheDocument();
-      expect(screen.getByText('🚀 Guide (Dummy)')).toBeInTheDocument();
+      expect(screen.getByText('🚀 Guide')).toBeInTheDocument();
       expect(screen.getByText('🔔 Notifications')).toBeInTheDocument();
       expect(screen.getByText('🎨 Personalization (Dummy)')).toBeInTheDocument();
       expect(screen.getByText('🔧 Account Management (Dummy)')).toBeInTheDocument();
@@ -385,9 +385,9 @@ describe('Settings Component', () => {
       renderComponent();
 
       expect(screen.getByText('Timetable')).toBeInTheDocument();
-      expect(screen.getByText('Interests')).toBeInTheDocument();
-      expect(screen.getByText('Canvas')).toBeInTheDocument();
-      expect(screen.getByText('Syllabi')).toBeInTheDocument();
+      expect(screen.getByText('Interests (Dummy)')).toBeInTheDocument();
+      expect(screen.getByText('Canvas (Dummy)')).toBeInTheDocument();
+      expect(screen.getByText('Syllabi (Dummy)')).toBeInTheDocument();
     });
 
     it('should navigate to onboarding step when Open is clicked', () => {

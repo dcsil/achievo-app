@@ -1,4 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react';
+import { getApiBaseUrl } from '../config/api';
 
 export interface Course {
   course_id: string;
@@ -14,7 +15,9 @@ export interface Course {
 }
 
 class AddCoursesApiService {
-  private baseUrl = 'http://127.0.0.1:5000';
+  private get baseUrl() {
+    return getApiBaseUrl();
+  }
 
   async createCourse(courseData: Omit<Course, 'date_imported_at'>): Promise<{ status: string; course_id: string }> {
     const response = await fetch(`${this.baseUrl}/db/courses`, {

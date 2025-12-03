@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { getApiBaseUrl } from '../../config/api';
 
 interface BlindBoxFigure {
   figure_id: string;
@@ -25,13 +26,11 @@ export const BlindBoxFiguresProvider: React.FC<{ children: React.ReactNode }> = 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE = 'http://127.0.0.1:5000';
-
   const fetchAllFigures = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/db/blind-box-figures`);
+      const response = await fetch(`${getApiBaseUrl()}/db/blind-box-figures`);
       
       if (!response.ok) {
         const err = await response.json();
@@ -52,7 +51,7 @@ export const BlindBoxFiguresProvider: React.FC<{ children: React.ReactNode }> = 
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/db/blind-box-figures?series_id=${seriesId}`);
+      const response = await fetch(`${getApiBaseUrl()}/db/blind-box-figures?series_id=${seriesId}`);
       
       if (!response.ok) {
         const err = await response.json();
@@ -73,7 +72,7 @@ export const BlindBoxFiguresProvider: React.FC<{ children: React.ReactNode }> = 
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/db/blind-box-figures?figure_id=${figureId}`);
+      const response = await fetch(`${getApiBaseUrl()}/db/blind-box-figures?figure_id=${figureId}`);
       
       if (!response.ok) {
         const err = await response.json();

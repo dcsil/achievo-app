@@ -1,3 +1,5 @@
+import { getApiBaseUrl } from '../config/api';
+
 export interface Course {
   course_id: string;
   course_name: string;
@@ -16,7 +18,7 @@ export interface CourseForUI {
 
 export async function getCourses(userId: string): Promise<CourseForUI[]> {
   try {
-    const response = await fetch('http://127.0.0.1:5000/db/courses');
+    const response = await fetch(`${getApiBaseUrl()}/db/courses`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

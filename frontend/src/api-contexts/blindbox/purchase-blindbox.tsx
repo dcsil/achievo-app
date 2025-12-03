@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { getApiBaseUrl } from '../../config/api';
 
 interface AwardedFigure {
   figure_id: string;
@@ -45,13 +46,11 @@ export const BlindBoxPurchaseProvider: React.FC<{ children: React.ReactNode }> =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE = 'http://127.0.0.1:5000';
-
   const purchaseBlindBox = useCallback(async (userId: string, seriesId?: string): Promise<PurchaseResult> => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/db/blind-boxes/purchase`, {
+      const response = await fetch(`${getApiBaseUrl()}/db/blind-boxes/purchase`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -83,7 +82,7 @@ export const BlindBoxPurchaseProvider: React.FC<{ children: React.ReactNode }> =
   setLoading(true);
   setError(null);
   try {
-    const response = await fetch(`${API_BASE}/db/users/${userId}/figures`);
+    const response = await fetch(`${getApiBaseUrl()}/db/users/${userId}/figures`);
 
     if (!response.ok) {
       const err = await response.json();

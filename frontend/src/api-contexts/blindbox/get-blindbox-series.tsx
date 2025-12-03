@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { getApiBaseUrl } from '../../config/api';
 
 interface BlindBoxSeries {
   series_id: string;
@@ -24,13 +25,11 @@ export const BlindBoxSeriesProvider: React.FC<{ children: React.ReactNode }> = (
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE = 'http://127.0.0.1:5000';
-
   const fetchAllSeries = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/db/blind-box-series`);
+      const response = await fetch(`${getApiBaseUrl()}/db/blind-box-series`);
       
       if (!response.ok) {
         const err = await response.json();
@@ -51,7 +50,7 @@ export const BlindBoxSeriesProvider: React.FC<{ children: React.ReactNode }> = (
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/db/blind-box-series?series_id=${seriesId}`);
+      const response = await fetch(`${getApiBaseUrl()}/db/blind-box-series?series_id=${seriesId}`);
       
       if (!response.ok) {
         const err = await response.json();
