@@ -1,4 +1,4 @@
-const ENVIRONMENT = 'production'; // <-- Change this line to 'production' when deploying
+const ENVIRONMENT = 'local'; // <-- Change this line to 'production' when deploying
 
 const API_CONFIG = {
   environment: ENVIRONMENT,
