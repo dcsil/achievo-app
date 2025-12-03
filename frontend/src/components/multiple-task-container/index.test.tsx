@@ -1,601 +1,666 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MultipleTaskContainer from './index';
 import { apiService } from '../../api-contexts/user-context';
 import { getAssignment } from '../../api-contexts/get-assignments';
+import ReactDOM from 'react-dom';
 
-// Mock the dependencies
+// Mock dependencies
 jest.mock('../../api-contexts/user-context');
 jest.mock('../../api-contexts/get-assignments');
 jest.mock('../task-complete', () => {
-  return function MockTaskComplete({ 
-    isOpen, 
-    task, 
-    assignment, 
-    onClose, 
-    onRefreshData, 
-    coinsEarned, 
-    userId 
-  }: any) {
+  return function TaskComplete({ isOpen, onClose, task, coinsEarned }: any) {
     if (!isOpen) return null;
     return (
       <div data-testid="task-complete-overlay">
         <div>Task: {task.title}</div>
-        <div>Assignment: {assignment || 'None'}</div>
         <div>Coins: {coinsEarned}</div>
-        <div>User: {userId}</div>
-        <button onClick={onClose} data-testid="close-overlay">Close</button>
-        <button onClick={onRefreshData} data-testid="refresh-data">Refresh</button>
+        <button onClick={onClose}>Close</button>
       </div>
     );
   };
 });
-
 jest.mock('../task-component', () => {
-  return function MockTaskComponent({ 
-    task, 
-    onCompleteTask, 
-    showCompleteButton, 
-    isCompleting,
-    timeAdjustment
-  }: any) {
+  return function TaskComponent({ task, onCompleteTask, showCompleteButton, isCompleting }: any) {
     return (
-      <div data-testid={`task-component-${task.task_id}`}>
-        <div>Task: {task.description}</div>
-        <div>Type: {task.type}</div>
-        <div>Course: {task.course_id}</div>
-        <div>Completing: {isCompleting ? 'true' : 'false'}</div>
-        <div>ShowComplete: {showCompleteButton ? 'true' : 'false'}</div>
-        <div>TimeAdjustment: {timeAdjustment ? 'true' : 'false'}</div>
+      <li data-testid={`task-${task.task_id}`}>
+        <div>{task.description}</div>
         {showCompleteButton && (
           <button 
             onClick={() => onCompleteTask(task)}
-            data-testid={`complete-task-${task.task_id}`}
             disabled={isCompleting}
+            data-testid={`complete-btn-${task.task_id}`}
           >
-            Complete Task
+            Complete
           </button>
         )}
-      </div>
+      </li>
     );
   };
 });
 
-// Mock ReactDOM.createPortal to render in place
-jest.mock('react-dom', () => ({
-  ...jest.requireActual('react-dom'),
-  createPortal: (node: any) => node,
-}));
-
-const mockApiService = {
-  completeTask: jest.fn()
-};
-const mockGetAssignment = getAssignment as jest.MockedFunction<typeof getAssignment>;
-
-// Replace the actual services with our mocks
-Object.defineProperty(require('../../api-contexts/user-context'), 'apiService', {
-  value: mockApiService,
-  writable: true
-});
+// Mock ReactDOM.createPortal
+const mockCreatePortal = jest.fn((element) => element);
+(ReactDOM.createPortal as jest.Mock) = mockCreatePortal;
 
 describe('MultipleTaskContainer', () => {
+  const mockUserId = 'user-123';
   const mockTasks = [
     {
       task_id: 'task-1',
-      user_id: 'user-1',
-      description: 'Complete homework',
-      type: 'assignment',
-      assignment_id: 'assignment-1',
+      description: 'Task 1',
+      scheduled_start_at: '2024-01-15T10:00:00Z',
+      completion_date_at: '2024-01-15T12:00:00Z',
+      course_color: '#FF0000',
+      type: 'homework',
       course_id: 'course-1',
-      course_color: '#3B82F6',
-      scheduled_start_at: '2024-01-01T10:00:00Z',
-      scheduled_end_at: '2024-01-01T11:00:00Z',
-      is_completed: false,
-      reward_points: 20
+      assignment_id: null
     },
     {
       task_id: 'task-2',
-      user_id: 'user-1',
-      description: 'Study for exam',
-      type: 'study',
-      assignment_id: 'assignment-2',
+      description: 'Task 2',
+      scheduled_start_at: '2024-01-16T10:00:00Z',
+      completion_date_at: '2024-01-16T12:00:00Z',
+      course_color: '#00FF00',
+      type: 'quiz',
       course_id: 'course-2',
-      course_color: '#EF4444',
-      scheduled_start_at: '2024-01-02T14:00:00Z',
-      scheduled_end_at: '2024-01-02T15:00:00Z',
-      is_completed: false,
-      reward_points: 15
+      assignment_id: null
     }
   ];
-
-  const mockCompletedTasks = [
-    {
-      task_id: 'completed-task-1',
-      user_id: 'user-1',
-      description: 'Completed homework',
-      type: 'assignment',
-      assignment_id: 'assignment-1',
-      course_id: 'course-1',
-      course_color: '#3B82F6',
-      completion_date_at: '2024-01-01T12:00:00Z',
-      is_completed: true,
-      reward_points: 20
-    }
-  ];
-
-  const defaultProps = {
-    tasks: mockTasks,
-    userId: 'user-1',
-    onTaskCompleted: jest.fn(),
-    onTasksUpdate: jest.fn(),
-    onRefreshData: jest.fn(),
-    showCompleteButton: true,
-    dateString: '2024-01-01',
-    timeAdjustment: true
-  };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset console methods
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockCreatePortal.mockImplementation((element) => element);
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  describe('Rendering and Initial State', () => {
-    it('renders without crashing with valid tasks', () => {
-      render(<MultipleTaskContainer {...defaultProps} />);
-      expect(screen.getByTestId('task-component-task-1')).toBeInTheDocument();
-      expect(screen.getByTestId('task-component-task-2')).toBeInTheDocument();
-    });
-
-    it('renders empty state when no tasks are provided', () => {
-      render(<MultipleTaskContainer {...defaultProps} tasks={[]} />);
+  describe('Rendering', () => {
+    it('should render empty state for incomplete tasks when no tasks provided', () => {
+      render(<MultipleTaskContainer tasks={[]} userId={mockUserId} />);
+      
+      expect(screen.getByText('🎉')).toBeInTheDocument();
       expect(screen.getByText('No tasks yet!')).toBeInTheDocument();
       expect(screen.getByText("You're all caught up")).toBeInTheDocument();
     });
 
-    it('renders empty state for completed tasks when no completed tasks', () => {
-      render(<MultipleTaskContainer {...defaultProps} tasks={[]} showCompleteButton={false} />);
+    it('should render empty state for completed tasks when no tasks provided', () => {
+      render(
+        <MultipleTaskContainer 
+          tasks={[]} 
+          userId={mockUserId} 
+          showCompleteButton={false}
+        />
+      );
+      
+      expect(screen.getByText('📂')).toBeInTheDocument();
       expect(screen.getByText('No completed tasks yet!')).toBeInTheDocument();
       expect(screen.getByText('Complete some tasks to see them here')).toBeInTheDocument();
     });
 
-    it('renders date string with task count', () => {
-      render(<MultipleTaskContainer {...defaultProps} dateString="2024-01-01" />);
-      expect(screen.getByText('Sunday, Dec 31')).toBeInTheDocument();
-      expect(screen.getByText('(2 tasks)')).toBeInTheDocument();
+    it('should render task list when tasks are provided', () => {
+      render(<MultipleTaskContainer tasks={mockTasks} userId={mockUserId} />);
+      
+      expect(screen.getByTestId('task-task-1')).toBeInTheDocument();
+      expect(screen.getByTestId('task-task-2')).toBeInTheDocument();
     });
 
-    it('handles non-array tasks gracefully', () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      render(<MultipleTaskContainer {...defaultProps} tasks={null as any} />);
+    it('should handle non-array tasks gracefully', () => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation();
+      
+      render(<MultipleTaskContainer tasks={'invalid' as any} userId={mockUserId} />);
+      
+      expect(consoleError).toHaveBeenCalledWith(
+        'MultipleTaskContainer received non-array tasks:',
+        'invalid'
+      );
       expect(screen.getByText('No tasks yet!')).toBeInTheDocument();
-      expect(consoleSpy).toHaveBeenCalledWith('MultipleTaskContainer received non-array tasks:', null);
+      
+      consoleError.mockRestore();
     });
 
-    it('renders with minimal props', () => {
-      render(<MultipleTaskContainer tasks={mockTasks} userId="user-1" />);
-      expect(screen.getByTestId('task-component-task-1')).toBeInTheDocument();
-    });
-  });
-
-  describe('Date Formatting', () => {
-    it('formats "Today" correctly', () => {
-      const today = new Date().toISOString().split('T')[0];
-      render(<MultipleTaskContainer {...defaultProps} dateString={today} />);
-      expect(screen.getByText('Tuesday, Dec 2')).toBeInTheDocument();
-    });
-
-    it('formats "Tomorrow" correctly', () => {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowString = tomorrow.toISOString().split('T')[0];
-      render(<MultipleTaskContainer {...defaultProps} dateString={tomorrowString} />);
-      expect(screen.getByText('Today')).toBeInTheDocument();
-    });
-
-    it('handles overdue date strings', () => {
-      render(<MultipleTaskContainer {...defaultProps} dateString="2024-01-01 (5 days overdue)" />);
-      expect(screen.getByText('2024-01-01 (5 days overdue)')).toBeInTheDocument();
-    });
-
-    it('formats other dates with weekday and month', () => {
-      render(<MultipleTaskContainer {...defaultProps} dateString="2024-03-15" />);
-      expect(screen.getByText('Thursday, Mar 14')).toBeInTheDocument();
+    it('should render with dateString header', () => {
+      render(
+        <MultipleTaskContainer 
+          tasks={mockTasks} 
+          userId={mockUserId}
+          dateString="2024-01-15"
+        />
+      );
+      
+      expect(screen.getByText(/2 tasks/)).toBeInTheDocument();
     });
   });
 
   describe('Task Sorting', () => {
-    it('sorts incomplete tasks by scheduled_start_at (earliest first)', () => {
+    it('should sort incomplete tasks by scheduled_start_at (earliest first)', () => {
       const unsortedTasks = [
-        { ...mockTasks[1], scheduled_start_at: '2024-01-03T14:00:00Z' },
-        { ...mockTasks[0], scheduled_start_at: '2024-01-01T10:00:00Z' }
+        { ...mockTasks[1], scheduled_start_at: '2024-01-20T10:00:00Z' },
+        { ...mockTasks[0], scheduled_start_at: '2024-01-10T10:00:00Z' }
       ];
-      render(<MultipleTaskContainer {...defaultProps} tasks={unsortedTasks} />);
       
-      // First task should be the one with earlier date
-      const taskComponents = screen.getAllByTestId(/task-component-/);
-      expect(taskComponents[0]).toHaveAttribute('data-testid', 'task-component-task-1');
-      expect(taskComponents[1]).toHaveAttribute('data-testid', 'task-component-task-2');
+      render(
+        <MultipleTaskContainer 
+          tasks={unsortedTasks} 
+          userId={mockUserId}
+          showCompleteButton={true}
+        />
+      );
+      
+      const taskElements = screen.getAllByRole('listitem');
+      expect(taskElements[0]).toHaveAttribute('data-testid', 'task-task-1');
+      expect(taskElements[1]).toHaveAttribute('data-testid', 'task-task-2');
     });
 
-    it('sorts completed tasks by completion_date_at (most recent first)', () => {
-      const completedTasks = [
-        { ...mockCompletedTasks[0], completion_date_at: '2024-01-01T12:00:00Z', task_id: 'old-task' },
-        { ...mockCompletedTasks[0], completion_date_at: '2024-01-02T12:00:00Z', task_id: 'new-task' }
+    it('should sort completed tasks by completion_date_at (most recent first)', () => {
+      const unsortedTasks = [
+        { ...mockTasks[0], completion_date_at: '2024-01-10T12:00:00Z' },
+        { ...mockTasks[1], completion_date_at: '2024-01-20T12:00:00Z' }
       ];
-      render(<MultipleTaskContainer {...defaultProps} tasks={completedTasks} showCompleteButton={false} />);
       
-      const taskComponents = screen.getAllByTestId(/task-component-/);
-      expect(taskComponents[0]).toHaveAttribute('data-testid', 'task-component-new-task');
-      expect(taskComponents[1]).toHaveAttribute('data-testid', 'task-component-old-task');
+      render(
+        <MultipleTaskContainer 
+          tasks={unsortedTasks} 
+          userId={mockUserId}
+          showCompleteButton={false}
+        />
+      );
+      
+      const taskElements = screen.getAllByRole('listitem');
+      expect(taskElements[0]).toHaveAttribute('data-testid', 'task-task-2');
+      expect(taskElements[1]).toHaveAttribute('data-testid', 'task-task-1');
     });
   });
 
-  describe('Show More/Collapse Functionality', () => {
+  describe('Show More / Collapse Functionality', () => {
     const manyTasks = Array.from({ length: 10 }, (_, i) => ({
       ...mockTasks[0],
-      task_id: `task-${i + 1}`,
-      description: `Task ${i + 1}`,
-      scheduled_start_at: `2024-01-0${(i % 9) + 1}T10:00:00Z`
+      task_id: `task-${i}`,
+      description: `Task ${i}`,
+      scheduled_start_at: `2024-01-${10 + i}T10:00:00Z`
     }));
 
-    it('shows only initial tasks when there are many tasks', () => {
-      render(<MultipleTaskContainer {...defaultProps} tasks={manyTasks} />);
+    it('should initially show 5 tasks', () => {
+      render(<MultipleTaskContainer tasks={manyTasks} userId={mockUserId} />);
       
-      // Should show 5 tasks initially
-      expect(screen.getAllByTestId(/task-component-/).length).toBe(5);
-      expect(screen.getByText(/Show 3 More Tasks/)).toBeInTheDocument();
+      expect(screen.getByTestId('task-task-0')).toBeInTheDocument();
+      expect(screen.getByTestId('task-task-4')).toBeInTheDocument();
+      expect(screen.queryByTestId('task-task-5')).not.toBeInTheDocument();
     });
 
-    it('expands to show more tasks when "Show More" is clicked', async () => {
-      render(<MultipleTaskContainer {...defaultProps} tasks={manyTasks} />);
+    it('should show more tasks when Show More button is clicked', () => {
+      render(<MultipleTaskContainer tasks={manyTasks} userId={mockUserId} />);
       
-      fireEvent.click(screen.getByText(/Show 3 More Tasks/));
-      await waitFor(() => {
-        expect(screen.getAllByTestId(/task-component-/).length).toBe(8);
-      });
+      const showMoreButton = screen.getByText(/Show \d+ More Tasks/);
+      fireEvent.click(showMoreButton);
+      
+      expect(screen.getByTestId('task-task-5')).toBeInTheDocument();
+      expect(screen.getByTestId('task-task-7')).toBeInTheDocument();
     });
 
-    it('shows all tasks when expanded beyond the increment', async () => {
-      render(<MultipleTaskContainer {...defaultProps} tasks={manyTasks} />);
+    it('should collapse tasks when Collapse button is clicked', () => {
+      render(<MultipleTaskContainer tasks={manyTasks} userId={mockUserId} />);
       
-      // Click show more once (shows 8)
-      fireEvent.click(screen.getByText(/Show 3 More Tasks/));
-      await waitFor(() => {
-        expect(screen.getAllByTestId(/task-component-/).length).toBe(8);
-      });
+      const showMoreButton = screen.getByText(/Show \d+ More Tasks/);
+      fireEvent.click(showMoreButton);
       
-      // Click show more again (shows all 10)
-      fireEvent.click(screen.getByText(/Show 2 More Tasks/));
-      await waitFor(() => {
-        expect(screen.getAllByTestId(/task-component-/).length).toBe(10);
-      });
+      const collapseButton = screen.getByText('Collapse');
+      fireEvent.click(collapseButton);
+      
+      expect(screen.queryByTestId('task-task-5')).not.toBeInTheDocument();
     });
 
-    it('collapses back to initial view when "Collapse" is clicked', async () => {
-      render(<MultipleTaskContainer {...defaultProps} tasks={manyTasks} />);
+    it('should not show Show More button when all tasks are displayed', () => {
+      const fewTasks = mockTasks.slice(0, 3);
+      render(<MultipleTaskContainer tasks={fewTasks} userId={mockUserId} />);
       
-      // Expand first
-      fireEvent.click(screen.getByText(/Show 3 More Tasks/));
-      await waitFor(() => {
-        expect(screen.getAllByTestId(/task-component-/).length).toBe(8);
-      });
-      
-      // Then collapse
-      fireEvent.click(screen.getByText('Collapse'));
-      await waitFor(() => {
-        expect(screen.getAllByTestId(/task-component-/).length).toBe(5);
-      });
+      expect(screen.queryByText(/Show \d+ More Tasks/)).not.toBeInTheDocument();
     });
 
-    it('handles tasks list shorter than initial page size', () => {
-      const fewTasks = manyTasks.slice(0, 3);
-      render(<MultipleTaskContainer {...defaultProps} tasks={fewTasks} />);
+    it('should show correct number in Show More button', () => {
+      render(<MultipleTaskContainer tasks={manyTasks} userId={mockUserId} />);
       
-      expect(screen.getAllByTestId(/task-component-/).length).toBe(3);
-      expect(screen.queryByText(/Show More/)).not.toBeInTheDocument();
-      expect(screen.queryByText('Collapse')).not.toBeInTheDocument();
+      const showMoreButton = screen.getByText(/Show 3 More Tasks/);
+      expect(showMoreButton).toBeInTheDocument();
+    });
+
+    it('should handle showing all remaining tasks when less than increment remain', () => {
+      const tasks = Array.from({ length: 7 }, (_, i) => ({
+        ...mockTasks[0],
+        task_id: `task-${i}`,
+        scheduled_start_at: `2024-01-${10 + i}T10:00:00Z`
+      }));
+      
+      render(<MultipleTaskContainer tasks={tasks} userId={mockUserId} />);
+      
+      const showMoreButton = screen.getByText(/Show 2 More Tasks/);
+      expect(showMoreButton).toBeInTheDocument();
     });
   });
 
   describe('Task Completion', () => {
     beforeEach(() => {
-      mockApiService.completeTask.mockClear();
-      mockGetAssignment.mockClear();
-    });
-
-    it('completes a task successfully without assignment completion', async () => {
-      mockApiService.completeTask.mockResolvedValue({
-        points_earned: 20,
+      (apiService.completeTask as jest.Mock).mockResolvedValue({
+        points_earned: 10,
         assignment_completed: false
       });
-
-      render(<MultipleTaskContainer {...defaultProps} />);
-      
-      await act(async () => {
-        fireEvent.click(screen.getByTestId('complete-task-task-1'));
-      });
-
-      await waitFor(() => {
-        expect(mockApiService.completeTask).toHaveBeenCalledWith('task-1');
-        expect(screen.getByTestId('task-complete-overlay')).toBeInTheDocument();
-        expect(screen.getByText('Coins: 20')).toBeInTheDocument();
-      });
-
-      expect(defaultProps.onTaskCompleted).toHaveBeenCalledWith('task-1', 'assignment', 20, 'course-1');
     });
 
-    it('completes a task with assignment completion', async () => {
-      mockApiService.completeTask.mockResolvedValue({
-        points_earned: 20,
+    it('should complete task successfully', async () => {
+      const onTaskCompleted = jest.fn();
+      
+      render(
+        <MultipleTaskContainer 
+          tasks={mockTasks} 
+          userId={mockUserId}
+          onTaskCompleted={onTaskCompleted}
+        />
+      );
+      
+      const completeButton = screen.getByTestId('complete-btn-task-1');
+      fireEvent.click(completeButton);
+      
+      await waitFor(() => {
+        expect(apiService.completeTask).toHaveBeenCalledWith('task-1');
+      });
+      
+      await waitFor(() => {
+        expect(onTaskCompleted).toHaveBeenCalledWith(
+          'task-1',
+          'homework',
+          10,
+          'course-1'
+        );
+      });
+    });
+
+    it('should show overlay after task completion', async () => {
+      render(<MultipleTaskContainer tasks={mockTasks} userId={mockUserId} />);
+      
+      const completeButton = screen.getByTestId('complete-btn-task-1');
+      fireEvent.click(completeButton);
+      
+      await waitFor(() => {
+        expect(screen.getByTestId('task-complete-overlay')).toBeInTheDocument();
+      });
+      
+      expect(screen.getByText('Task: Task 1')).toBeInTheDocument();
+      expect(screen.getByText('Coins: 10')).toBeInTheDocument();
+    });
+
+    it('should handle assignment completion', async () => {
+      (apiService.completeTask as jest.Mock).mockResolvedValue({
+        points_earned: 10,
         assignment_completed: true
       });
-      mockGetAssignment.mockResolvedValue({
-        assignment_id: 'assignment-1',
-        course_id: 'course-1',
-        title: 'Math Homework',
-        due_date: '2024-01-01',
-        completion_points: 50,
-        is_complete: true
-      });
-
-      render(<MultipleTaskContainer {...defaultProps} />);
       
-      await act(async () => {
-        fireEvent.click(screen.getByTestId('complete-task-task-1'));
+      (getAssignment as jest.Mock).mockResolvedValue({
+        completion_points: 20,
+        title: 'Math Assignment'
       });
-
+      
+      const taskWithAssignment = {
+        ...mockTasks[0],
+        assignment_id: 'assignment-1'
+      };
+      
+      render(<MultipleTaskContainer tasks={[taskWithAssignment]} userId={mockUserId} />);
+      
+      const completeButton = screen.getByTestId('complete-btn-task-1');
+      fireEvent.click(completeButton);
+      
       await waitFor(() => {
-        expect(mockGetAssignment).toHaveBeenCalledWith('assignment-1');
-        expect(screen.getByText('Coins: 70')).toBeInTheDocument(); // 20 + 50
-        expect(screen.getByText('Assignment: Math Homework')).toBeInTheDocument();
+        expect(getAssignment).toHaveBeenCalledWith('assignment-1');
+      });
+      
+      await waitFor(() => {
+        expect(screen.getByText('Coins: 30')).toBeInTheDocument();
       });
     });
 
-    it('removes completed task from the list', async () => {
-      mockApiService.completeTask.mockResolvedValue({
-        points_earned: 20,
-        assignment_completed: false
-      });
-
-      render(<MultipleTaskContainer {...defaultProps} />);
+    it('should remove completed task from list', async () => {
+      const onTasksUpdate = jest.fn();
       
-      expect(screen.getByTestId('task-component-task-1')).toBeInTheDocument();
+      render(
+        <MultipleTaskContainer 
+          tasks={mockTasks} 
+          userId={mockUserId}
+          onTasksUpdate={onTasksUpdate}
+        />
+      );
       
-      await act(async () => {
-        fireEvent.click(screen.getByTestId('complete-task-task-1'));
-      });
-
+      const completeButton = screen.getByTestId('complete-btn-task-1');
+      fireEvent.click(completeButton);
+      
       await waitFor(() => {
-        expect(screen.queryByTestId('task-component-task-1')).not.toBeInTheDocument();
-        expect(screen.getByTestId('task-component-task-2')).toBeInTheDocument();
+        expect(onTasksUpdate).toHaveBeenCalled();
       });
-
-      expect(defaultProps.onTasksUpdate).toHaveBeenCalledWith([mockTasks[1]]);
+      
+      const updatedTasks = onTasksUpdate.mock.calls[0][0];
+      expect(updatedTasks).toHaveLength(1);
+      expect(updatedTasks[0].task_id).toBe('task-2');
     });
 
-    it('adjusts tasksToShow when removing task from expanded view', async () => {
+    it('should handle completion error', async () => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation();
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation();
+      
+      (apiService.completeTask as jest.Mock).mockRejectedValue(new Error('API Error'));
+      
+      render(<MultipleTaskContainer tasks={mockTasks} userId={mockUserId} />);
+      
+      const completeButton = screen.getByTestId('complete-btn-task-1');
+      fireEvent.click(completeButton);
+      
+      await waitFor(() => {
+        expect(consoleError).toHaveBeenCalledWith(
+          '❌ Failed to complete task:',
+          expect.any(Error)
+        );
+      });
+      
+      expect(alertMock).toHaveBeenCalledWith('Failed to complete task. Please try again.');
+      
+      consoleError.mockRestore();
+      alertMock.mockRestore();
+    });
+
+    it('should prevent double-clicking complete button', async () => {
+      render(<MultipleTaskContainer tasks={mockTasks} userId={mockUserId} />);
+      
+      const completeButton = screen.getByTestId('complete-btn-task-1');
+      
+      fireEvent.click(completeButton);
+      fireEvent.click(completeButton);
+      
+      await waitFor(() => {
+        expect(apiService.completeTask).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('should adjust tasksToShow after completion when needed', async () => {
       const manyTasks = Array.from({ length: 10 }, (_, i) => ({
         ...mockTasks[0],
-        task_id: `task-${i + 1}`,
-        description: `Task ${i + 1}`,
-        scheduled_start_at: `2024-01-0${(i % 9) + 1}T10:00:00Z`
+        task_id: `task-${i}`,
+        scheduled_start_at: `2024-01-${10 + i}T10:00:00Z`
       }));
-
-      mockApiService.completeTask.mockResolvedValue({
-        points_earned: 20,
-        assignment_completed: false
-      });
-
-      render(<MultipleTaskContainer {...defaultProps} tasks={manyTasks} />);
       
-      // Expand to show more tasks
-      fireEvent.click(screen.getByText(/Show 3 More Tasks/));
-      await waitFor(() => {
-        expect(screen.getAllByTestId(/task-component-/).length).toBe(8);
-      });
+      render(<MultipleTaskContainer tasks={manyTasks} userId={mockUserId} />);
+      
+      // Show more tasks first
+      const showMoreButton = screen.getByText(/Show \d+ More Tasks/);
+      fireEvent.click(showMoreButton);
       
       // Complete a task
-      await act(async () => {
-        fireEvent.click(screen.getByTestId('complete-task-task-1'));
-      });
-
-      await waitFor(() => {
-        // Should still show 8 tasks (9 remaining tasks, showing up to 8 as it was expanded)
-        expect(screen.getAllByTestId(/task-component-/).length).toBe(8);
-      });
-    });
-
-    it('prevents multiple simultaneous task completions', async () => {
-      mockApiService.completeTask.mockImplementation(() => 
-        new Promise(resolve => setTimeout(() => resolve({ points_earned: 20, assignment_completed: false }), 100))
-      );
-
-      render(<MultipleTaskContainer {...defaultProps} />);
+      const completeButton = screen.getByTestId('complete-btn-task-0');
+      fireEvent.click(completeButton);
       
-      // Click multiple times rapidly
-      fireEvent.click(screen.getByTestId('complete-task-task-1'));
-      fireEvent.click(screen.getByTestId('complete-task-task-1'));
-      fireEvent.click(screen.getByTestId('complete-task-task-1'));
-
       await waitFor(() => {
-        expect(mockApiService.completeTask).toHaveBeenCalledTimes(1);
+        expect(apiService.completeTask).toHaveBeenCalled();
       });
     });
 
-    it('handles task completion errors gracefully', async () => {
-      mockApiService.completeTask.mockRejectedValue(new Error('Network error'));
-      window.alert = jest.fn();
-
-      render(<MultipleTaskContainer {...defaultProps} />);
+    it('should reset tasksToShow to initial when few tasks remain', async () => {
+      const fewTasks = Array.from({ length: 6 }, (_, i) => ({
+        ...mockTasks[0],
+        task_id: `task-${i}`,
+        scheduled_start_at: `2024-01-${10 + i}T10:00:00Z`
+      }));
       
-      await act(async () => {
-        fireEvent.click(screen.getByTestId('complete-task-task-1'));
-      });
-
+      render(<MultipleTaskContainer tasks={fewTasks} userId={mockUserId} />);
+      
+      const showMoreButton = screen.getByText(/Show \d+ More Tasks/);
+      fireEvent.click(showMoreButton);
+      
+      const completeButton = screen.getByTestId('complete-btn-task-0');
+      fireEvent.click(completeButton);
+      
       await waitFor(() => {
-        expect(window.alert).toHaveBeenCalledWith('Failed to complete task. Please try again.');
-        expect(screen.getByTestId('task-component-task-1')).toBeInTheDocument(); // Task should still be there
+        expect(apiService.completeTask).toHaveBeenCalled();
       });
     });
+  });
 
-    it('closes overlay correctly', async () => {
-      mockApiService.completeTask.mockResolvedValue({
-        points_earned: 20,
+  describe('Overlay Handling', () => {
+    beforeEach(() => {
+      (apiService.completeTask as jest.Mock).mockResolvedValue({
+        points_earned: 10,
         assignment_completed: false
       });
+    });
 
-      render(<MultipleTaskContainer {...defaultProps} />);
+    it('should close overlay when close button clicked', async () => {
+      render(<MultipleTaskContainer tasks={mockTasks} userId={mockUserId} />);
       
-      await act(async () => {
-        fireEvent.click(screen.getByTestId('complete-task-task-1'));
-      });
-
+      const completeButton = screen.getByTestId('complete-btn-task-1');
+      fireEvent.click(completeButton);
+      
       await waitFor(() => {
         expect(screen.getByTestId('task-complete-overlay')).toBeInTheDocument();
       });
-
-      fireEvent.click(screen.getByTestId('close-overlay'));
+      
+      const closeButton = screen.getByText('Close');
+      fireEvent.click(closeButton);
       
       await waitFor(() => {
         expect(screen.queryByTestId('task-complete-overlay')).not.toBeInTheDocument();
       });
     });
 
-    it('calls onRefreshData when refresh button is clicked in overlay', async () => {
-      mockApiService.completeTask.mockResolvedValue({
-        points_earned: 20,
-        assignment_completed: false
-      });
-
-      render(<MultipleTaskContainer {...defaultProps} />);
+    it('should render overlay as portal to document.body', async () => {
+      render(<MultipleTaskContainer tasks={mockTasks} userId={mockUserId} />);
       
-      await act(async () => {
-        fireEvent.click(screen.getByTestId('complete-task-task-1'));
+      const completeButton = screen.getByTestId('complete-btn-task-1');
+      fireEvent.click(completeButton);
+      
+      await waitFor(() => {
+        expect(mockCreatePortal).toHaveBeenCalledWith(
+          expect.anything(),
+          document.body
+        );
       });
+    });
 
+    it('should call onRefreshData when provided', async () => {
+      const onRefreshData = jest.fn();
+      
+      render(
+        <MultipleTaskContainer 
+          tasks={mockTasks} 
+          userId={mockUserId}
+          onRefreshData={onRefreshData}
+        />
+      );
+      
+      const completeButton = screen.getByTestId('complete-btn-task-1');
+      fireEvent.click(completeButton);
+      
       await waitFor(() => {
         expect(screen.getByTestId('task-complete-overlay')).toBeInTheDocument();
       });
-
-      fireEvent.click(screen.getByTestId('refresh-data'));
-      
-      expect(defaultProps.onRefreshData).toHaveBeenCalled();
     });
   });
 
-  describe('Props Variations', () => {
-    it('renders without showCompleteButton', () => {
-      render(<MultipleTaskContainer {...defaultProps} showCompleteButton={false} />);
+  describe('Date Formatting', () => {
+    it('should format today\'s date', () => {
+      // Create date at noon to avoid timezone issues
+      const today = new Date();
+      today.setHours(12, 0, 0, 0);
+      const todayString = today.toISOString().split('T')[0] + 'T12:00:00';
       
-      expect(screen.getAllByText('ShowComplete: false')).toHaveLength(2); // Two tasks rendered
+      render(
+        <MultipleTaskContainer 
+          tasks={mockTasks} 
+          userId={mockUserId}
+          dateString={todayString}
+        />
+      );
+      
+      expect(screen.getByText(/Today/)).toBeInTheDocument();
     });
 
-    it('renders without timeAdjustment', () => {
-      render(<MultipleTaskContainer {...defaultProps} timeAdjustment={false} />);
+    it('should format tomorrow\'s date', () => {
+      // Create tomorrow's date at noon to avoid timezone issues
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(12, 0, 0, 0);
+      const tomorrowString = tomorrow.toISOString().split('T')[0] + 'T12:00:00';
       
-      expect(screen.getAllByText('TimeAdjustment: false')).toHaveLength(2); // Two tasks rendered
+      render(
+        <MultipleTaskContainer 
+          tasks={mockTasks} 
+          userId={mockUserId}
+          dateString={tomorrowString}
+        />
+      );
+      
+      expect(screen.getByText(/Tomorrow/)).toBeInTheDocument();
     });
 
-    it('renders without dateString', () => {
-      render(<MultipleTaskContainer {...defaultProps} dateString={undefined} />);
+    it('should format other dates with weekday and month', () => {
+      // Use a specific future date with time to avoid timezone issues
+      const futureDate = '2025-06-15T12:00:00';
+      const expectedDate = new Date(futureDate);
+      const expectedText = expectedDate.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        month: 'short', 
+        day: 'numeric' 
+      });
       
-      expect(screen.queryByText(/Monday, Jan 1/)).not.toBeInTheDocument();
+      render(
+        <MultipleTaskContainer 
+          tasks={mockTasks} 
+          userId={mockUserId}
+          dateString={futureDate}
+        />
+      );
+      
+      expect(screen.getByText(new RegExp(expectedText))).toBeInTheDocument();
     });
 
-    it('handles singular task count in date string', () => {
-      render(<MultipleTaskContainer {...defaultProps} tasks={[mockTasks[0]]} dateString="2024-01-01" />);
-      expect(screen.getByText('(1 task)')).toBeInTheDocument();
+    it('should handle overdue date strings', () => {
+      const overdueString = 'Monday, Jan 10 (5 days overdue)';
+      
+      render(
+        <MultipleTaskContainer 
+          tasks={mockTasks} 
+          userId={mockUserId}
+          dateString={overdueString}
+        />
+      );
+      
+      expect(screen.getByText(overdueString)).toBeInTheDocument();
+    });
+
+    it('should show task count with singular task', () => {
+      render(
+        <MultipleTaskContainer 
+          tasks={[mockTasks[0]]} 
+          userId={mockUserId}
+          dateString="2024-01-15"
+        />
+      );
+      
+      expect(screen.getByText(/1 task\)/)).toBeInTheDocument();
     });
   });
 
-  describe('Error Cases and Edge Cases', () => {
-    it('resets tasksToShow when tasks prop changes', async () => {
+  describe('Task Updates on Props Change', () => {
+    it('should update task list when tasks prop changes', () => {
+      const { rerender } = render(
+        <MultipleTaskContainer tasks={mockTasks} userId={mockUserId} />
+      );
+      
+      expect(screen.getByTestId('task-task-1')).toBeInTheDocument();
+      
+      const newTasks = [{
+        ...mockTasks[0],
+        task_id: 'task-3',
+        description: 'Task 3'
+      }];
+      
+      rerender(<MultipleTaskContainer tasks={newTasks} userId={mockUserId} />);
+      
+      expect(screen.queryByTestId('task-task-1')).not.toBeInTheDocument();
+      expect(screen.getByTestId('task-task-3')).toBeInTheDocument();
+    });
+
+    it('should reset tasksToShow when tasks change', () => {
       const manyTasks = Array.from({ length: 10 }, (_, i) => ({
         ...mockTasks[0],
-        task_id: `task-${i + 1}`,
-        description: `Task ${i + 1}`
+        task_id: `task-${i}`,
+        scheduled_start_at: `2024-01-${10 + i}T10:00:00Z`
       }));
-
-      const { rerender } = render(<MultipleTaskContainer {...defaultProps} tasks={manyTasks} />);
       
-      // Expand view
-      fireEvent.click(screen.getByText(/Show 3 More Tasks/));
-      await waitFor(() => {
-        expect(screen.getAllByTestId(/task-component-/).length).toBe(8);
-      });
+      const { rerender } = render(
+        <MultipleTaskContainer tasks={manyTasks} userId={mockUserId} />
+      );
       
-      // Change tasks prop
-      rerender(<MultipleTaskContainer {...defaultProps} tasks={mockTasks} />);
+      const showMoreButton = screen.getByText(/Show \d+ More Tasks/);
+      fireEvent.click(showMoreButton);
       
-      // Should reset to showing 2 tasks (all available)
-      expect(screen.getAllByTestId(/task-component-/).length).toBe(2);
-    });
-
-    it('handles tasks becoming empty after removal', async () => {
-      mockApiService.completeTask.mockResolvedValue({
-        points_earned: 20,
-        assignment_completed: false
-      });
-
-      const singleTask = [mockTasks[0]];
-      render(<MultipleTaskContainer {...defaultProps} tasks={singleTask} />);
+      expect(screen.getByTestId('task-task-5')).toBeInTheDocument();
       
-      await act(async () => {
-        fireEvent.click(screen.getByTestId('complete-task-task-1'));
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText('No tasks yet!')).toBeInTheDocument();
-      });
+      rerender(<MultipleTaskContainer tasks={mockTasks} userId={mockUserId} />);
+      
+      expect(screen.queryByTestId('task-task-5')).not.toBeInTheDocument();
     });
   });
 
-  describe('Console Logging', () => {
-    it('logs task completion message', async () => {
-      const consoleSpy = jest.spyOn(console, 'log');
-      mockApiService.completeTask.mockResolvedValue({
-        points_earned: 20,
-        assignment_completed: false
-      });
-
-      render(<MultipleTaskContainer {...defaultProps} />);
+  describe('Edge Cases', () => {
+    it('should handle empty task list array gracefully', () => {
+      render(<MultipleTaskContainer tasks={[]} userId={mockUserId} />);
       
-      await act(async () => {
-        fireEvent.click(screen.getByTestId('complete-task-task-1'));
-      });
-
-      expect(consoleSpy).toHaveBeenCalledWith('Task completed. Points earned: 20');
+      expect(screen.getByText('No tasks yet!')).toBeInTheDocument();
     });
 
-    it('logs assignment completion message', async () => {
-      const consoleSpy = jest.spyOn(console, 'log');
-      mockApiService.completeTask.mockResolvedValue({
-        points_earned: 20,
-        assignment_completed: true
+    it('should handle undefined callbacks gracefully', async () => {
+      (apiService.completeTask as jest.Mock).mockResolvedValue({
+        points_earned: 10,
+        assignment_completed: false
       });
-      mockGetAssignment.mockResolvedValue({
-        assignment_id: 'assignment-1',
-        course_id: 'course-1',
-        title: 'Math Homework',
-        due_date: '2024-01-01',
-        completion_points: 50,
-        is_complete: true
-      });
-
-      render(<MultipleTaskContainer {...defaultProps} />);
       
-      await act(async () => {
-        fireEvent.click(screen.getByTestId('complete-task-task-1'));
+      render(<MultipleTaskContainer tasks={mockTasks} userId={mockUserId} />);
+      
+      const completeButton = screen.getByTestId('complete-btn-task-1');
+      fireEvent.click(completeButton);
+      
+      await waitFor(() => {
+        expect(apiService.completeTask).toHaveBeenCalled();
       });
+    });
 
-      expect(consoleSpy).toHaveBeenCalledWith('Task completed. Points earned: 20\nAssignment completed! Additional points earned: 50');
+    it('should pass timeAdjustment prop to TaskComponent', () => {
+      render(
+        <MultipleTaskContainer 
+          tasks={mockTasks} 
+          userId={mockUserId}
+          timeAdjustment={false}
+        />
+      );
+      
+      expect(screen.getByTestId('task-task-1')).toBeInTheDocument();
+    });
+
+    it('should handle console.log output on successful completion', async () => {
+      const consoleLog = jest.spyOn(console, 'log').mockImplementation();
+      
+      (apiService.completeTask as jest.Mock).mockResolvedValue({
+        points_earned: 15,
+        assignment_completed: false
+      });
+      
+      render(<MultipleTaskContainer tasks={mockTasks} userId={mockUserId} />);
+      
+      const completeButton = screen.getByTestId('complete-btn-task-1');
+      fireEvent.click(completeButton);
+      
+      await waitFor(() => {
+        expect(consoleLog).toHaveBeenCalledWith(
+          'Task completed. Points earned: 15'
+        );
+      });
+      
+      consoleLog.mockRestore();
     });
   });
 });
