@@ -13,12 +13,12 @@ def allowed_file(filename):
 def handle_file_upload(request, upload_folder=UPLOAD_FOLDER):
     """Handle file upload with proper absolute path management"""
     if "file" not in request.files:
-        return None, jsonify({"error": "No file provided"}), 400
+        return None, (jsonify({"error": "No file provided"}), 400)
     file = request.files["file"]
     if file.filename == "":
-        return None, jsonify({"error": "No file selected"}), 400
+        return None, (jsonify({"error": "No file selected"}), 400)
     if not file.filename.lower().endswith(".pdf"):
-        return None, jsonify({"error": "File must be a PDF"}), 400
+        return None, (jsonify({"error": "File must be a PDF"}), 400)
     
     # Ensure upload folder is absolute and exists
     abs_upload_folder = os.path.abspath(upload_folder)
@@ -38,7 +38,7 @@ def handle_file_upload(request, upload_folder=UPLOAD_FOLDER):
         return filepath, None
     except Exception as e:
         print(f"Error saving file: {str(e)}")
-        return None, jsonify({"error": f"Failed to save file: {str(e)}"}), 500
+        return None, (jsonify({"error": f"Failed to save file: {str(e)}"}), 500)
 
 def extract_tables_from_pdf(pdf_path):
     """
