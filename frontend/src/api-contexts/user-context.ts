@@ -38,6 +38,32 @@ class ApiService {
     }
   }
 
+  // Auth endpoints
+  async signup(email: string, password: string, displayName: string): Promise<{ user: User }> {
+    const url = `${this.baseUrl}/auth/signup`;
+    const signupResponse = await this.fetchWithErrorHandling(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password, display_name: displayName }),
+    });
+
+    // Automatically login after successful signup
+    return this.login(email, password);
+  }
+
+  async login(email: string, password: string): Promise<{ user: User }> {
+    const url = `${this.baseUrl}/auth/login`;
+    return this.fetchWithErrorHandling(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+  }
+
   // User endpoints
   async getUser(userId: string): Promise<User> {
     const url = `${this.baseUrl}/db/users?user_id=${encodeURIComponent(userId)}`;
