@@ -92,11 +92,9 @@ export const BlindBoxPurchaseProvider: React.FC<{ children: React.ReactNode }> =
 
     const data = await response.json();
     
-    // Handle paginated response - extract the 'results' array
     if (data.results && Array.isArray(data.results)) {
       setUserFigures(data.results);
     } else if (Array.isArray(data)) {
-      // Fallback: direct array response
       setUserFigures(data);
     } else {
       console.error('Unexpected response format:', data);
@@ -104,7 +102,7 @@ export const BlindBoxPurchaseProvider: React.FC<{ children: React.ReactNode }> =
     }
   } catch (err) {
     setError(err instanceof Error ? err.message : 'An error occurred');
-    setUserFigures([]); // Set empty array on error
+    setUserFigures([]); 
     throw err;
   } finally {
     setLoading(false);
