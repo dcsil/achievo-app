@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { OnboardingStepProps } from '../index';
 import { TimetableProcessResult, timetableApiService } from '../../../api-contexts/timetable-context';
 import { tasksApiService } from '../../../api-contexts/add-tasks';
@@ -16,7 +16,11 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [taskGroupsToShow, setTaskGroupsToShow] = useState(3);
   
+  const initialTaskGroupsToShow = 3;
+  const taskGroupsPerIncrement = 3;
+
   // Get user ID from localStorage
   const getUserId = () => {
     try {
@@ -131,6 +135,33 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
     onNext();
   };
 
+  const getDisplayedTaskGroups = (groupedTasks: any[]) => {
+    return groupedTasks.slice(0, taskGroupsToShow);
+  };
+
+  const hasMoreTaskGroups = (groupedTasks: any[]) => {
+    return groupedTasks.length > taskGroupsToShow;
+  };
+
+  const canCollapseTaskGroups = () => {
+    return taskGroupsToShow > initialTaskGroupsToShow;
+  };
+
+  const handleShowMoreTaskGroups = (totalGroups: number) => {
+    setTaskGroupsToShow(prev => Math.min(prev + taskGroupsPerIncrement, totalGroups));
+  };
+
+  const handleCollapseTaskGroups = () => {
+    setTaskGroupsToShow(initialTaskGroupsToShow);
+  };
+
+  // Reset taskGroupsToShow when result changes
+  useEffect(() => {
+    if (result) {
+      setTaskGroupsToShow(initialTaskGroupsToShow);
+    }
+  }, [result]);
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
@@ -213,7 +244,7 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
                       />
                     </div>
                     
-                    {/* Course Tasks by Date - Use proper MultipleTaskContainer */}
+                    {/* Course Tasks by Date - Use proper MultipleTaskContainer with pagination */}
                     <div>
                       <h4 className="text-md font-semibold text-gray-700 mb-3 text-center">
                         Generated Tasks ({courseTasks.length} total)
@@ -221,24 +252,42 @@ const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
                       
                       {groupedTasks.length > 0 ? (
                         <div className="space-y-4">
-                          {groupedTasks.map(({ date, tasks: dateTasks }) => {
-                            const displayTasks = dateTasks.slice(0, 5);
-                            
-                            return (
-                              <div key={`${course.course_id}-${date}`} className="space-y-2">
-                                <MultipleTaskContainer 
-                                  tasks={displayTasks}
-                                  userId={userId}
-                                  onTaskCompleted={() => {}}
-                                  onRefreshData={() => {}}
-                                  showCompleteButton={false}
-                                  dateString={date}
-                                  timeAdjustment={false}
-
-                                />
-                              </div>
-                            );
-                          })}
+                          {getDisplayedTaskGroups(groupedTasks).map(({ date, tasks: dateTasks }) => (
+                            <div key={`${course.course_id}-${date}`} className="space-y-2">
+                              <MultipleTaskContainer 
+                                tasks={dateTasks}
+                                userId={userId}
+                                onTaskCompleted={() => {}}
+                                onRefreshData={() => {}}
+                                showCompleteButton={false}
+                                dateString={date}
+                                timeAdjustment={false}
+                              />
+                            </div>
+                          ))}
+                          
+                          {(hasMoreTaskGroups(groupedTasks) || canCollapseTaskGroups()) && (
+                            <div className="flex justify-center mt-4 gap-2">
+                              {canCollapseTaskGroups() && (
+                                <button
+                                  onClick={handleCollapseTaskGroups}
+                                  className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex items-center gap-1"
+                                >
+                                  <span>▲</span>
+                                  Collapse
+                                </button>
+                              )}
+                              {hasMoreTaskGroups(groupedTasks) && (
+                                <button
+                                  onClick={() => handleShowMoreTaskGroups(groupedTasks.length)}
+                                  className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex items-center gap-1"
+                                >
+                                  <span>▼</span>
+                                  Show {Math.min(taskGroupsPerIncrement, groupedTasks.length - taskGroupsToShow)} More
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <p className="text-gray-500 text-sm text-center">No tasks generated for this course</p>
