@@ -1,4 +1,3 @@
-// src/services/api.ts
 const API_BASE_URL = 'http://127.0.0.1:5000';
 
 export interface User {
@@ -18,7 +17,6 @@ class ApiService {
     this.baseUrl = baseUrl;
   }
 
-  // Generic fetch wrapper with error handling
   private async fetchWithErrorHandling<T>(
     url: string,
     options?: RequestInit
@@ -38,7 +36,6 @@ class ApiService {
     }
   }
 
-  // Auth endpoints
   async signup(email: string, password: string, displayName: string): Promise<{ user: User }> {
     const url = `${this.baseUrl}/auth/signup`;
     const signupResponse = await this.fetchWithErrorHandling(url, {
@@ -49,7 +46,6 @@ class ApiService {
       body: JSON.stringify({ email, password, display_name: displayName }),
     });
 
-    // Automatically login after successful signup
     return this.login(email, password);
   }
 
@@ -64,7 +60,6 @@ class ApiService {
     });
   }
 
-  // User endpoints
   async getUser(userId: string): Promise<User> {
     const url = `${this.baseUrl}/db/users?user_id=${encodeURIComponent(userId)}`;
     return this.fetchWithErrorHandling<User>(url);
@@ -89,12 +84,10 @@ class ApiService {
     });
   }
 
-  // Task endpoints
   async getTasks(userId: string, scheduledStartAt?: string, scheduledEndAt?: string, isCompleted?: boolean): Promise<any[]> {
     let url = `${this.baseUrl}/db/tasks?user_id=${encodeURIComponent(userId)}`;
     if (scheduledStartAt) url += `&scheduled_start_at=${encodeURIComponent(scheduledStartAt)}`;
     if (scheduledEndAt) url += `&scheduled_end_at=${encodeURIComponent(scheduledEndAt)}`;
-    // By default, only fetch incomplete tasks (false) unless explicitly specified
     if (isCompleted !== undefined) {
       url += `&is_completed=${isCompleted}`;
     } else {
@@ -127,5 +120,4 @@ class ApiService {
   }
 }
 
-// Export a singleton instance
 export const apiService = new ApiService();

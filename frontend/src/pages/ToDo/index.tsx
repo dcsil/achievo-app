@@ -20,7 +20,6 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
   
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Helper function to group tasks by date
   const groupTasksByDate = (tasks: any[]) => {
     const grouped: { [key: string]: any[] } = {};
     
@@ -41,7 +40,6 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
     return grouped;
   };
 
-  // Helper function to calculate days overdue
   const getDaysOverdue = (scheduledEndAt: string) => {
     const now = new Date();
     now.setHours(23, 59, 59, 999);
@@ -54,7 +52,6 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
     return diffDays > 0 ? diffDays : 0;
   };
 
-  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
       if (refreshTimerRef.current) {
@@ -87,32 +84,24 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
     }
   };
 
-  // Function to refresh task data from backend without loading state
   const refreshTaskData = async () => {
     try {
-      console.log('🔄 ToDo: Refreshing task data from backend');
       const combinedData = await apiService.getCombinedTasks(userId);
       setAllTasks(combinedData.incomplete_tasks);
       setCompletedTasks(combinedData.completed_tasks);
       setAvailableCourses(combinedData.available_courses);
       setAvailableTaskTypes(combinedData.available_task_types);
-      console.log('✅ ToDo: Refreshed task data from backend');
     } catch (err) {
       console.error('Failed to refresh task data:', err);
     }
   };
 
   const handleTaskCompleted = async (taskId: string, taskType: string, pointsEarned: number, courseId?: string) => {
-    console.log('🎯 ToDo: Task completed:', taskId);
     
-    // DON'T update local state immediately - let modal show first
-    
-    // Update user points
     if (user && updateUserPoints) {
       updateUserPoints(user.total_points + pointsEarned);
     }
     
-    // Refresh user data from backend
     try {
       const updatedUser = await apiService.getUser(userId);
       if (updateUserPoints) {
@@ -122,7 +111,6 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
       console.error('Failed to refresh user data:', err);
     }
 
-    // Clear any scheduled notifications
     try {
       if (taskType === 'exercise' || taskType === 'break') {
         const alarmId = `${taskType}-${taskId}`;
@@ -135,8 +123,6 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
                 console.warn(`⚠️ Failed to clear alarm for task ${taskId}`);
               }
             });
-          } else {
-            console.log(`ℹ️ No alarm found for task ${taskId} - already cleared or not set`);
           }
         });
       }
@@ -144,20 +130,14 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
       console.warn('Failed to clear task notification:', notifError);
     }
 
-    // Clear any existing refresh timer
     if (refreshTimerRef.current) {
       clearTimeout(refreshTimerRef.current);
     }
 
-    // Schedule refresh after modal has time to show and be closed
-    console.log('⏳ ToDo: Scheduling refresh in 3 seconds');
     refreshTimerRef.current = setTimeout(() => {
-      console.log('⏰ ToDo: Timer fired - refreshing data');
       refreshTaskData();
     }, 3000);
   };
-
-  // Remove handleTasksUpdate - no longer needed
 
   const getFilteredTasks = useCallback((): Record<string, any[]> | any[] => {
     const now = new Date();
@@ -200,7 +180,6 @@ const ToDo: React.FC<TasksProps> = ({ user, updateUserPoints, userId = 'paul_paw
 
     const filteredTasks: any[] = tasksToFilter;
 
-    // Group by date for certain filters
     if (filter === 'all' || filter === 'upcoming' || filter === 'overdue') {
       return groupTasksByDate(filteredTasks);
     } else {
