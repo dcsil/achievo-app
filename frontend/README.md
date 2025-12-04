@@ -30,12 +30,12 @@ Create or update `src/config/api.ts` to set the environment:
 
 - **Local Development**:
   ```typescript
-  export const ENVIRONMENT = 'local';
+  const ENVIRONMENT = 'local';
   ```
 
 - **Production**:
   ```typescript
-  export const ENVIRONMENT = 'production';
+  const ENVIRONMENT = 'production';
   ```
 
 ## Development
