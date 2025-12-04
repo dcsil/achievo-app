@@ -30,3 +30,5 @@
 ### To test front end:
 
 - run ``npm run test:coverage``
+Note: set `ENVIRONMENT = 'local'` in `src/config/api.ts` for testing.
+
