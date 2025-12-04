@@ -78,8 +78,8 @@ def get_term_schedule(term_str: str):
         ]
     else:
         # Default to Winter 2026 schedule
-        original_start_date = date_parse("2026-01-06")
-        end_date = date_parse("2026-04-10")
+        original_start_date = date_parse("2026-01-05")
+        end_date = date_parse("2026-04-6")
         breaks = [
             (date_parse("2026-02-16"), date_parse("2026-02-20")),
         ]
