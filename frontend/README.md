@@ -42,12 +42,12 @@ Create or update `src/config/api.ts` to set the environment:
 
 1. Start the backend server (see [backend README](../backend/README.md))
 
-2. For quick changes and development, start the development server:
+2. For quick changes and development, start the development server in the frontend directory:
    ```bash
    npm start
    ```
 
-3. For Chrome extension development, build the extension:
+3. For Chrome extension development, build the extension in the frontend directory:
    ```bash
    npm run build
    ```
