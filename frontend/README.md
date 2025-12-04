@@ -1,4 +1,4 @@
-# README for Frontend (To be updated later)
+# README for Frontend
 
 ## Environment Configuration
 
