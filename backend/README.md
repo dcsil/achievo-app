@@ -46,9 +46,6 @@ GOOGLE_API_KEY=your_google_api_key_here
 # Supabase Database
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_KEY=your_supabase_anon_key_here
-
-# Canvas LMS Integration (optional)
-CANVAS_TOKEN=your_canvas_token_here
 ```
 
 **Note**: The Gemini API is used for intelligent extraction of tasks and assignments from course syllabi PDFs.
